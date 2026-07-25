@@ -1,26 +1,302 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Design system editorial: nyaris monokrom, satu aksen navy, emas hanya untuk brand. */
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-body: var(--body);
+  --color-meta: var(--meta);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-brand: var(--brand);
+
+  --font-display: var(--font-montserrat);
+  --font-sans: var(--font-montserrat);
+  --font-serif: var(--font-cardo);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  --canvas: #f8f8f6;
+  --surface: #ffffff;
+  --ink: #111111;
+  --body: #4a4a4a;
+  --meta: #9a9a9a;
+  --line: #e8e8e8;
+  --accent: #0b3d91;
+  /* Emas kompas: khusus elemen brand/dekoratif (drop cap, ornamen, penanda). */
+  --brand: #b27d0f;
+}
+
+.dark {
+  --canvas: #121212;
+  --surface: #1a1a1a;
+  --ink: #f2f2f0;
+  --body: #ababab;
+  --meta: #737373;
+  --line: #282828;
+  /* Dark mode: aksen memakai gold, bukan navy */
+  --accent: #d9b14a;
+  --brand: #d9b14a;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--canvas);
+  color: var(--body);
+  font-family: var(--font-cardo), Georgia, serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Label uppercase (kategori, tombol, nav, label meta) memakai Montserrat;
+   teks bacaan tetap Cardo. */
+.uppercase {
+  font-family: var(--font-montserrat), system-ui, sans-serif;
+}
+
+/* Transisi halus antar halaman */
+@keyframes route-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.route-fade {
+  animation: route-fade-in 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-fade {
+    animation: none;
+  }
+}
+
+/* Munculnya panel pencarian */
+@keyframes search-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.search-fade > * {
+  animation: search-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .search-fade > * {
+    animation: none;
+  }
+}
+
+/* Animasi bar hasil jajak pendapat */
+@keyframes poll-bar-grow {
+  from {
+    width: 0;
+  }
+  to {
+    width: var(--poll-w, 0%);
+  }
+}
+.poll-bar {
+  animation: poll-bar-grow 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .poll-bar {
+    animation: none;
+  }
+}
+
+/* ==== Kartu balot jajak pendapat: kertas arsip tua ==== */
+.ballot-wrap {
+  filter: drop-shadow(0 5px 12px rgb(0 0 0 / 0.1));
+}
+.ballot-tilt {
+  transform: rotate(-0.4deg);
+}
+.ballot {
+  --paper: #f6efdc;
+  background-color: var(--paper);
+  /* Tepi bawah sobek bergerigi + sudut kanan atas terpotong (lipatan). */
+  clip-path: polygon(
+    0 0,
+    calc(100% - 26px) 0,
+    100% 26px,
+    100% calc(100% - 9px),
+    93.75% 100%,
+    87.5% calc(100% - 9px),
+    81.25% 100%,
+    75% calc(100% - 9px),
+    68.75% 100%,
+    62.5% calc(100% - 9px),
+    56.25% 100%,
+    50% calc(100% - 9px),
+    43.75% 100%,
+    37.5% calc(100% - 9px),
+    31.25% 100%,
+    25% calc(100% - 9px),
+    18.75% 100%,
+    12.5% calc(100% - 9px),
+    6.25% 100%,
+    0 calc(100% - 9px)
+  );
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+.dark .ballot {
+  --paper: #211c12;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+}
+/* Serat kertas di atas seluruh isi (pointer-events none). */
+.ballot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url("/images/tekstur-kertas-editorial.jpg") center/cover;
+  opacity: 0.35;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+.dark .ballot::before {
+  opacity: 0.1;
+}
+/* Lipatan sudut kanan atas. */
+.ballot::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 26px;
+  height: 26px;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+  background: color-mix(in srgb, var(--paper) 86%, black);
+  pointer-events: none;
+}
+
+/* Kertas memudar untuk poll yang sudah ditutup. */
+.ballot--closed {
+  filter: sepia(0.16) saturate(0.82) contrast(0.97);
+}
+
+/* Getar halus "cap jatuh" saat pembaca mencoret pilihan. */
+@keyframes ballot-thud {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(0.985) rotate(-0.35deg);
+  }
+  70% {
+    transform: scale(1.006) rotate(0.2deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.ballot--thud {
+  animation: ballot-thud 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Coretan tinta digambar kiri→kanan menimpa pilihan. */
+@keyframes strike-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.strike-anim {
+  stroke-dasharray: 102;
+  stroke-dashoffset: 102;
+  animation: strike-draw 0.5s cubic-bezier(0.65, 0, 0.35, 1) forwards;
+}
+
+/* Bar hasil: arsiran pensil diagonal (warna via currentColor). */
+.hatch {
+  background-image: repeating-linear-gradient(
+    -55deg,
+    currentColor 0 2.5px,
+    transparent 2.5px 5.5px
+  );
+}
+
+/* Drop cap editorial untuk paragraf pembuka halaman panjang. */
+/* Coretan penanda (stabilo) pada frasa kunci judul.
+   Warna brand navy (emas di dark). Dua lapis teks: dasar (ink) + isian
+   (putih di atas coretan) yang disingkap kiri→kanan lewat animasi lebar. */
+.mk {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  /* Padding memberi ruang coretan; negative margin menetralkan agar spasi
+     antar kata tetap normal ketika penanda belum tampil. */
+  margin: 0 -0.18em;
+}
+.mk__base {
+  padding: 0.02em 0.18em;
+}
+.mk__fill {
+  position: absolute;
+  inset: 0;
+  width: 0;
+  overflow: hidden;
+  border-radius: 6px 11px 7px 12px;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+}
+.mk__fillinner {
+  display: block;
+  width: max-content;
+  height: 100%;
+  padding: 0.02em 0.18em;
+  border-radius: inherit;
+  background: #012258;
+  color: #ffffff;
+}
+.dark .mk__fillinner {
+  background: #d9b14a;
+  color: #121212;
+}
+/* Selalu tampil (hero / berita utama), sedikit miring agar terasa digambar. */
+.mk--on {
+  transform: rotate(-0.8deg);
+}
+.mk--on .mk__fill {
+  width: 100%;
+}
+/* Disingkap saat kartu induk dihover atau menerima fokus keyboard. */
+.group:hover .mk--hover .mk__fill,
+.group:focus-within .mk--hover .mk__fill {
+  width: 100%;
+}
+
+.drop-cap::first-letter {
+  float: left;
+  font-family: var(--font-cardo), Georgia, serif;
+  font-weight: 700;
+  font-size: 3.4em;
+  line-height: 0.8;
+  padding-right: 0.14em;
+  padding-top: 0.08em;
+  color: var(--brand);
 }

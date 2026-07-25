@@ -1,65 +1,234 @@
 import Image from "next/image";
+import Link from "next/link";
+import {
+  CardCompact,
+  CardHeadline,
+  CardRow,
+  CategoryTag,
+  TitleWithHighlight,
+} from "@/components/ArticleCard";
+import { WorldDotMap } from "@/components/WorldDotMap";
+import { NewsletterForm } from "@/components/NewsletterForm";
+import { PollSection } from "@/components/PollSection";
+import { SectionHeading } from "@/components/SectionHeading";
+import { Sidebar } from "@/components/Sidebar";
+import { TabbedSection } from "@/components/TabbedSection";
+import { getAuthor } from "@/data/authors";
+import {
+  allArticles,
+  articleHref,
+  articleImage,
+  byCategories,
+  byCategory,
+  featuredArticles,
+  formatDate,
+} from "@/lib/articles";
 
-export default function Home() {
+export default function HomePage() {
+  const heroes = featuredArticles(5);
+  const [heroMain, ...heroSide] = heroes;
+  const heroAuthor = getAuthor(heroMain.author);
+
+  const analisisPool = byCategories(
+    ["analisis", "geopolitik", "politik-keamanan", "diplomasi"],
+    12
+  );
+  const internasionalPool = byCategory("internasional", 6);
+  const ragamPool = byCategories(["sosial", "budaya", "media", "features"], 8);
+
+  const usedSlugs = new Set([
+    ...heroes.map((a) => a.slug),
+    ...analisisPool.slice(0, 8).map((a) => a.slug),
+    ...internasionalPool.map((a) => a.slug),
+    ...ragamPool.slice(0, 4).map((a) => a.slug),
+  ]);
+  const beritaLainnya = allArticles()
+    .filter((a) => !usedSlugs.has(a.slug))
+    .slice(0, 6);
+
+  const [internasionalMain, ...internasionalRest] = internasionalPool;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div>
+      {/* Hero: satu cerita utama + daftar headline */}
+      <section
+        aria-label="Berita utama"
+        className="mx-auto grid max-w-7xl gap-12 px-4 py-14 md:py-20 lg:grid-cols-12 lg:px-6"
+      >
+        <article className="lg:col-span-8">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
+            Berita Utama
           </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          <h1 className="mt-4 font-display text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-5xl">
+            <Link
+              href={articleHref(heroMain)}
+              className="transition-opacity hover:opacity-90"
+            >
+              <TitleWithHighlight
+                title={heroMain.title}
+                highlight={heroMain.highlight}
+              />
+            </Link>
+          </h1>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-body">
+            {heroMain.excerpt}
+          </p>
+          <p className="mt-5 text-sm text-meta">
+            <span className="font-semibold text-ink">{heroAuthor.name}</span>
+            <span className="px-2" aria-hidden>
+              ·
+            </span>
+            {formatDate(heroMain.date)}
+          </p>
+          <Link
+            href={articleHref(heroMain)}
+            className="mt-8 block aspect-[1200/630] w-full self-start overflow-hidden rounded-xl bg-canvas"
+            tabIndex={-1}
+            aria-hidden
           >
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+              src={articleImage(heroMain, 1200, 630)}
+              alt={heroMain.title}
+              width={1200}
+              height={630}
+              priority
+              sizes="(min-width: 1024px) 66vw, 100vw"
+              className="h-full w-full object-cover saturate-[0.9]"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          </Link>
+        </article>
+
+        <div className="lg:col-span-4 lg:border-l lg:border-line lg:pl-10">
+          <p className="border-b border-line pb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
+            Sorotan
+          </p>
+          <div className="divide-y divide-line">
+            {heroSide.map((a) => (
+              <div key={a.slug} className="py-5">
+                <CardHeadline article={a} />
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
+      </section>
+
+      {/* Analisis dengan tab filter */}
+      <div className="mx-auto max-w-7xl px-4 py-12 md:py-16 lg:px-6">
+        <TabbedSection
+          title="Analisis"
+          href="/category/analisis"
+          articles={analisisPool}
+          tabs={[
+            { label: "Semua", slug: null },
+            { label: "Analisis", slug: "analisis" },
+            { label: "Geopolitik", slug: "geopolitik" },
+            { label: "Politik-Keamanan", slug: "politik-keamanan" },
+            { label: "Diplomasi", slug: "diplomasi" },
+          ]}
+        />
+      </div>
+
+      {/* Internasional + Sosial & Budaya berbagi latar peta kontinen titik */}
+      <div className="relative overflow-hidden">
+        <WorldDotMap />
+
+        {/* Internasional: sorotan lebar */}
+        <section
+          aria-label="Internasional"
+          className="relative mx-auto max-w-7xl px-4 py-12 md:py-16 lg:px-6"
+        >
+        <SectionHeading
+          title="Internasional"
+          href="/category/internasional"
+        />
+        {internasionalMain && (
+          <div className="grid gap-10 lg:grid-cols-2">
+            <article className="group">
+              <Link
+                href={articleHref(internasionalMain)}
+                className="block aspect-[16/10] w-full self-start overflow-hidden rounded-xl bg-canvas"
+                tabIndex={-1}
+                aria-hidden
+              >
+                <Image
+                  src={articleImage(internasionalMain, 900, 560)}
+                  alt={internasionalMain.title}
+                  width={900}
+                  height={560}
+                  sizes="(min-width: 1024px) 50vw, 100vw"
+                  className="h-full w-full object-cover saturate-50 transition-[filter] duration-300 group-hover:saturate-100"
+                />
+              </Link>
+              <div className="pt-6">
+                <CategoryTag slug={internasionalMain.category} />
+                <h3 className="mt-3 font-display text-2xl font-extrabold leading-snug tracking-tight text-ink md:text-3xl">
+                  <Link
+                    href={articleHref(internasionalMain)}
+                    className="transition-colors hover:text-accent"
+                  >
+                    <TitleWithHighlight
+                      title={internasionalMain.title}
+                      highlight={internasionalMain.highlight}
+                    />
+                  </Link>
+                </h3>
+                <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-body">
+                  {internasionalMain.excerpt}
+                </p>
+                <p className="mt-3 text-xs text-meta">
+                  {formatDate(internasionalMain.date)}
+                </p>
+              </div>
+            </article>
+            <div className="flex flex-col justify-between gap-6 border-line lg:border-l lg:pl-10">
+              {internasionalRest.map((a) => (
+                <div
+                  key={a.slug}
+                  className="border-b border-line pb-6 last:border-0 last:pb-0"
+                >
+                  <CardCompact article={a} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        </section>
+
+        {/* Sosial, budaya, media, dan features dengan tab, layout grid */}
+        <div className="relative mx-auto max-w-7xl px-4 py-12 md:py-16 lg:px-6">
+          <TabbedSection
+            title="Sosial & Budaya"
+            href="/category/sosial"
+            layout="grid"
+            articles={ragamPool}
+            tabs={[
+              { label: "Semua", slug: null },
+              { label: "Sosial", slug: "sosial" },
+              { label: "Budaya", slug: "budaya" },
+              { label: "Media", slug: "media" },
+              { label: "Features", slug: "features" },
+            ]}
+          />
+        </div>
+      </div>
+
+      {/* Jajak pendapat (carousel) */}
+      <PollSection />
+
+      {/* Berita lainnya + sidebar */}
+      <div className="mx-auto grid max-w-7xl gap-14 px-4 py-12 pb-24 md:py-16 lg:grid-cols-[1fr_320px] lg:px-6">
+        <section aria-label="Berita lainnya">
+          <SectionHeading title="Berita Lainnya" />
+          <div className="divide-y divide-line">
+            {beritaLainnya.map((a) => (
+              <CardRow key={a.slug} article={a} />
+            ))}
+          </div>
+        </section>
+        <Sidebar />
+      </div>
+
+      <NewsletterForm />
     </div>
   );
 }
