@@ -17,11 +17,14 @@ export const site = {
     handle: "theglobal-review.com",
     followers: 2147,
   },
+  /**
+   * Kanal media milik TGR sendiri. YouTube tidak dicantumkan karena
+   * kemunculan TGR/Hendrajit di sana berstatus tamu di kanal pihak lain —
+   * rekam jejaknya sudah diwadahi rubrik Podcast.
+   */
   social: {
     facebook: "https://www.facebook.com/theglobalreviewcom/",
     twitter: "https://twitter.com/GlobalReview07",
-    youtube: "https://www.youtube.com/results?search_query=global+review+channel",
-    rss: "/feed",
   },
   copyright: `Copyright © 2008-${new Date().getFullYear()} The Global Review`,
 };

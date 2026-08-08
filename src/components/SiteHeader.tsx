@@ -28,7 +28,6 @@ import {
   UsersThree,
   X,
   XLogo,
-  YoutubeLogo,
 } from "@phosphor-icons/react";
 import { lainnyaGroups, mainMenu, site, topBarMenu } from "@/data/site";
 import { useLang } from "@/lib/i18n";
@@ -69,7 +68,6 @@ const tentangMobile = topBarMenu.filter((i) => !lainnyaHrefs.has(i.href));
 const social = [
   { href: site.social.facebook, Icon: FacebookLogo, label: "Facebook" },
   { href: site.social.twitter, Icon: XLogo, label: "X" },
-  { href: site.social.youtube, Icon: YoutubeLogo, label: "YouTube" },
 ];
 
 export function SiteHeader() {

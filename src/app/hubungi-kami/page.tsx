@@ -9,7 +9,6 @@ import {
   MapPin,
   Newspaper,
   XLogo,
-  YoutubeLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/PageHeader";
 import { ContactForm } from "@/components/ContactForm";
@@ -180,11 +179,6 @@ export default function HubungiKamiPage() {
                     label: "Facebook",
                   },
                   { href: site.social.twitter, Icon: XLogo, label: "X" },
-                  {
-                    href: site.social.youtube,
-                    Icon: YoutubeLogo,
-                    label: "YouTube",
-                  },
                 ].map(({ href, Icon, label }) => (
                   <a
                     key={label}

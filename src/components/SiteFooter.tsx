@@ -7,7 +7,6 @@ import {
   FacebookLogo,
   MapPin,
   XLogo,
-  YoutubeLogo,
 } from "@phosphor-icons/react/dist/ssr";
 import { site } from "@/data/site";
 import { useLang } from "@/lib/i18n";
@@ -208,15 +207,6 @@ export function SiteFooter() {
               className="flex h-8 w-8 items-center justify-center text-white/55 transition-colors hover:text-white"
             >
               <XLogo size={16} weight="regular" />
-            </a>
-            <a
-              href={site.social.youtube}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="YouTube Global Review Channel"
-              className="flex h-8 w-8 items-center justify-center text-white/55 transition-colors hover:text-white"
-            >
-              <YoutubeLogo size={16} weight="regular" />
             </a>
           </div>
         </div>
