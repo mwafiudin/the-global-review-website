@@ -7,6 +7,16 @@ export const site = {
   email: "redaksi.theglobalreview@gmail.com",
   address:
     "DARIA Building, Suite 402, Jl. Iskandarsyah Raya No. 7, Kebayoran Baru, Jakarta Selatan",
+  /**
+   * Halaman Facebook resmi. Jumlah pengikut disalin manual dari halaman FB
+   * (plugin resmi tidak dipakai agar tidak membebani pembaca dengan skrip
+   * pelacak dan agar tampilannya bisa mengikuti desain situs).
+   * Terakhir diperbarui: Agustus 2026.
+   */
+  facebookPage: {
+    handle: "theglobal-review.com",
+    followers: 2147,
+  },
   social: {
     facebook: "https://www.facebook.com/theglobalreviewcom/",
     twitter: "https://twitter.com/GlobalReview07",

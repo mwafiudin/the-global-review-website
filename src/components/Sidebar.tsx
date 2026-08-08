@@ -3,12 +3,15 @@ import Link from "next/link";
 import {
   ArrowRight,
   ArrowUpRight,
+  FacebookLogo,
   PlayCircle,
+  ThumbsUp,
 } from "@phosphor-icons/react/dist/ssr";
 import type { NavItem } from "@/data/site";
 import {
   partnerLinksIndonesia,
   partnerLinksInternational,
+  site,
 } from "@/data/site";
 import { articleHref, featuredArticles } from "@/lib/articles";
 import { allPodcasts } from "@/data/podcasts";
@@ -186,6 +189,45 @@ export function Sidebar({ polls }: { polls?: PollView[] }) {
             </span>
           </div>
         </Link>
+      </section>
+
+      {/* Halaman Facebook: kartu on-brand, bukan plugin resmi (lihat site.ts) */}
+      <section>
+        <WidgetTitle>Ikuti di Facebook</WidgetTitle>
+        <a
+          href={site.social.facebook}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group block overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-sm"
+        >
+          <div className="flex items-center gap-3.5 p-5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-canvas text-accent ring-1 ring-inset ring-line">
+              <FacebookLogo size={22} weight="fill" />
+            </span>
+            <div className="min-w-0">
+              <p className="truncate font-display text-[15px] font-bold leading-snug text-ink transition-colors group-hover:text-accent">
+                {site.facebookPage.handle}
+              </p>
+              <p className="mt-0.5 text-xs text-meta">
+                <span className="font-semibold text-body">
+                  {site.facebookPage.followers.toLocaleString("id-ID")}
+                </span>{" "}
+                pengikut
+              </p>
+            </div>
+          </div>
+          <div className="border-t border-line px-5 py-3.5">
+            <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent">
+              <ThumbsUp size={14} weight="fill" />
+              Suka Halaman
+              <ArrowUpRight
+                size={12}
+                weight="bold"
+                className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </span>
+          </div>
+        </a>
       </section>
 
       {/* Jaringan rujukan: mitra & sumber, ditata sebagai chip */}
