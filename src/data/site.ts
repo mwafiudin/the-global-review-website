@@ -137,17 +137,18 @@ export const partnerLinksIndonesia = [
 
 /**
  * Diperiksa Agustus 2026 — seluruh tautan di bawah menjawab dengan normal.
- * Dihapus karena domainnya sudah tidak beresolusi: strategic-culture.org,
- * journal-neo.org, orientalreview.org. Ketiga media itu sendiri masih terbit,
- * hanya berpindah domain ke .su; belum dipasang kembali menunggu keputusan
- * redaksi.
+ * Strategic Culture, Journal NEO (New Eastern Outlook), dan Oriental Review
+ * memakai domain .su karena domain .org lama mereka sudah tidak beresolusi.
  */
 export const partnerLinksInternational = [
+  { label: "Strategic Culture", href: "https://strategic-culture.su" },
   { label: "Global Research", href: "https://globalresearch.ca" },
   { label: "The Duran", href: "https://theduran.com" },
   { label: "Consortium News", href: "https://consortiumnews.com" },
+  { label: "Journal NEO", href: "https://journal-neo.su" },
   { label: "Voltaire Network", href: "https://voltairenet.org" },
   { label: "MintPress News", href: "https://mintpressnews.com" },
+  { label: "Oriental Review", href: "https://orientalreview.su" },
   { label: "Antiwar.com", href: "https://antiwar.com" },
   { label: "Countercurrents", href: "https://countercurrents.org" },
 ];
