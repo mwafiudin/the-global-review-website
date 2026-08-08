@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
-import { books, getBook } from "@/data/books";
+import { bookImprint, books, getBook } from "@/data/books";
 import { getPodcast } from "@/data/podcasts";
 import { VideoEmbed } from "@/components/VideoEmbed";
 import { EndMark } from "@/components/Ornaments";
@@ -76,9 +76,10 @@ export default async function BookReviewPage({
           <p className="mt-4 text-sm font-semibold text-accent">
             {book.penulis}
           </p>
-          <p className="mt-1 text-sm text-meta">
-            {book.penerbit} · {book.tahun}
-          </p>
+          <p className="mt-1 text-sm text-meta">{bookImprint(book)}</p>
+          {book.isbn && (
+            <p className="mt-1 text-xs text-meta">ISBN {book.isbn}</p>
+          )}
           <p className="mt-5 text-[15px] italic leading-relaxed text-body">
             {book.ringkasan}
           </p>
@@ -123,7 +124,7 @@ export default async function BookReviewPage({
         <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
           Ulasan lainnya
         </h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {lainnya.map((b) => (
             <Link
               key={b.slug}
@@ -143,7 +144,8 @@ export default async function BookReviewPage({
                   {b.judul}
                 </h3>
                 <p className="mt-1 text-xs text-meta">
-                  {b.penulis}, {b.tahun}
+                  {b.penulis}
+                  {b.tahun ? `, ${b.tahun}` : ""}
                 </p>
               </div>
             </Link>

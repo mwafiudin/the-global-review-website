@@ -3,7 +3,10 @@ export interface Book {
   judul: string;
   penulis: string;
   penerbit: string;
-  tahun: string;
+  /** Tahun terbit; dikosongkan bila belum terkonfirmasi. */
+  tahun?: string;
+  /** ISBN dari sampul belakang (opsional). */
+  isbn?: string;
   cover: string;
   /** Ringkasan pendek untuk kartu daftar. */
   ringkasan: string;
@@ -12,8 +15,6 @@ export interface Book {
   /** Slug podcast/video terkait (opsional) untuk embed di halaman ulasan. */
   podcastTerkait?: string;
 }
-
-const PLACEHOLDER = "/images/placeholder-sampul-buku.jpg";
 
 export const books: Book[] = [
   {
@@ -35,36 +36,62 @@ export const books: Book[] = [
   },
   {
     slug: "tangan-tangan-amerika",
-    judul: "Tangan-Tangan Amerika: Operasi Siluman AS di Pelbagai Belahan Dunia",
-    penulis: "Hendrajit",
+    judul: "Tangan-Tangan Amerika: Kisah Operasi AS di Pelbagai Belahan Dunia",
+    penulis: "Hendrajit dkk.",
     penerbit: "Global Future Institute",
     tahun: "2010",
-    cover: PLACEHOLDER,
+    isbn: "978-602-97209-0-7",
+    cover:
+      "/images/buku-tangan-tangan-amerika-kisah-operasi-as-di-pelbagai-belahan-dunia.jpg",
     ringkasan:
-      "Menelusuri jejak operasi-operasi terselubung Amerika Serikat di berbagai kawasan dunia dan pelajaran yang bisa dipetik Indonesia.",
+      "Menelusuri jejak operasi Amerika Serikat di berbagai kawasan dunia — dari agresi militer hingga perang ekonomi yang berlangsung tanpa satu peluru pun.",
     ulasan: [
-      "Melalui buku ini, Hendrajit menyusun sebuah peta panjang tentang bagaimana Amerika Serikat menjalankan pengaruhnya lewat operasi-operasi yang jarang terlihat di permukaan. Dari dukungan diam-diam pada kelompok tertentu hingga rekayasa krisis, penulis memperlihatkan pola yang berulang di banyak kawasan.",
-      "Yang membedakan buku ini dari sekadar kumpulan teori konspirasi adalah upaya penulis menautkan setiap kasus dengan kepentingan geopolitik yang lebih besar. Ia mengajak pembaca melihat bahwa intervensi tersembunyi selalu punya logika: penguasaan sumber daya, jalur strategis, atau pembendungan kekuatan pesaing.",
-      "Bagi pembaca Indonesia, nilai buku ini terletak pada refleksinya. Hendrajit tidak berhenti pada kritik terhadap kekuatan asing, tetapi menegaskan pentingnya kewaspadaan dan kemandirian dalam merumuskan politik luar negeri yang benar-benar berpijak pada kepentingan nasional.",
+      "Buku ini berangkat dari sebuah catatan yang jarang diakui secara terbuka: dalam sejarah perang modern, Amerika Serikat memegang rekor tertinggi sebagai negara agresor. Merujuk William Blum dalam Killing Hope: U.S. Military and CIA Interventions Since World War II, para penulis mengingatkan bahwa sejak memproklamasikan kemerdekaannya pada 1776, AS terus melancarkan arus tetap pertempuran — sembilan perang besar dan lebih dari dua ratus penyerbuan angkatan bersenjata.",
+      "Namun kekuatan utama buku ini justru terletak pada babak yang lebih senyap. Hendrajit dan para kontributornya menaruh perhatian pada perang ekonomi: bentuk peperangan yang berlangsung tenang, nyaris tanpa gegap gempita, tetapi memiliki daya rusak yang setara dengan operasi militer. Peperangan semacam ini dilancarkan untuk melumpuhkan lawan tanpa meletuskan sebutir peluru pun.",
+      "Pada tingkat yang paling ekstrem, tulis mereka, perang ekonomi menunjukkan daya hancur yang tak ubahnya bom nuklir — ia melemahkan rakyat dan melumpuhkan infrastruktur secara perlahan. Justru karena tidak terlihat sebagai kekerasan, korbannya kerap tidak menyadari sedang berada dalam sebuah medan pertempuran.",
+      "Bagi pembaca Indonesia, nilai buku ini terletak pada refleksinya. Para penulis tidak berhenti pada kritik terhadap kekuatan asing, melainkan menegaskan pentingnya kewaspadaan dan kemandirian dalam merumuskan politik luar negeri yang benar-benar berpijak pada kepentingan nasional.",
+    ],
+  },
+  {
+    slug: "neo-kolonialisme-as-di-asia",
+    judul: "Neo Kolonialisme AS di Asia: Perspektif Indonesia",
+    penulis: "Hendrajit dkk.",
+    penerbit: "Indonesia Consulting Group",
+    cover: "/images/buku-neo-kolonialisme-as-di-asia-perspektif-indonesia.jpg",
+    ringkasan:
+      "Membaca wajah baru kolonialisme Amerika Serikat di Asia — bukan lewat pendudukan wilayah, melainkan penguasaan ekonomi, politik, dan arah kebijakan.",
+    ulasan: [
+      "Jika kolonialisme klasik ditandai bendera yang ditancapkan di tanah jajahan, neo-kolonialisme bekerja jauh lebih halus: melalui kesepakatan dagang, ketergantungan modal, dan penyelarasan kebijakan. Buku ini menempatkan Asia sebagai medan utama tempat pola tersebut berlangsung, dengan Amerika Serikat sebagai aktor yang paling konsisten memainkannya.",
+      "Yang membedakan buku ini dari kajian sejenis adalah sudut pandangnya yang tegas: perspektif Indonesia. Para penulis tidak memotret Asia dari kacamata pengamat luar, melainkan dari posisi sebuah negara yang berada tepat di persilangan kepentingan kekuatan besar — dan karena itu paling merasakan konsekuensinya.",
+      "Pembahasannya menautkan dimensi ekonomi, politik, dan keamanan sebagai satu kesatuan. Penguasaan sumber daya, arsitektur perjanjian regional, hingga pembentukan opini publik dibaca sebagai instrumen yang saling menopang, bukan peristiwa yang berdiri sendiri.",
+      "Sebagai bacaan, buku ini melengkapi jalur pemikiran yang telah dirintis Global Future Institute mengenai perang asimetris dan penjajahan gaya baru. Ia menawarkan kerangka bagi pembaca yang ingin memahami mengapa kemerdekaan politik tidak otomatis berarti kemerdekaan dalam menentukan arah kebijakan.",
     ],
   },
   {
     slug: "japanese-militarism-war-crimes-asia-pacific",
     judul: "Japanese Militarism & Its War Crimes in Asia Pacific Region",
-    penulis: "Hendrajit",
+    penulis: "Hendrajit (Ed.)",
     penerbit: "Global Future Institute",
     tahun: "2011",
-    cover: PLACEHOLDER,
+    isbn: "978-602-97209-1-4",
+    cover:
+      "/images/buku-japanese-militarism-and-its-war-crimes-in-asia-pacific-region.jpg",
     ringkasan:
-      "Kajian sejarah militerisme Jepang dan kejahatan perangnya di kawasan Asia Pasifik, serta relevansinya bagi hari ini.",
+      "Kajian militerisme Jepang dan kejahatan perangnya di Asia Pasifik, hingga sinyal kebangkitan kembali kekuatan militernya hari ini.",
     ulasan: [
-      "Buku berbahasa Inggris ini menelusuri akar militerisme Jepang dan rangkaian kejahatan perang yang menyertainya di kawasan Asia Pasifik pada paruh pertama abad ke-20. Hendrajit menyusunnya bukan sebagai catatan sejarah semata, melainkan sebagai bahan pembacaan atas dinamika keamanan kawasan hari ini.",
-      "Penulis menautkan memori sejarah itu dengan pertanyaan kontemporer: bagaimana warisan militerisme membentuk persepsi antarnegara di Asia Timur, dan sejauh mana potensi ancaman keamanan baru dapat muncul dari pergeseran postur pertahanan di kawasan.",
-      "Dengan pendekatan lintas disiplin antara sejarah dan geopolitik, buku ini menjadi pengingat bahwa masa lalu tidak pernah benar-benar selesai. Ia relevan bagi pembaca yang ingin memahami mengapa isu-isu lama kembali mengemuka dalam konstelasi Asia Pasifik masa kini.",
+      "Buku berbahasa Inggris yang disunting Hendrajit ini bermula dari sebuah paradoks pascaperang. Setelah Perang Dunia II, Jepang dipaksa melucuti seluruh kekuatan bersenjatanya, termasuk kepemilikan persenjataan strategis. Dalam skema itu, Amerika Serikat justru menjadi aktor kunci: ia menerima penyerahan Jepang sebagai kekuatan militer fasis, lalu mengubahnya menjadi raksasa ekonomi di Asia Pasifik.",
+      "Persoalannya, konstelasi global bergeser. Ketika Washington mulai memandang Cina sebagai adidaya baru sekaligus ancaman utama di kawasan, posisi Jepang sebagai sekutu tradisional ikut dihitung ulang. Para penyunting menangkap kemungkinan yang tidak nyaman: upaya memperkuat kembali kekuatan militer Jepang boleh jadi memperoleh dukungan diam-diam dari para pengambil keputusan keamanan nasional AS.",
+      "Sinyal itu, menurut buku ini, tampak pada pembentukan panel ahli oleh pemerintah Jepang untuk merevisi kebijakan pertahanan yang selama ini bersifat defensif semata. Perubahan tersebut dibaca sebagai tanda proses pengambilan keputusan yang dapat mengaktifkan kembali angkatan bersenjata Jepang — dari karakter pasif menjadi kekuatan militer yang agresif, bahkan lebih ekspansif dari masa lalu.",
+      "Bagian penutupnya membawa persoalan itu pulang ke Indonesia. Berkaitan dengan kejahatan perang Jepang sepanjang 1942–1945, buku ini menyerukan agar seluruh elemen strategis bangsa bersama-sama menuntut pertanggungjawaban moral maupun material atas kerusakan besar yang ditimbulkan — pada ekonomi, sumber daya alam, politik, martabat manusia, sosial, hingga kebudayaan.",
     ],
   },
 ];
 
 export function getBook(slug: string): Book | undefined {
   return books.find((b) => b.slug === slug);
+}
+
+/** "Global Future Institute (2019)" — tahun disembunyikan bila belum diketahui. */
+export function bookImprint(book: Book): string {
+  return book.tahun ? `${book.penerbit} (${book.tahun})` : book.penerbit;
 }

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/PageHeader";
 import { Sidebar } from "@/components/Sidebar";
-import { books } from "@/data/books";
+import { bookImprint, books } from "@/data/books";
 
 export const metadata: Metadata = {
   title: "Bedah Buku",
@@ -46,7 +46,7 @@ export default function BedahBukuPage() {
                   {utama.judul}
                 </h2>
                 <p className="mt-2 text-sm text-meta">
-                  {utama.penulis}, {utama.penerbit} ({utama.tahun})
+                  {utama.penulis}, {bookImprint(utama)}
                 </p>
                 <p className="mt-4 text-[15px] leading-relaxed">
                   {utama.ringkasan}
@@ -87,7 +87,7 @@ export default function BedahBukuPage() {
                         {b.judul}
                       </h3>
                       <p className="mt-1.5 text-sm text-meta">
-                        {b.penulis}, {b.penerbit} ({b.tahun})
+                        {b.penulis}, {bookImprint(b)}
                       </p>
                       <p className="mt-3 text-sm leading-relaxed">{b.ringkasan}</p>
                       <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-accent">
