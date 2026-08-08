@@ -42,7 +42,7 @@ export default function HomePage() {
     ...internasionalPool.map((a) => a.slug),
     ...ragamPool.slice(0, 4).map((a) => a.slug),
   ]);
-  const beritaLainnya = allArticles()
+  const tulisanLainnya = allArticles()
     .filter((a) => !usedSlugs.has(a.slug))
     .slice(0, 6);
 
@@ -52,12 +52,12 @@ export default function HomePage() {
     <div>
       {/* Hero: satu cerita utama + daftar headline */}
       <section
-        aria-label="Berita utama"
+        aria-label="Isu utama"
         className="mx-auto grid max-w-7xl gap-12 px-4 py-14 md:py-20 lg:grid-cols-12 lg:px-6"
       >
         <article className="lg:col-span-8">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
-            Berita Utama
+            Isu Utama
           </p>
           <h1 className="mt-4 font-display text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-5xl">
             <Link
@@ -215,12 +215,12 @@ export default function HomePage() {
       {/* Jajak pendapat (carousel) */}
       <PollSection />
 
-      {/* Berita lainnya + sidebar */}
+      {/* Tulisan lainnya + sidebar */}
       <div className="mx-auto grid max-w-7xl gap-14 px-4 py-12 pb-24 md:py-16 lg:grid-cols-[1fr_320px] lg:px-6">
-        <section aria-label="Berita lainnya">
-          <SectionHeading title="Berita Lainnya" />
+        <section aria-label="Tulisan lainnya">
+          <SectionHeading title="Tulisan Lainnya" />
           <div className="divide-y divide-line">
-            {beritaLainnya.map((a) => (
+            {tulisanLainnya.map((a) => (
               <CardRow key={a.slug} article={a} />
             ))}
           </div>

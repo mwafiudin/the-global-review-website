@@ -34,7 +34,7 @@ export function CategoryTag({
 
 /**
  * Menyorot satu frasa kunci judul dengan coretan penanda (stabilo).
- * hover=false → selalu tampil (hero/berita utama).
+ * hover=false → selalu tampil (hero/isu utama).
  * hover=true  → disingkap saat kartu induk (.group) dihover / fokus.
  */
 export function TitleWithHighlight({
@@ -164,7 +164,7 @@ export function CardHeadline({ article }: { article: Article }) {
   );
 }
 
-/** Kartu baris: horizontal dengan excerpt, untuk feed berita. */
+/** Kartu baris: horizontal dengan excerpt, untuk feed tulisan. */
 export function CardRow({ article }: { article: Article }) {
   return (
     <article className="group grid gap-5 py-8 first:pt-0 sm:grid-cols-[220px_1fr] sm:gap-7">

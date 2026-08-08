@@ -277,7 +277,7 @@ body {
   background: #d9b14a;
   color: #121212;
 }
-/* Selalu tampil (hero / berita utama), sedikit miring agar terasa digambar. */
+/* Selalu tampil (hero / isu utama), sedikit miring agar terasa digambar. */
 .mk--on {
   transform: rotate(-0.8deg);
 }

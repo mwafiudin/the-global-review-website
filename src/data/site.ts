@@ -2,7 +2,7 @@ export const site = {
   name: "The Global Review",
   tagline: "Pemandu Informasi Perkembangan Dunia",
   description:
-    "Media online yang dimiliki Global Future Institute. The Global Review portal berita politik dan geopolitik terpercaya di Indonesia.",
+    "Media online yang dimiliki Global Future Institute. The Global Review menyajikan analisis dan opini politik luar negeri serta geopolitik dari Indonesia.",
   owner: "Global Future Institute (GFI)",
   email: "redaksi.theglobalreview@gmail.com",
   address:
