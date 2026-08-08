@@ -16,10 +16,48 @@ wordpress/
 
 ---
 
-## Prasyarat: akses SSH
+## Kondisi hosting (hasil pemeriksaan, Agustus 2026)
 
-Seluruh skrip di `cli/` memerlukan **WP-CLI**, dan WP-CLI memerlukan **SSH**.
-Yang perlu diminta ke Webiihost:
+| Aspek | Temuan |
+|---|---|
+| Panel | **cPanel** — port 2083 menjawab, port Plesk (8443/8880) tertutup |
+| WHM | Port 2087 menjawab |
+| IP server | 172.236.131.177 |
+| SSH | **Belum terbuka.** Port 22, 2200, 2222, 2022, 22222, 65002 seluruhnya tertutup/terfilter |
+
+Artinya SSH perlu **diaktifkan lebih dulu oleh Webiihost** — pada banyak layanan
+hosting, SSH memang dimatikan secara bawaan dan baru dibuka atas permintaan
+(kadang disertai verifikasi identitas), atau dibatasi daftar IP.
+
+### Tiga jalur menjalankan WP-CLI, berurut dari yang paling disarankan
+
+**1. SSH** — paling leluasa, bisa dipakai skrip otomatis dari mesin lokal.
+Di cPanel: **Security → SSH Access → Manage SSH Keys** untuk mendaftarkan kunci.
+Bila menu itu tidak ada, berarti fiturnya dikunci di tingkat penyedia.
+
+**2. Terminal cPanel** — bila SSH tidak kunjung dibuka. Di cPanel:
+**Advanced → Terminal**. Ini shell sungguhan di dalam peramban, berjalan sebagai
+pengguna cPanel, dan **WP-CLI bisa dijalankan di sana**. Skrip `cli/` tinggal
+disalin-tempel isinya. Kelemahannya: tidak bisa diotomatiskan dari luar.
+
+**3. Tanpa keduanya** — integrasi headless **tetap bisa berjalan**, karena REST
+API sudah terbuka. Yang hilang hanya kemudahan: backup memakai
+*cPanel → Backup Wizard* atau phpMyAdmin, dan penataan kategori dilakukan lewat
+wp-admin atau skrip yang memanggil REST API.
+
+### Yang perlu ditanyakan ke Webiihost
+
+> Mohon informasinya untuk akun hosting theglobal-review.com:
+> 1. Apakah akses SSH bisa diaktifkan? Bila ya, di port berapa, dan apakah
+>    perlu whitelist IP?
+> 2. Apakah fitur Terminal di cPanel tersedia/bisa diaktifkan?
+> 3. Apakah WP-CLI sudah terpasang di server? (perintah `wp --info`)
+> 4. Layanan ini shared hosting atau VPS?
+> 5. Berapa path lengkap instalasi WordPress-nya?
+
+---
+
+## Bila SSH sudah aktif
 
 1. Akses SSH ke akun hosting (host, port, dan nama pengguna).
 2. Konfirmasi apakah **WP-CLI sudah terpasang**. Cek dengan `wp --info`.
@@ -37,7 +75,9 @@ Yang perlu diminta ke Webiihost:
 ### Cara memberi akses dengan aman
 
 **Gunakan kunci SSH, bukan kata sandi.** Kata sandi jangan dikirim lewat chat,
-surel, atau WhatsApp.
+surel, atau WhatsApp. Di cPanel, kunci publik didaftarkan lewat
+**Security → SSH Access → Manage SSH Keys → Import Key**, lalu jangan lupa
+menekan **Authorize**.
 
 ```bash
 # 1) Di mesin lokal — buat kunci khusus proyek ini
