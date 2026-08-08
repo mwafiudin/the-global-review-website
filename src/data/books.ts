@@ -1,7 +1,10 @@
 export interface Book {
   slug: string;
   judul: string;
+  /** Nama untuk byline kartu; ringkas (mis. "Hendrajit dkk."). */
   penulis: string;
+  /** Daftar penulis/kontributor lengkap, ditampilkan di halaman ulasan. */
+  penulisLengkap?: string;
   penerbit: string;
   /** Tahun terbit; dikosongkan bila belum terkonfirmasi. */
   tahun?: string;
@@ -56,7 +59,10 @@ export const books: Book[] = [
     slug: "neo-kolonialisme-as-di-asia",
     judul: "Neo Kolonialisme AS di Asia: Perspektif Indonesia",
     penulis: "Hendrajit dkk.",
+    penulisLengkap:
+      "Hendrajit, Rahadi Teguh Wiratama, Abriyanto Satrio, Arismunandar, Agung Marsudi D. Susanto, Dina, dkk.",
     penerbit: "Indonesia Consulting Group",
+    tahun: "2024",
     cover: "/images/buku-neo-kolonialisme-as-di-asia-perspektif-indonesia.jpg",
     ringkasan:
       "Membaca wajah baru kolonialisme Amerika Serikat di Asia — bukan lewat pendudukan wilayah, melainkan penguasaan ekonomi, politik, dan arah kebijakan.",
@@ -64,7 +70,8 @@ export const books: Book[] = [
       "Jika kolonialisme klasik ditandai bendera yang ditancapkan di tanah jajahan, neo-kolonialisme bekerja jauh lebih halus: melalui kesepakatan dagang, ketergantungan modal, dan penyelarasan kebijakan. Buku ini menempatkan Asia sebagai medan utama tempat pola tersebut berlangsung, dengan Amerika Serikat sebagai aktor yang paling konsisten memainkannya.",
       "Yang membedakan buku ini dari kajian sejenis adalah sudut pandangnya yang tegas: perspektif Indonesia. Para penulis tidak memotret Asia dari kacamata pengamat luar, melainkan dari posisi sebuah negara yang berada tepat di persilangan kepentingan kekuatan besar — dan karena itu paling merasakan konsekuensinya.",
       "Pembahasannya menautkan dimensi ekonomi, politik, dan keamanan sebagai satu kesatuan. Penguasaan sumber daya, arsitektur perjanjian regional, hingga pembentukan opini publik dibaca sebagai instrumen yang saling menopang, bukan peristiwa yang berdiri sendiri.",
-      "Sebagai bacaan, buku ini melengkapi jalur pemikiran yang telah dirintis Global Future Institute mengenai perang asimetris dan penjajahan gaya baru. Ia menawarkan kerangka bagi pembaca yang ingin memahami mengapa kemerdekaan politik tidak otomatis berarti kemerdekaan dalam menentukan arah kebijakan.",
+      "Ditulis keroyokan oleh sejumlah pengkaji — antara lain Hendrajit, Rahadi Teguh Wiratama, Abriyanto Satrio, Arismunandar, dan Agung Marsudi D. Susanto — buku ini hadir sebagai bunga rampai, bukan risalah tunggal. Keragaman latar penulisnya membuat satu tema besar dibedah dari beberapa sudut sekaligus.",
+      "Terbit pada 2024 lewat Indonesia Consulting Group, buku ini melengkapi jalur pemikiran yang telah dirintis Global Future Institute mengenai perang asimetris dan penjajahan gaya baru. Ia menawarkan kerangka bagi pembaca yang ingin memahami mengapa kemerdekaan politik tidak otomatis berarti kemerdekaan dalam menentukan arah kebijakan.",
     ],
   },
   {

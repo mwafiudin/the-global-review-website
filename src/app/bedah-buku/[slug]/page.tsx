@@ -83,6 +83,15 @@ export default async function BookReviewPage({
           <p className="mt-5 text-[15px] italic leading-relaxed text-body">
             {book.ringkasan}
           </p>
+          {book.penulisLengkap && (
+            <p className="mt-5 border-t border-line pt-4 text-sm leading-relaxed text-meta">
+              <span className="font-semibold uppercase tracking-wider text-ink">
+                Penulis
+              </span>
+              <br />
+              {book.penulisLengkap}
+            </p>
+          )}
         </div>
       </div>
 
