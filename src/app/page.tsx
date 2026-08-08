@@ -7,6 +7,7 @@ import {
   CategoryTag,
   TitleWithHighlight,
 } from "@/components/ArticleCard";
+import { BrandBand } from "@/components/BrandBand";
 import { WorldDotMap } from "@/components/WorldDotMap";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { PollSection } from "@/components/PollSection";
@@ -211,6 +212,9 @@ export default function HomePage() {
           />
         </div>
       </div>
+
+      {/* Pengenal brand: jeda di tengah halaman */}
+      <BrandBand />
 
       {/* Jajak pendapat (carousel) */}
       <PollSection />

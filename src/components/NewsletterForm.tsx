@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useLang } from "@/lib/i18n";
 
 /** Garis bujur-lintang globe: motif "pemandu" selain kompas. */
@@ -60,6 +61,21 @@ export function NewsletterForm() {
       aria-label="Buletin"
       className="relative overflow-hidden bg-[#011840] dark:bg-[#18181b]"
     >
+      {/* Foto identitas sebagai latar: nadanya sudah navy-gelap sehingga
+          menyatu dengan blok penutup tanpa mengganggu keterbacaan. */}
+      <Image
+        src="/images/the-global-review-brand-stationery.jpg"
+        alt=""
+        width={1402}
+        height={1122}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-40"
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#011840] via-[#011840]/90 to-[#011840]/40 dark:from-[#18181b] dark:via-[#18181b]/90 dark:to-[#18181b]/40"
+      />
+
       <GlobeLines className="pointer-events-none absolute -right-20 -top-28 h-[360px] w-[360px] text-[#d9b14a] opacity-25" />
       <GlobeLines className="pointer-events-none absolute -bottom-32 -left-24 hidden h-[280px] w-[280px] text-white opacity-10 md:block" />
 
