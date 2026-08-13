@@ -7,6 +7,47 @@ Disusun setelah pemeriksaan langsung terhadap situs produksi, Agustus 2026.
 
 ---
 
+## Status implementasi — 13 Agustus 2026
+
+**Fase 1 (artikel + rubrik + penulis + pencarian) sudah diimplementasikan
+di frontend.** Konten kini dibaca langsung dari `wp-json` produksi:
+
+- Lapisan data: `src/lib/wp/` (client + peta rubrik + sanitasi + pemetaan
+  `WpPost → Article`); tipe `Article` tetap jadi kontrak sehingga seluruh
+  komponen tampilan tidak berubah. Pencarian via `/api/search` (proxy
+  `?search=` WordPress). Podcast/Galeri/Bedah-Buku/Poll masih data contoh
+  (Fase 2, menunggu `tgr-headless.php` terpasang).
+- Keputusan §3.2 dieksekusi: **URL artikel `/{slug}`** (route root
+  `src/app/[slug]/` + redirect `/artikel/:slug → /:slug`). Nol tabrakan
+  slug dengan route statis (diaudit terhadap 5.683 post).
+- Kesegaran: **webhook** `wordpress/mu-plugins/tgr-revalidate.php` →
+  `/api/revalidate` (tag cache, kedaluwarsa seketika), dengan ISR berkala
+  sebagai jaring pengaman. Artikel utama beranda = **sticky post**.
+- Peta rubrik sementara (37 term → rubrikasi baru) hidup di
+  `src/lib/wp/rubrik.ts` — baris `TODO(editorial)` menunggu keputusan
+  redaksi §3.1; setelah `04-rubrik.sh` dijalankan, tabel itu dikecilkan.
+- Perilaku host yang ditemukan (WAF menolak UA curl, blokir `?author=N`,
+  rate-limit burst) beserta mitigasinya terdokumentasi di
+  `wordpress/README.md`.
+
+Keterbatasan Fase 1 yang disengaja (hilang saat paginasi server masuk di
+Fase 2): daftar halaman rubrik & penulis menampilkan maksimal 100/50
+tulisan terbaru meski header menunjukkan jumlah arsip sebenarnya — filter
+dan sort di toolbar hanya menjangkau subset itu. Empat sub-rubrik menu
+(Asia Timur/Selatan/Tengah, Australia) masih kosong sampai redaksi
+memecah kategori `asia` di WordPress (§3.1). Slug artikel/rubrik yang tak
+dikenal menampilkan halaman 404 dengan status HTTP 200 + meta `noindex`
+(konsekuensi streaming `loading.tsx` di Next 16; aman untuk SEO, halaman
+penulis yang tanpa streaming tetap 404 murni).
+
+**Menunggu tindakan pemilik akses** (rincian di `wordpress/README.md`):
+secret + env di Vercel, unggah dua mu-plugin lewat cPanel File Manager,
+uji ujung-ke-ujung webhook, lalu butir keamanan (backup + update WP 6.5.9,
+limit-login). Pertanyaan ke Webiihost dan pemetaan rubrik redaksi tetap
+berjalan paralel — keduanya bukan penghalang koneksi.
+
+---
+
 ## 1. Hasil pemeriksaan situs sekarang
 
 Semua angka di bawah diambil langsung dari REST API situs produksi.
@@ -173,16 +214,19 @@ bukan syarat.
 | 8 | Strategi gambar | Daftarkan domain WordPress di `next.config.ts` `images.remotePatterns` |
 | 9 | Peta redirect | Hanya bila pola URL berubah |
 
-### 4.4 Penyesuaian di sisi frontend
+### 4.4 Penyesuaian di sisi frontend — ✅ selesai untuk Fase 1
 
-Berkas yang akan berubah saat integrasi:
+Realisasinya (lihat "Status implementasi" di atas):
 
-- `src/data/articles.ts` → diganti pengambilan dari `/wp-json/wp/v2/posts`
-- `src/data/authors.ts` → dari `/wp-json/wp/v2/users`
-- `src/data/site.ts` → sebagian tetap statis (menu, mitra), taksonomi dari API
-- `src/lib/articles.ts` → helper menyesuaikan bentuk data WordPress
+- `src/lib/wp/articles.ts` → pengambilan dari `/wp-json/wp/v2/posts`
+  (daftar tanpa `_embed`, media via batch `/media`, cache `unstable_cache`)
+- `src/lib/wp/map.ts` → user WP ⇄ penulis FE; roster profil tetap
+  `src/data/authors.ts` (WordPress tidak punya role/bio)
+- `src/data/site.ts` → tetap statis + entri rubrik `bedah-buku`
+- `src/lib/articles.ts` → tinggal helper murni (aman diimpor komponen client)
 - `src/data/books.ts`, `podcasts.ts`, `gallery.ts` → menunggu CPT tersedia
-- `articleImage()` di `src/lib/articles.ts` → dari picsum ke featured media asli
+- `articleImage()` → featured media asli, picsum hanya fallback bila
+  tulisan belum punya gambar unggulan
 
 ---
 

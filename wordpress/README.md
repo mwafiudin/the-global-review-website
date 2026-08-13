@@ -6,7 +6,8 @@ Berkas untuk dijalankan/dipasang di WordPress produksi TGR
 ```
 wordpress/
 ├── mu-plugins/
-│   └── tgr-headless.php     # CPT Podcast, Album, Jajak Pendapat + field Bedah Buku
+│   ├── tgr-headless.php     # CPT Podcast, Album, Jajak Pendapat + field Bedah Buku
+│   └── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
 └── cli/
     ├── 01-backup.sh         # cadangkan basis data + wp-content
     ├── 02-inventaris.sh     # tarik CSV konten untuk bahan pemetaan rubrik
@@ -104,7 +105,10 @@ repositori.
 
 ### Application Password (untuk REST API)
 
-Terpisah dari SSH, frontend memerlukan kredensial baca/tulis REST:
+**Fase 1 (baca artikel) TIDAK memerlukan ini** — seluruh endpoint yang
+dipakai frontend terbuka publik. Application Password baru dibutuhkan di
+Fase 2: membaca CPT `polls` yang non-publik, batas `per_page` 200, dan
+unggah media. Saat waktunya tiba:
 
 1. wp-admin → Pengguna → profil → **Application Passwords**
 2. Beri nama, mis. `frontend-nextjs`
@@ -158,6 +162,73 @@ Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 
 **Bedah Buku sengaja tetap berupa kategori**, bukan tipe konten tersendiri,
 agar 78 URL ulasan yang sudah terindeks tidak berubah.
+
+---
+
+## Memasang mu-plugin TANPA SSH (cPanel File Manager)
+
+SSH belum terbuka, tapi kedua mu-plugin bisa dipasang lewat peramban.
+Sekali sesi ±30 menit:
+
+1. Masuk cPanel: `https://theglobal-review.com:2083`.
+2. Temukan akar WordPress. Bila ada **WP Toolkit**, buka — daftar instalasi
+   menampilkan path lengkapnya (sekalian menjawab pertanyaan #5 ke Webiihost).
+   Tanpa itu: **File Manager → public_html**, pastikan ada `wp-config.php`
+   dan folder `wp-content/`.
+3. Masuk `wp-content/`. Bila belum ada folder `mu-plugins/`: tombol
+   **+ Folder** → beri nama `mu-plugins`.
+4. **Unggah satu berkas per satu** (tombol Upload): mulai `tgr-headless.php`.
+   Setelah tiap unggahan, buka beranda situs di tab lain — bila masih
+   termuat, berkasnya sehat. (Salah ketik PHP di mu-plugins = situs mati
+   total, dan mu-plugins tidak bisa dinonaktifkan dari dasbor. Pemulihan:
+   hapus/ganti nama berkasnya di File Manager, situs langsung hidup lagi.)
+5. Sebelum menyunting `wp-config.php`, unduh salinannya dulu (cadangan).
+   Lalu klik kanan → Edit, dan tambahkan DI ATAS baris
+   `/* That's all, stop editing! */`:
+
+   ```php
+   define( 'TGR_REVALIDATE_SECRET', '<hasil openssl rand -hex 32>' );
+   define( 'TGR_REVALIDATE_URL', 'https://the-global-review-website.vercel.app/api/revalidate' );
+   ```
+
+6. Unggah `tgr-revalidate.php` ke `mu-plugins/` (cek beranda lagi).
+7. wp-admin → **Settings → Permalinks → Save Changes** (tanpa mengubah
+   apa pun) — menyegarkan rewrite agar slug CPT (`/podcast/…`) dikenali.
+8. Verifikasi: `/wp-json/wp/v2/types` kini memuat `tgr_podcast` dkk., dan
+   `/wp-json/wp/v2/podcasts` menjawab `[]` (bukan 404 lagi).
+
+### Webhook revalidasi (tgr-revalidate.php)
+
+Setiap terbit/sunting/hapus tulisan, WordPress mem-POST
+`{ type, slug, status_new, … }` ke `/api/revalidate` di Vercel dengan header
+`X-TGR-Secret`. Frontend langsung mengadaluwarsakan cache halaman terkait —
+perubahan tampil dalam hitungan detik. Redaksi melihat hasilnya sebagai
+notice di layar edit ("Situs baru diperbarui …" / peringatan bila gagal).
+
+Nilai secret **harus sama** di dua tempat: konstanta `TGR_REVALIDATE_SECRET`
+di wp-config.php dan variabel `REVALIDATE_SECRET` di Vercel (Project →
+Settings → Environment Variables, tandai *Sensitive*, lalu redeploy).
+Buat nilainya dengan `openssl rand -hex 32`; jangan kirim lewat chat/surel.
+
+Kegagalan kirim tidak diulang — frontend memasang ISR berkala sebagai
+jaring pengaman, jadi webhook yang hilang tersusul paling lama satu jendela
+revalidasi. Uji ujung-ke-ujung: sunting judul satu tulisan → halaman Vercel
+berubah ≤30 detik → log fungsi `/api/revalidate` di dasbor Vercel mencatat 200.
+
+---
+
+## Perilaku WAF/nginx host (ditemukan Agustus 2026)
+
+- **User-Agent `curl/*` ditolak (HTTP 406).** Skrip pemeriksa apa pun harus
+  memakai UA lain (frontend memakai `TGR-Frontend/1.0`).
+- **Parameter `?author=N` diblokir (HTTP 403)** — aturan anti-enumerasi.
+  Frontend memakai sintaks array REST yang sah, `?author[]=N`, yang lolos.
+  Bila suatu saat halaman penulis kosong mendadak, periksa apakah aturan
+  WAF host berubah.
+- **Rate-limit (HTTP 503)** muncul bila permintaan beruntun terlalu deras
+  (mis. menarik daftar 100 tulisan berulang-ulang). Klien frontend memasang
+  jeda sebelum mengulang dan meng-cache hasil petaan, jadi lalu lintas
+  normal aman.
 
 ---
 
