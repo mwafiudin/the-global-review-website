@@ -121,6 +121,10 @@ export const categoryNames: Record<string, string> = {
   "sorot-tokoh": "Sorot Tokoh",
   features: "Features",
   media: "Media",
+  // Kategori WordPress berisi 79 ulasan buku; ada di sini agar label dan
+  // halaman rubriknya valid, tapi sengaja tidak dimasukkan ke menu mana pun
+  // (kanal Bedah Buku di navigasi tetap menunjuk /bedah-buku).
+  "bedah-buku": "Bedah Buku",
 };
 
 /** Diperiksa Agustus 2026 — seluruh tautan menjawab dengan normal. */

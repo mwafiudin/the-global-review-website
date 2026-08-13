@@ -1,7 +1,8 @@
 import { Article } from "@/lib/types";
 
-// Konten dummy untuk pengembangan frontend.
-// Saat migrasi ke headless WordPress, ganti dengan fetch dari WP REST API / WPGraphQL.
+// Konten dummy sisa fase prototype. Artikel kini diambil dari WP REST API
+// (src/lib/wp/articles.ts); berkas ini dipertahankan sebagai fixture untuk
+// menguji pemetaan/komponen tanpa jaringan.
 export const articles: Article[] = [
   {
     slug: "poros-maritim-di-tengah-rivalitas-indo-pasifik",

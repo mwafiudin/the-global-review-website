@@ -16,12 +16,13 @@ export interface Poll {
   closesAt?: string;
 }
 
-// Data dummy. Saat migrasi ke backend/WordPress, ganti dengan fetch.
+// Poll masih dikelola di frontend; articleSlug menunjuk artikel WordPress
+// produksi yang relevan. Pindah ke CPT tgr_poll setelah mu-plugin terpasang.
 // Satu artikel bisa punya 0 atau lebih poll (relasi via articleSlug).
 export const polls: Poll[] = [
   {
     id: "poll-indopasifik",
-    articleSlug: "poros-maritim-di-tengah-rivalitas-indo-pasifik",
+    articleSlug: "militerisme-jepang-strategi-indo-pasifik-as-dan-kekhawatiran-china",
     question:
       "Bagaimana sebaiknya Indonesia memposisikan diri dalam rivalitas AS-Cina di Indo-Pasifik?",
     date: "2026-07-07",
@@ -35,7 +36,7 @@ export const polls: Poll[] = [
   },
   {
     id: "poll-natuna",
-    articleSlug: "geopolitik-laut-cina-selatan-eskalasi-baru",
+    articleSlug: "mewaspadai-ancaman-frontier-di-perbatasan",
     question: "Sikap apa yang paling tepat untuk menjaga Natuna Utara?",
     date: "2026-07-05",
     closesAt: "2026-08-05",
@@ -48,7 +49,7 @@ export const polls: Poll[] = [
   },
   {
     id: "poll-multipolar",
-    articleSlug: "sco-brics-dan-arsitektur-dunia-multipolar",
+    articleSlug: "non-blok-dalam-pusaran-as-china-rusia-iran",
     question: "Apakah dunia multipolar lebih menguntungkan kepentingan Indonesia?",
     date: "2026-07-02",
     closesAt: "2026-07-20",

@@ -26,4 +26,12 @@ export interface Article {
   featured?: boolean;
   /** Satu kata/frasa pada judul yang disorot (hanya untuk hero / featured). */
   highlight?: string;
+  /** URL featured image WordPress; tanpa ini articleImage() memakai picsum. */
+  imageUrl?: string;
+  /** Waktu terbit penuh dari WordPress (jangkar kueri artikel sebelum/sesudah). */
+  dateTime?: string;
+  /** content.rendered tersanitasi — hanya diisi pada halaman detail. */
+  bodyHtml?: string;
+  /** Waktu baca (menit) dihitung server; readingMinutes() memprioritaskannya. */
+  readMinutes?: number;
 }
