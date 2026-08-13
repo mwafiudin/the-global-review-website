@@ -15,27 +15,25 @@ import { SectionHeading } from "@/components/SectionHeading";
 import { Sidebar } from "@/components/Sidebar";
 import { TabbedSection } from "@/components/TabbedSection";
 import { getAuthor } from "@/data/authors";
+import { articleHref, articleImage, formatDate } from "@/lib/articles";
 import {
   allArticles,
-  articleHref,
-  articleImage,
   byCategories,
   byCategory,
   featuredArticles,
-  formatDate,
-} from "@/lib/articles";
+} from "@/lib/wp/articles";
 
-export default function HomePage() {
-  const heroes = featuredArticles(5);
+export default async function HomePage() {
+  const [heroes, analisisPool, internasionalPool, ragamPool, terbaru] =
+    await Promise.all([
+      featuredArticles(5),
+      byCategories(["analisis", "geopolitik", "politik-keamanan", "diplomasi"], 12),
+      byCategory("internasional", 6),
+      byCategories(["sosial", "budaya", "media", "features"], 8),
+      allArticles(24),
+    ]);
   const [heroMain, ...heroSide] = heroes;
   const heroAuthor = getAuthor(heroMain.author);
-
-  const analisisPool = byCategories(
-    ["analisis", "geopolitik", "politik-keamanan", "diplomasi"],
-    12
-  );
-  const internasionalPool = byCategory("internasional", 6);
-  const ragamPool = byCategories(["sosial", "budaya", "media", "features"], 8);
 
   const usedSlugs = new Set([
     ...heroes.map((a) => a.slug),
@@ -43,7 +41,7 @@ export default function HomePage() {
     ...internasionalPool.map((a) => a.slug),
     ...ragamPool.slice(0, 4).map((a) => a.slug),
   ]);
-  const tulisanLainnya = allArticles()
+  const tulisanLainnya = terbaru
     .filter((a) => !usedSlugs.has(a.slug))
     .slice(0, 6);
 

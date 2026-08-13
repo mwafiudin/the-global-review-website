@@ -4,17 +4,20 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { categoryNames, mainMenu } from "@/data/site";
 import { getAuthor } from "@/data/authors";
-import { byCategory, categoryName } from "@/lib/articles";
+import { categoryName } from "@/lib/articles";
+import { byCategoryWithTotal } from "@/lib/wp/articles";
 import { categoryIcon } from "@/lib/categoryIcons";
 import { CardRow } from "@/components/ArticleCard";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { PageHeader } from "@/components/PageHeader";
 import { Sidebar } from "@/components/Sidebar";
 
-export function generateStaticParams() {
-  return Object.keys(categoryNames).map((slug) => ({
-    slug: slug.split("/"),
-  }));
+/**
+ * Kosong: halaman rubrik dirender on-demand + ISR (build tidak memberondong
+ * WordPress). Gerbang notFound di bawah tetap menjaga slug liar → 404.
+ */
+export function generateStaticParams(): { slug: string[] }[] {
+  return [];
 }
 
 export async function generateMetadata({
@@ -24,7 +27,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const key = slug.join("/");
-  if (!categoryNames[key]) return {};
+  // Streaming (loading.tsx): status 404 diputuskan sebelum shell terkirim.
+  if (!categoryNames[key]) notFound();
   return {
     title: `Rubrik ${categoryNames[key]}`,
     description: `Kumpulan artikel The Global Review pada rubrik ${categoryNames[key]}.`,
@@ -40,7 +44,8 @@ export default async function CategoryPage({
   const key = slug.join("/");
   if (!categoryNames[key]) notFound();
 
-  const list = byCategory(key);
+  // list dibatasi 100 terbaru (payload ke browser); total = jumlah sebenarnya.
+  const { list, total } = await byCategoryWithTotal(key);
   const menuEntry = mainMenu.find(
     (item) => item.href === `/category/${key}`
   );
@@ -76,7 +81,7 @@ export default async function CategoryPage({
         title={categoryName(key)}
         icon={categoryIcon(key)}
         breadcrumb={breadcrumb}
-        meta={`${list.length} artikel`}
+        meta={`${total} artikel`}
       />
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="grid gap-12 lg:grid-cols-[1fr_340px]">

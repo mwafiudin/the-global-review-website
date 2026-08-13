@@ -3,19 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
-import { articles } from "@/data/articles";
 import { getAuthor } from "@/data/authors";
 import {
-  adjacentArticles,
   articleHref,
   articleImage,
-  byCategory,
   categoryName,
   formatDate,
-  getArticle,
   readingMinutes,
 } from "@/lib/articles";
-import { pollsForArticle, toPollView } from "@/lib/polls";
+import { adjacentArticles, byCategory, getArticle } from "@/lib/wp/articles";
+import { pollsForArticle } from "@/lib/polls";
+import { toPollView } from "@/lib/wp/polls";
 import {
   CardFeature,
   CategoryTag,
@@ -27,8 +25,14 @@ import { EndMark } from "@/components/Ornaments";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { ShareButtons } from "@/components/ShareButtons";
 
-export function generateStaticParams() {
-  return articles.map((a) => ({ slug: a.slug }));
+/**
+ * Sengaja kosong: seluruh artikel dirender on-demand lalu di-cache (ISR +
+ * webhook). Prerender massal saat build memberondong host WordPress yang
+ * membatasi burst (503) dan membuat build gagal timeout — sedangkan arsip
+ * 5.600+ artikel memang mustahil di-prerender seluruhnya.
+ */
+export async function generateStaticParams() {
+  return [];
 }
 
 export async function generateMetadata({
@@ -37,9 +41,16 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticle(slug);
-  if (!article) return {};
-  return { title: article.title, description: article.excerpt };
+  const article = await getArticle(slug);
+  // notFound di sini, bukan hanya di body page: route ini streaming
+  // (loading.tsx), jadi status 404 harus diputuskan sebelum shell terkirim.
+  if (!article) notFound();
+  return {
+    title: article.title,
+    // Excerpt kosong = excerpt otomatis WP (duplikat awal body) yang
+    // sengaja tidak ditampilkan sebagai lead; meta tetap butuh deskripsi.
+    description: article.excerpt || article.body[0]?.slice(0, 160),
+  };
 }
 
 export default async function ArticlePage({
@@ -48,16 +59,19 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = getArticle(slug);
+  const article = await getArticle(slug);
   if (!article) notFound();
 
   const author = getAuthor(article.author);
   const parentCategory = article.category.split("/")[0];
-  const related = byCategory(parentCategory)
+  const [inParent, { prev, next }, articlePolls] = await Promise.all([
+    byCategory(parentCategory),
+    adjacentArticles(article),
+    Promise.all(pollsForArticle(article.slug).map(toPollView)),
+  ]);
+  const related = inParent
     .filter((a) => a.slug !== article.slug)
     .slice(0, 3);
-  const { prev, next } = adjacentArticles(article);
-  const articlePolls = pollsForArticle(article.slug).map(toPollView);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-14 md:py-20 lg:px-6">
@@ -109,19 +123,28 @@ export default async function ArticlePage({
             />
           </figure>
 
-          <p className="mt-10 max-w-[62ch] text-xl font-medium leading-relaxed text-ink">
-            {article.excerpt}
-          </p>
-          <div className="mt-7 space-y-6">
-            {article.body.map((paragraph, i) => (
-              <p
-                key={i}
-                className={`max-w-[62ch] text-[18px] leading-[1.8] text-ink/85 ${i === 0 ? "drop-cap" : ""}`}
-              >
-                {paragraph}
-              </p>
-            ))}
-          </div>
+          {article.excerpt && (
+            <p className="mt-10 max-w-[62ch] text-xl font-medium leading-relaxed text-ink">
+              {article.excerpt}
+            </p>
+          )}
+          {article.bodyHtml ? (
+            <div
+              className="wp-body mt-7 space-y-6"
+              dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
+            />
+          ) : (
+            <div className="mt-7 space-y-6">
+              {article.body.map((paragraph, i) => (
+                <p
+                  key={i}
+                  className={`max-w-[62ch] text-[18px] leading-[1.8] text-ink/85 ${i === 0 ? "drop-cap" : ""}`}
+                >
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          )}
 
           <EndMark className="mt-10 max-w-[62ch]" />
 

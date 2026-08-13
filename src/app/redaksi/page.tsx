@@ -18,7 +18,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { Avatar } from "@/components/Avatar";
 import { authors } from "@/data/authors";
 import { site } from "@/data/site";
-import { byAuthor } from "@/lib/articles";
+import { byAuthorCount } from "@/lib/wp/articles";
 
 export const metadata: Metadata = {
   title: "Redaksi",
@@ -67,10 +67,6 @@ const pedoman = [
   },
 ];
 
-const kontributor = authors
-  .map((a) => ({ ...a, jumlah: byAuthor(a.slug).length }))
-  .sort((a, b) => b.jumlah - a.jumlah);
-
 function Heading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="mb-6 border-b border-line pb-4 text-xs font-bold uppercase tracking-[0.16em] text-ink md:text-sm">
@@ -79,7 +75,13 @@ function Heading({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function RedaksiPage() {
+export default async function RedaksiPage() {
+  const kontributor = (
+    await Promise.all(
+      authors.map(async (a) => ({ ...a, jumlah: await byAuthorCount(a.slug) }))
+    )
+  ).sort((a, b) => b.jumlah - a.jumlah);
+
   return (
     <>
       <PageHeader

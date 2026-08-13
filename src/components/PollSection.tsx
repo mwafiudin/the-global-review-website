@@ -1,11 +1,12 @@
 import Image from "next/image";
-import { activePolls, toPollView } from "@/lib/polls";
+import { activePolls } from "@/lib/polls";
+import { toPollView } from "@/lib/wp/polls";
 import { SectionHeading } from "./SectionHeading";
 import { PollCarousel } from "./PollCarousel";
 
 /** Section jajak pendapat di homepage: grid (desktop) / carousel (mobile). */
-export function PollSection() {
-  const views = activePolls().map(toPollView);
+export async function PollSection() {
+  const views = await Promise.all(activePolls().map(toPollView));
   if (views.length === 0) return null;
 
   return (

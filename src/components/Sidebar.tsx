@@ -13,7 +13,8 @@ import {
   partnerLinksInternational,
   site,
 } from "@/data/site";
-import { articleHref, featuredArticles } from "@/lib/articles";
+import { articleHref } from "@/lib/articles";
+import { featuredArticles } from "@/lib/wp/articles";
 import { allPodcasts } from "@/data/podcasts";
 import { youtubeThumb } from "./VideoEmbed";
 import type { PollView } from "@/lib/polls";
@@ -66,8 +67,8 @@ function ReferenceGroup({
 }
 
 /** polls: hanya diisi di halaman artikel yang memiliki jajak pendapat. */
-export function Sidebar({ polls }: { polls?: PollView[] }) {
-  const populer = featuredArticles(5);
+export async function Sidebar({ polls }: { polls?: PollView[] }) {
+  const populer = await featuredArticles(5);
   const podcastTerbaru = allPodcasts().slice(0, 3);
 
   return (

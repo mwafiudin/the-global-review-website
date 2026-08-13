@@ -290,7 +290,8 @@ body {
   width: 100%;
 }
 
-.drop-cap::first-letter {
+.drop-cap::first-letter,
+.wp-body > p:first-of-type::first-letter {
   float: left;
   font-family: var(--font-cardo), Georgia, serif;
   font-weight: 700;
@@ -299,4 +300,68 @@ body {
   padding-right: 0.14em;
   padding-top: 0.08em;
   color: var(--brand);
+}
+
+/* Body artikel dari WordPress (content.rendered tersanitasi).
+   Paragrafnya meniru persis kelas paragraf dummy di halaman artikel:
+   max-w-[62ch] text-[18px] leading-[1.8] text-ink/85. Elemen lain
+   (kutipan, daftar, gambar, subjudul) tidak punya padanan di data dummy,
+   jadi digayakan senada dengan tipografi artikel. */
+.wp-body > p {
+  @apply max-w-[62ch] text-[18px] leading-[1.8] text-ink/85;
+}
+.wp-body h2,
+.wp-body h3,
+.wp-body h4 {
+  @apply max-w-[62ch] font-display font-bold tracking-tight text-ink;
+}
+.wp-body h2 {
+  @apply text-2xl;
+}
+.wp-body h3 {
+  @apply text-xl;
+}
+.wp-body h4 {
+  @apply text-lg;
+}
+.wp-body a {
+  @apply text-accent underline decoration-accent/40 underline-offset-2 transition-colors;
+}
+.wp-body a:hover {
+  @apply decoration-accent;
+}
+.wp-body blockquote {
+  @apply max-w-[62ch] border-l-2 border-brand pl-5 text-[18px] italic leading-[1.8] text-ink/75;
+}
+.wp-body ul,
+.wp-body ol {
+  @apply max-w-[62ch] space-y-2 pl-6 text-[18px] leading-[1.8] text-ink/85;
+}
+.wp-body ul {
+  @apply list-disc;
+}
+.wp-body ol {
+  @apply list-decimal;
+}
+.wp-body img {
+  @apply h-auto max-w-full rounded-xl;
+}
+.wp-body figure {
+  @apply max-w-[62ch];
+}
+.wp-body figcaption {
+  @apply mt-2 text-sm text-meta;
+}
+.wp-body iframe {
+  @apply aspect-video w-full max-w-[62ch] rounded-xl;
+}
+.wp-body hr {
+  @apply max-w-[62ch] border-line;
+}
+.wp-body table {
+  @apply w-full max-w-[62ch] border-collapse text-[15px];
+}
+.wp-body th,
+.wp-body td {
+  @apply border border-line px-3 py-2 text-left align-top;
 }

@@ -4,20 +4,13 @@ import {
   createContext,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from "react";
 import Link from "next/link";
 import { ArrowRight, MagnifyingGlass, X } from "@phosphor-icons/react";
-import { articles } from "@/data/articles";
 import { mainMenu } from "@/data/site";
-import {
-  articleHref,
-  categoryName,
-  featuredArticles,
-  formatDate,
-} from "@/lib/articles";
+import { articleHref, categoryName, formatDate } from "@/lib/articles";
 import type { Article } from "@/lib/types";
 
 const popularCategories = mainMenu.filter((m) => m.href !== "#");
@@ -126,29 +119,62 @@ function ResultRow({
   );
 }
 
+/** Cache modul: daftar Sorotan cukup diambil sekali per sesi halaman. */
+let featuredCache: Article[] | null = null;
+
 function SearchPanel({ onClose }: { onClose: () => void }) {
   const [q, setQ] = useState("");
+  const [featured, setFeatured] = useState<Article[]>(() => featuredCache ?? []);
+  const [results, setResults] = useState<Article[]>([]);
+  /** Kueri yang hasilnya sudah tiba — pembeda "belum ada jawaban" vs "nihil". */
+  const [settledFor, setSettledFor] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
-  const featured = useMemo(() => featuredArticles(5), []);
-  const results = useMemo(() => {
+  // Daftar "Sorotan" pada keadaan awal (tanpa kata kunci).
+  useEffect(() => {
+    if (featuredCache) return;
+    const ctrl = new AbortController();
+    fetch("/api/search?featured=1", { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => {
+        featuredCache = data;
+        setFeatured(data);
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, []);
+
+  // Pencarian full-text WordPress: debounce 300 ms, batalkan saat mengetik
+  // lagi; hasil sebelumnya tetap tampil selama permintaan berjalan. Saat
+  // kueri kosong, panel Sorotan yang dirender — results tak perlu dikosongkan.
+  useEffect(() => {
     const term = q.trim().toLowerCase();
-    if (!term) return [];
-    return articles
-      .filter((a) =>
-        `${a.title} ${a.excerpt} ${categoryName(a.category)}`
-          .toLowerCase()
-          .includes(term)
-      )
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 8);
+    if (term.length < 2) return;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => {
+      fetch(`/api/search?q=${encodeURIComponent(term)}`, {
+        signal: ctrl.signal,
+      })
+        .then((r) => (r.ok ? r.json() : []))
+        .then((data) => {
+          setResults(data);
+          setSettledFor(term);
+        })
+        .catch(() => {});
+    }, 300);
+    return () => {
+      clearTimeout(timer);
+      ctrl.abort();
+    };
   }, [q]);
 
   const empty = q.trim() === "";
+  /** "Tidak ada hasil" hanya boleh tampil setelah jawaban kueri INI tiba. */
+  const settled = settledFor === q.trim().toLowerCase();
 
   return (
     <div
@@ -209,19 +235,21 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
               </ul>
             </div>
           ) : results.length === 0 ? (
-            <div className="px-4 py-12 text-center">
-              <MagnifyingGlass
-                size={26}
-                weight="thin"
-                className="mx-auto text-meta"
-              />
-              <p className="mt-3 text-sm text-body">
-                Tidak ada hasil untuk &ldquo;{q}&rdquo;.
-              </p>
-              <p className="mt-1 text-xs text-meta">
-                Coba kata kunci lain atau jelajahi rubrik.
-              </p>
-            </div>
+            settled ? (
+              <div className="px-4 py-12 text-center">
+                <MagnifyingGlass
+                  size={26}
+                  weight="thin"
+                  className="mx-auto text-meta"
+                />
+                <p className="mt-3 text-sm text-body">
+                  Tidak ada hasil untuk &ldquo;{q}&rdquo;.
+                </p>
+                <p className="mt-1 text-xs text-meta">
+                  Coba kata kunci lain atau jelajahi rubrik.
+                </p>
+              </div>
+            ) : null
           ) : (
             <>
               <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-meta">

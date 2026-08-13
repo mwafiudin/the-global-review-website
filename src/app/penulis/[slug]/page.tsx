@@ -3,12 +3,13 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { authors, getAuthor } from "@/data/authors";
-import { byAuthor } from "@/lib/articles";
+import { byAuthor, byAuthorCount } from "@/lib/wp/articles";
 import { Avatar } from "@/components/Avatar";
 import { CardRow } from "@/components/ArticleCard";
 
-export function generateStaticParams() {
-  return authors.map((a) => ({ slug: a.slug }));
+/** Kosong: profil penulis on-demand + ISR; gerbang notFound menjaga slug liar. */
+export function generateStaticParams(): { slug: string }[] {
+  return [];
 }
 
 export async function generateMetadata({
@@ -18,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const author = authors.find((a) => a.slug === slug);
-  if (!author) return {};
+  if (!author) notFound();
   return {
     title: `${author.name} — Penulis`,
     description: author.bio ?? `Kumpulan tulisan ${author.name} di The Global Review.`,
@@ -34,7 +35,10 @@ export default async function PenulisPage({
   if (!authors.some((a) => a.slug === slug)) notFound();
 
   const author = getAuthor(slug);
-  const artikel = byAuthor(slug);
+  const [artikel, totalTulisan] = await Promise.all([
+    byAuthor(slug),
+    byAuthorCount(slug),
+  ]);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-14 md:py-20">
@@ -64,7 +68,7 @@ export default async function PenulisPage({
             {author.role}
           </p>
           <p className="mt-1 text-xs font-medium uppercase tracking-wider text-meta">
-            {artikel.length} tulisan
+            {totalTulisan} tulisan
           </p>
         </div>
       </div>
