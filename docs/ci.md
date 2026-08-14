@@ -74,9 +74,17 @@ Kalau ini hijau di laptop, ia hijau di CI. `.nvmrc` (Node 22) dan
 `engines` di `package.json` menjaga versi Node laptop, CI, dan Vercel tetap
 sama; CI membacanya lewat `node-version-file`.
 
-`php` dan `shellcheck` sudah terpasang di runner `ubuntu-latest`, jadi job
-`wordpress` tidak punya langkah instalasi. Di Windows keduanya biasanya
-tidak ada — job itu memang paling praktis diverifikasi lewat CI saja.
+Job `wordpress` tidak punya langkah instalasi: `ubuntu-latest` (kini
+Ubuntu 24.04) sudah membawa **PHP 8.3.6** dan **ShellCheck 0.9.0**. Di
+Windows keduanya biasanya tidak ada, jadi job itu paling praktis
+diverifikasi lewat CI saja.
+
+Perlu diingat `php -l` mengecek terhadap PHP 8.3, bukan versi PHP host
+WordPress (yang belum terdokumentasi di repo ini). Hari ini itu aman:
+kedua mu-plugin tidak memakai satu pun sintaks khusus PHP 8.x — tanpa
+`match`, nullsafe, atribut, maupun deklarasi tipe skalar — jadi tidak ada
+celah "lolos di CI, fatal di host". Kalau nanti ada yang menulis sintaks
+modern di sana, versi PHP host harus dipastikan lebih dulu.
 
 ## Kalau CI merah
 
