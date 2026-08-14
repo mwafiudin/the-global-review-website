@@ -249,7 +249,18 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                   Coba kata kunci lain atau jelajahi rubrik.
                 </p>
               </div>
-            ) : null
+            ) : (
+              <div className="px-4 py-12 text-center">
+                <MagnifyingGlass
+                  size={26}
+                  weight="thin"
+                  className="mx-auto animate-pulse text-meta"
+                />
+                <p className="mt-3 text-sm text-meta">
+                  Mencari &ldquo;{q}&rdquo;&hellip;
+                </p>
+              </div>
+            )
           ) : (
             <>
               <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-meta">
