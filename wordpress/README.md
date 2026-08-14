@@ -7,7 +7,8 @@ Berkas untuk dijalankan/dipasang di WordPress produksi TGR
 wordpress/
 ├── mu-plugins/
 │   ├── tgr-headless.php     # CPT Podcast, Album, Jajak Pendapat + field Bedah Buku
-│   └── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
+│   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
+│   └── tgr-alih-sementara.php  # SEMENTARA: beranda lama → situs baru (302)
 └── cli/
     ├── 01-backup.sh         # cadangkan basis data + wp-content
     ├── 02-inventaris.sh     # tarik CSV konten untuk bahan pemetaan rubrik
@@ -281,6 +282,29 @@ Kegagalan kirim tidak diulang — frontend memasang ISR berkala sebagai
 jaring pengaman, jadi webhook yang hilang tersusul paling lama satu jendela
 revalidasi. Uji ujung-ke-ujung: sunting judul satu tulisan → halaman Vercel
 berubah ≤30 detik → log fungsi `/api/revalidate` di dasbor Vercel mencatat 200.
+
+### Alihan sementara beranda (tgr-alih-sementara.php)
+
+Pengunjung `theglobal-review.com` diantar ke situs baru, **hanya dari
+halaman depan** dan dengan status **302 (sementara)** — mesin pencari
+diberi tahu agar tetap mengindeks alamat aslinya, bukan alamat
+`*.vercel.app` yang nanti dibuang saat peralihan domain sesungguhnya
+(lihat [`docs/peralihan-domain.md`](../docs/peralihan-domain.md)).
+
+**Jangan memakai cPanel → Redirects untuk ini.** Form itu bekerja per
+direktori di `.htaccess`; sekali *Wild Card Redirect* dicentang, `/wp-json`,
+`/wp-admin`, dan `/wp-content/uploads` ikut teralihkan — dan ketiganya
+justru yang dipakai situs baru untuk hidup.
+
+| | |
+|---|---|
+| Yang teralihkan | `https://theglobal-review.com/` saja |
+| Tetap di WordPress | artikel, rubrik, halaman, feed, `/wp-json`, `/wp-admin`, media |
+| Pengecualian | pengguna yang sedang masuk, dan `?beranda-lama` |
+| Mengembalikan | hapus berkasnya dari `mu-plugins/` — tidak ada jejak lain |
+
+Berkas ini memang berumur pendek: hapus pada tahap 2 runbook peralihan
+domain, saat WordPress pindah ke `cms.theglobal-review.com`.
 
 ---
 
