@@ -50,8 +50,30 @@ function perPage(limit: number): number {
   return Math.min(Math.max(limit, 1), 100);
 }
 
+/**
+ * Arsip lama: tulisan 2022 ke bawah diarsipkan terpisah ke Google Drive atas
+ * arahan GFI dan tidak ditampilkan di situs baru. Ambangnya dibaca dari env
+ * supaya bisa digeser tanpa ubah kode; kosongkan untuk menayangkan seluruh
+ * arsip lagi.
+ */
+const ARSIP_SETELAH = process.env.WP_ARCHIVE_AFTER ?? "2022-12-31T23:59:59";
+
+/**
+ * Dua pengecualian yang disengaja:
+ * - `after` sudah dipakai pemanggil sebagai jangkar (adjacentArticles) — satu
+ *   kueri tidak bisa punya dua batas bawah.
+ * - Pencarian `slug` adalah rujukan eksplisit ke tulisan tertentu (kartu jajak
+ *   pendapat), bukan penelusuran arsip.
+ */
+export function withArchive(query: PostsQuery): PostsQuery {
+  if (!ARSIP_SETELAH || query.after !== undefined || query.slug !== undefined) {
+    return query;
+  }
+  return { after: ARSIP_SETELAH, ...query };
+}
+
 function listQuery(query: PostsQuery): PostsQuery {
-  return { _fields: LIST_FIELDS, ...query };
+  return { _fields: LIST_FIELDS, ...withArchive(query) };
 }
 
 /** URL gambar unggulan per attachment, satu request batch untuk satu daftar. */
@@ -120,7 +142,7 @@ const cachedListWithTotal = unstable_cache(
 const cachedCount = unstable_cache(
   async (query: PostsQuery): Promise<number> => {
     const { total } = await wpFetchFreshWithTotal<unknown[]>("/posts", {
-      query: { per_page: 1, _fields: "id", ...query },
+      query: { per_page: 1, _fields: "id", ...withArchive(query) },
     });
     return total;
   },

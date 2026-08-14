@@ -30,6 +30,21 @@ di kode (meta `tgr_buku_*` belum punya slot UI). Suara poll pengunjung
 masih di sisi klien — penyimpanan suara ke WP = Fase 2b (butuh endpoint
 tulis di mu-plugin + Application Password).
 
+**Batas arsip (proposal §3.2).** Tulisan yang terbit sebelum
+`WP_ARCHIVE_AFTER` (bawaan `2022-12-31T23:59:59`) tidak ditampilkan:
+**5.683 → 876 artikel**. Ambangnya disisipkan terpusat lewat `withArchive()`
+di `src/lib/wp/articles.ts`, dengan dua pengecualian yang disengaja —
+`adjacentArticles()` yang memakai `after` sebagai jangkar, dan pencarian
+berdasarkan `slug` (rujukan eksplisit kartu jajak pendapat). Halaman detail
+`getArticle()` tidak difilter, jadi URL langsung ke tulisan lama tetap hidup
+(proposal hanya melarang *menampilkan*; redirect URL lama di luar lingkup).
+Kosongkan `WP_ARCHIVE_AFTER` untuk menayangkan seluruh arsip lagi.
+
+Konsekuensi yang perlu diketahui redaksi: **dua tulisan sticky yang ada
+bertanggal 2021 dan 2017**, jadi keduanya ikut tersembunyi dan hero beranda
+kini jatuh ke artikel terbaru. Redaksi perlu mencentang "Lekatkan di atas
+blog" pada tulisan 2023+ untuk mengendalikan hero.
+
 Konten Fase 1 (arsip 5.600+ artikel) dibaca langsung dari `wp-json`:
 
 - Lapisan data: `src/lib/wp/` (client + peta rubrik + sanitasi + pemetaan
