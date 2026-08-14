@@ -3,11 +3,14 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight, MapPin } from "@phosphor-icons/react/dist/ssr";
-import { albums, getAlbum, photoSrc } from "@/data/gallery";
+import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
+import { wpAlbum, wpAlbums } from "@/lib/wp/gallery";
 
+// Bergantung data WordPress — dirender on-demand lalu di-cache (ISR),
+// sama seperti rute artikel; build tidak memanggil WP.
 export function generateStaticParams() {
-  return albums.map((a) => ({ slug: a.slug }));
+  return [];
 }
 
 export async function generateMetadata({
@@ -16,8 +19,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const album = getAlbum(slug);
-  if (!album) return {};
+  const album = await wpAlbum(slug);
+  if (!album) notFound();
   return { title: `${album.judul} — Galeri`, description: album.ringkasan };
 }
 
@@ -27,10 +30,12 @@ export default async function AlbumPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const album = getAlbum(slug);
+  const album = await wpAlbum(slug);
   if (!album) notFound();
 
-  const lainnya = albums.filter((a) => a.slug !== album.slug).slice(0, 3);
+  const lainnya = (await wpAlbums())
+    .filter((a) => a.slug !== album.slug)
+    .slice(0, 3);
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-14 md:py-20">
@@ -76,7 +81,7 @@ export default async function AlbumPage({
           <figure key={f.seed} className="group">
             <div className="overflow-hidden rounded-xl bg-canvas">
               <Image
-                src={photoSrc(f.seed, 800, 560)}
+                src={f.src ?? photoSrc(f.seed, 800, 560)}
                 alt={f.caption}
                 width={800}
                 height={560}
@@ -93,36 +98,40 @@ export default async function AlbumPage({
 
       {/* Album lainnya */}
       <div className="mt-16 border-t border-line pt-10">
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
-          Album Lainnya
-        </h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          {lainnya.map((o) => (
-            <Link
-              key={o.slug}
-              href={`/gallery/${o.slug}`}
-              className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-            >
-              <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
-                <Image
-                  src={photoSrc(o.foto[0].seed, 600, 400)}
-                  alt={o.judul}
-                  fill
-                  sizes="(min-width: 640px) 33vw, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
-                />
-              </div>
-              <div className="p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-meta">
-                  {o.kategori}
-                </p>
-                <h3 className="mt-1.5 font-display text-sm font-bold leading-snug text-ink transition-colors group-hover:text-accent">
-                  {o.judul}
-                </h3>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {lainnya.length > 0 && (
+          <>
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
+              Album Lainnya
+            </h2>
+            <div className="mt-6 grid gap-6 sm:grid-cols-3">
+              {lainnya.map((o) => (
+                <Link
+                  key={o.slug}
+                  href={`/gallery/${o.slug}`}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                >
+                  <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
+                    <Image
+                      src={o.foto[0].src ?? photoSrc(o.foto[0].seed, 600, 400)}
+                      alt={o.judul}
+                      fill
+                      sizes="(min-width: 640px) 33vw, 100vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-meta">
+                      {o.kategori}
+                    </p>
+                    <h3 className="mt-1.5 font-display text-sm font-bold leading-snug text-ink transition-colors group-hover:text-accent">
+                      {o.judul}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
 
         <Link
           href="/gallery"

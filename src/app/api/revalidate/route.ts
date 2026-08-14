@@ -35,6 +35,12 @@ function secretValid(header: string | null): boolean {
 // (judul non-Latin); tetap dibatasi karakter aman-URL.
 const SLUG_RE = /^[a-zA-Z0-9._~%-]{1,200}$/;
 
+const CPT_TAGS = new Map([
+  ["tgr_podcast", "wp:podcasts"],
+  ["tgr_album", "wp:albums"],
+  ["tgr_poll", "wp:polls"],
+]);
+
 export async function POST(request: NextRequest) {
   if (!process.env.REVALIDATE_SECRET) {
     return Response.json(
@@ -46,7 +52,7 @@ export async function POST(request: NextRequest) {
     return new Response(null, { status: 401 });
   }
 
-  let payload: { slug?: unknown };
+  let payload: { slug?: unknown; type?: unknown };
   try {
     payload = await request.json();
   } catch {
@@ -58,9 +64,14 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "slug tidak valid" }, { status: 400 });
   }
 
-  // Tag nama sendiri (halaman detail) + seluruh daftar (beranda, rubrik,
-  // penulis, pencarian) — semuanya di-tag wp:posts di lapisan fetch.
-  const tags = [`wp:post:${slug}`, "wp:posts"];
+  // Tipe konten khusus punya tag koleksi sendiri; tulisan biasa memakai
+  // tag nama sendiri (halaman detail) + seluruh daftar (beranda, rubrik,
+  // penulis, pencarian) yang di-tag wp:posts di lapisan fetch. Map, bukan
+  // objek: lookup objek ikut membaca kunci warisan Object.prototype, jadi
+  // type "constructor"/"toString" akan lolos sebagai tag palsu.
+  const type = typeof payload.type === "string" ? payload.type : "post";
+  const tagCpt = CPT_TAGS.get(type);
+  const tags = tagCpt ? [tagCpt] : [`wp:post:${slug}`, "wp:posts"];
   for (const tag of tags) revalidateTag(tag, { expire: 0 });
 
   return Response.json({ revalidated: tags });

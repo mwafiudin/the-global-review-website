@@ -15,7 +15,7 @@ import {
 } from "@/data/site";
 import { articleHref } from "@/lib/articles";
 import { featuredArticles } from "@/lib/wp/articles";
-import { allPodcasts } from "@/data/podcasts";
+import { wpPodcasts } from "@/lib/wp/podcasts";
 import { youtubeThumb } from "./VideoEmbed";
 import type { PollView } from "@/lib/polls";
 import { PollCard } from "./PollCard";
@@ -68,8 +68,11 @@ function ReferenceGroup({
 
 /** polls: hanya diisi di halaman artikel yang memiliki jajak pendapat. */
 export async function Sidebar({ polls }: { polls?: PollView[] }) {
-  const populer = await featuredArticles(5);
-  const podcastTerbaru = allPodcasts().slice(0, 3);
+  const [populer, semuaPodcast] = await Promise.all([
+    featuredArticles(5),
+    wpPodcasts(),
+  ]);
+  const podcastTerbaru = semuaPodcast.slice(0, 3);
 
   return (
     <aside className="flex flex-col gap-14" aria-label="Sidebar">

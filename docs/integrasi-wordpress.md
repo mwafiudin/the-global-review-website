@@ -7,16 +7,35 @@ Disusun setelah pemeriksaan langsung terhadap situs produksi, Agustus 2026.
 
 ---
 
-## Status implementasi — 13 Agustus 2026
+## Status implementasi — 14 Agustus 2026
 
-**Fase 1 (artikel + rubrik + penulis + pencarian) sudah diimplementasikan
-di frontend.** Konten kini dibaca langsung dari `wp-json` produksi:
+**Fase 1 LIVE di produksi dan teruji ujung-ke-ujung** (sunting di wp-admin
+→ notice hijau → halaman Vercel berubah dalam hitungan detik). Rantai
+deploy: repo GitHub publik + webhook push → deploy hook Vercel (paket
+Hobby menolak auto-deploy commit kolaborator pada repo privat — itulah
+alasan repo dipublikkan). Pencarian dibatasi `search_columns=post_title`
+(pencarian isi penuh 5–9 dtk di host ini dan kerap melewati batas waktu
+fungsi; judul saja <1 dtk) plus indikator "Mencari…" di panel.
+
+**Fase 2a (Podcast, Galeri, Jajak Pendapat dari CPT) diimplementasikan.**
+`src/lib/wp/podcasts|gallery|polls.ts` membaca `podcasts`/`albums`/`polls`
+(anonim, terverifikasi 200) dengan `unstable_cache` bertag
+`wp:podcasts|albums|polls` (revalidate 300); `/api/revalidate` memetakan
+`type` CPT → tag koleksinya, dan `tgr-revalidate.php` memang sudah
+mengirimkan tipe-tipe itu sejak awal. **Koleksi kosong atau WP gagal →
+fallback ke data contoh `src/data/*.ts`**, sehingga seksi berpindah ke
+WordPress dengan sendirinya begitu redaksi menerbitkan konten pertamanya
+— tanpa deploy, tanpa perubahan visual. Bedah Buku tetap katalog kurasi
+di kode (meta `tgr_buku_*` belum punya slot UI). Suara poll pengunjung
+masih di sisi klien — penyimpanan suara ke WP = Fase 2b (butuh endpoint
+tulis di mu-plugin + Application Password).
+
+Konten Fase 1 (arsip 5.600+ artikel) dibaca langsung dari `wp-json`:
 
 - Lapisan data: `src/lib/wp/` (client + peta rubrik + sanitasi + pemetaan
   `WpPost → Article`); tipe `Article` tetap jadi kontrak sehingga seluruh
   komponen tampilan tidak berubah. Pencarian via `/api/search` (proxy
-  `?search=` WordPress). Podcast/Galeri/Bedah-Buku/Poll masih data contoh
-  (Fase 2, menunggu `tgr-headless.php` terpasang).
+  `?search=` WordPress, kolom judul).
 - Keputusan §3.2 dieksekusi: **URL artikel `/{slug}`** (route root
   `src/app/[slug]/` + redirect `/artikel/:slug → /:slug`). Nol tabrakan
   slug dengan route statis (diaudit terhadap 5.683 post).
@@ -41,10 +60,13 @@ dikenal menampilkan halaman 404 dengan status HTTP 200 + meta `noindex`
 penulis yang tanpa streaming tetap 404 murni).
 
 **Menunggu tindakan pemilik akses** (rincian di `wordpress/README.md`):
-secret + env di Vercel, unggah dua mu-plugin lewat cPanel File Manager,
-uji ujung-ke-ujung webhook, lalu butir keamanan (backup + update WP 6.5.9,
-limit-login). Pertanyaan ke Webiihost dan pemetaan rubrik redaksi tetap
-berjalan paralel — keduanya bukan penghalang koneksi.
+unggah ulang `tgr-headless.php` **v1.1** (menambah field `tgr_kategori`
+album + `tgr_unggulan` podcast — timpa file lama di
+`wp-content/mu-plugins/`, cek beranda sesudahnya), lalu butir keamanan
+(backup + update WP core, limit-login) dan keputusan visibilitas repo.
+Redaksi: mulai mengisi Podcast/Album/Poll di wp-admin (menu sudah ada;
+field lewat panel Custom Fields), pemetaan 8 rubrik TINJAU + pemecahan
+`asia`, atribusi M. Arief Pranoto, tinjau 2 sticky lama.
 
 ---
 

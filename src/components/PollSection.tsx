@@ -1,12 +1,13 @@
 import Image from "next/image";
-import { activePolls } from "@/lib/polls";
-import { toPollView } from "@/lib/wp/polls";
+import { toPollViews, wpActivePolls } from "@/lib/wp/polls";
 import { SectionHeading } from "./SectionHeading";
 import { PollCarousel } from "./PollCarousel";
 
 /** Section jajak pendapat di homepage: grid (desktop) / carousel (mobile). */
 export async function PollSection() {
-  const views = await Promise.all(activePolls().map(toPollView));
+  // Tiga terbaru: grid desktop memang satu baris tiga kolom, dan arsip poll
+  // WordPress akan terus bertambah.
+  const views = await toPollViews((await wpActivePolls()).slice(0, 3));
   if (views.length === 0) return null;
 
   return (

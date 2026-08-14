@@ -151,7 +151,19 @@ Setelah `tgr-headless.php` terpasang, REST API bertambah:
 |---|---|
 | `/wp-json/wp/v2/podcasts` | Penampilan di kanal media lain |
 | `/wp-json/wp/v2/albums` | Album dokumentasi kegiatan |
-| `/wp-json/wp/v2/polls` | Jajak pendapat (non-publik, perlu autentikasi) |
+| `/wp-json/wp/v2/polls` | Jajak pendapat (terverifikasi terbaca anonim — cukup untuk frontend) |
+
+Frontend membaca ketiganya sejak Fase 2a (`src/lib/wp/podcasts|gallery|polls.ts`)
+dengan aturan: **koleksi kosong → tampilkan data contoh**. Artinya begitu
+redaksi menerbitkan podcast/album/poll pertamanya, seksi terkait berpindah
+ke konten WordPress dengan sendirinya, tanpa deploy.
+
+**Pembaruan v1.1** (timpa `tgr-headless.php` lama di `mu-plugins/` lewat
+File Manager, cek beranda sesudahnya; tidak perlu flush permalink karena
+hanya menambah meta): `tgr_kategori` pada album (label jenis kegiatan,
+mis. "Seminar"; kosong = frontend menampilkan "Kegiatan") dan
+`tgr_unggulan` pada podcast (isi `1` untuk penampilan utama halaman
+Podcast; kosong = frontend memakai yang terbaru).
 
 Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 

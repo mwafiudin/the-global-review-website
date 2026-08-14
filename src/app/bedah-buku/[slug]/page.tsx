@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { bookImprint, books, getBook } from "@/data/books";
-import { getPodcast } from "@/data/podcasts";
+import { wpPodcast } from "@/lib/wp/podcasts";
 import { VideoEmbed } from "@/components/VideoEmbed";
 import { EndMark } from "@/components/Ornaments";
 
@@ -32,7 +32,11 @@ export default async function BookReviewPage({
   const book = getBook(slug);
   if (!book) notFound();
 
-  const podcast = book.podcastTerkait ? getPodcast(book.podcastTerkait) : undefined;
+  // Lewat lapisan WordPress, bukan data contoh: /podcast/{slug} me-resolve
+  // dari sana, jadi tautan ke slug yang tak ada di sana akan berujung 404.
+  const podcast = book.podcastTerkait
+    ? await wpPodcast(book.podcastTerkait)
+    : undefined;
   const lainnya = books.filter((b) => b.slug !== book.slug);
 
   return (

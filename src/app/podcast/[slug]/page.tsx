@@ -3,13 +3,15 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight, PlayCircle } from "@phosphor-icons/react/dist/ssr";
-import { allPodcasts, getPodcast, podcasts } from "@/data/podcasts";
 import { VideoEmbed, youtubeThumb } from "@/components/VideoEmbed";
 import { EndMark } from "@/components/Ornaments";
 import { formatDate } from "@/lib/articles";
+import { wpPodcast, wpPodcasts } from "@/lib/wp/podcasts";
 
+// Bergantung data WordPress — dirender on-demand lalu di-cache (ISR),
+// sama seperti rute artikel; build tidak memanggil WP.
 export function generateStaticParams() {
-  return podcasts.map((p) => ({ slug: p.slug }));
+  return [];
 }
 
 export async function generateMetadata({
@@ -18,9 +20,14 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const ep = getPodcast(slug);
-  if (!ep) return {};
-  return { title: ep.headline, description: ep.ringkasan[0] };
+  const ep = await wpPodcast(slug);
+  if (!ep) notFound();
+  return {
+    title: ep.headline,
+    description:
+      ep.ringkasan[0] ||
+      `${ep.format} bersama ${ep.narasumber} di kanal ${ep.media}.`,
+  };
 }
 
 export default async function PodcastDetailPage({
@@ -29,10 +36,10 @@ export default async function PodcastDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const ep = getPodcast(slug);
+  const ep = await wpPodcast(slug);
   if (!ep) notFound();
 
-  const lainnya = allPodcasts()
+  const lainnya = (await wpPodcasts())
     .filter((p) => p.slug !== ep.slug)
     .slice(0, 3);
 
@@ -87,41 +94,45 @@ export default async function PodcastDetailPage({
 
       {/* Episode lainnya */}
       <div className="mt-12 border-t border-line pt-10">
-        <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
-          Penampilan lainnya
-        </h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-3">
-          {lainnya.map((o) => (
-            <Link
-              key={o.slug}
-              href={`/podcast/${o.slug}`}
-              className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
-            >
-              <div className="relative aspect-video overflow-hidden bg-black">
-                <Image
-                  src={youtubeThumb(o.videoId)}
-                  alt={`Cuplikan ${o.headline}`}
-                  fill
-                  sizes="(min-width: 640px) 33vw, 100vw"
-                  className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-                />
-                <PlayCircle
-                  size={36}
-                  weight="fill"
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white/90 drop-shadow"
-                />
-              </div>
-              <div className="p-4">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-meta">
-                  {o.media}
-                </p>
-                <h3 className="mt-1.5 font-display text-sm font-bold leading-snug text-ink transition-colors group-hover:text-accent">
-                  {o.headline}
-                </h3>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {lainnya.length > 0 && (
+          <>
+            <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
+              Penampilan lainnya
+            </h2>
+            <div className="mt-6 grid gap-6 sm:grid-cols-3">
+              {lainnya.map((o) => (
+                <Link
+                  key={o.slug}
+                  href={`/podcast/${o.slug}`}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                >
+                  <div className="relative aspect-video overflow-hidden bg-black">
+                    <Image
+                      src={youtubeThumb(o.videoId)}
+                      alt={`Cuplikan ${o.headline}`}
+                      fill
+                      sizes="(min-width: 640px) 33vw, 100vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
+                    />
+                    <PlayCircle
+                      size={36}
+                      weight="fill"
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white/90 drop-shadow"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-meta">
+                      {o.media}
+                    </p>
+                    <h3 className="mt-1.5 font-display text-sm font-bold leading-snug text-ink transition-colors group-hover:text-accent">
+                      {o.headline}
+                    </h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
 
         <Link
           href="/podcast"

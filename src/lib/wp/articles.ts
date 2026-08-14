@@ -3,7 +3,9 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 import type { Article } from "@/lib/types";
 import {
+  dedup,
   wpFetch,
+  wpFetchByIdsFresh,
   wpFetchFresh,
   wpFetchFreshWithTotal,
   type WpMediaLite,
@@ -54,17 +56,12 @@ function listQuery(query: PostsQuery): PostsQuery {
 
 /** URL gambar unggulan per attachment, satu request batch untuk satu daftar. */
 async function featuredImageMap(posts: WpPost[]): Promise<Map<number, string>> {
-  const ids = [...new Set(posts.map((p) => p.featured_media).filter(Boolean))];
+  const ids = posts.map((p) => p.featured_media ?? 0);
   const map = new Map<number, string>();
-  if (ids.length === 0) return map;
   // _fields bersarang (media_details.sizes.…) tidak difilter host ini —
   // minta media_details utuh agar ukuran `large` benar-benar terpakai.
-  const media = await wpFetchFresh<WpMediaLite[]>("/media", {
-    query: {
-      include: ids.join(","),
-      per_page: 100,
-      _fields: "id,source_url,media_details",
-    },
+  const media = await wpFetchByIdsFresh<WpMediaLite>("/media", ids, {
+    query: { _fields: "id,source_url,media_details" },
   });
   for (const m of media) {
     const url = m.media_details?.sizes?.large?.source_url ?? m.source_url;
@@ -93,20 +90,6 @@ async function mapListPosts(posts: WpPost[]): Promise<Article[]> {
       })
     )
   );
-}
-
-/**
- * Dedup in-flight: unstable_cache tidak menyatukan dua pembangunan kunci
- * yang sama yang berjalan bersamaan (mis. byCategory + adjacentArticles
- * pada render halaman yang sama saat cache dingin).
- */
-const inflight = new Map<string, Promise<unknown>>();
-function dedup<T>(key: string, run: () => Promise<T>): Promise<T> {
-  const hit = inflight.get(key);
-  if (hit) return hit as Promise<T>;
-  const p = run().finally(() => inflight.delete(key));
-  inflight.set(key, p);
-  return p;
 }
 
 /** Argumen ikut menjadi kunci cache, jadi tiap kombinasi query di-cache terpisah. */
@@ -274,6 +257,23 @@ export async function adjacentArticles(article: Article): Promise<{
     listCached({ ...base, before: anchor, order: "desc" }),
   ]);
   return { prev: newer[0], next: older[0] };
+}
+
+/**
+ * Beberapa artikel sekaligus berdasarkan slug — satu request per 100 slug,
+ * bukan satu request detail per artikel (dipakai kartu jajak pendapat yang
+ * butuh judul + rubrik sumbernya).
+ */
+export async function articlesBySlugs(slugs: string[]): Promise<Article[]> {
+  const unik = [...new Set(slugs)].filter(Boolean);
+  const hasil: Article[] = [];
+  for (let i = 0; i < unik.length; i += 100) {
+    const bagian = unik.slice(i, i + 100);
+    hasil.push(
+      ...(await listCached({ slug: bagian.join(","), per_page: bagian.length }))
+    );
+  }
+  return hasil;
 }
 
 /** Pencarian judul WordPress (urutan relevansi) untuk /api/search. */

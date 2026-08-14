@@ -1,6 +1,8 @@
 export interface Photo {
   seed: string;
   caption: string;
+  /** URL asli dari media WordPress; tanpa ini dipakai placeholder photoSrc(). */
+  src?: string;
 }
 
 export interface Album {

@@ -4,7 +4,7 @@
  * Description:  Mendaftarkan tipe konten khusus (Podcast, Album Galeri, Jajak
  *               Pendapat) dan field tambahan Bedah Buku, seluruhnya terekspos
  *               ke REST API untuk dikonsumsi frontend Next.js.
- * Version:      1.0.0
+ * Version:      1.1.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -102,11 +102,13 @@ add_action(
  * tgr_format    — Talkshow / Podcast / Bedah Buku / Wawancara / Diskusi
  * tgr_video_id  — ID video YouTube (bukan URL penuh)
  * tgr_tayang    — tanggal tayang asli di kanal sumber (YYYY-MM-DD)
+ * tgr_unggulan  — isi "1" untuk penampilan utama halaman Podcast (sejak 1.1;
+ *                 kosong = frontend memakai penampilan terbaru)
  */
 add_action(
 	'init',
 	function () {
-		$fields = array( 'tgr_kanal', 'tgr_narasumber', 'tgr_format', 'tgr_video_id', 'tgr_tayang' );
+		$fields = array( 'tgr_kanal', 'tgr_narasumber', 'tgr_format', 'tgr_video_id', 'tgr_tayang', 'tgr_unggulan' );
 
 		foreach ( $fields as $key ) {
 			register_post_meta(
@@ -130,14 +132,16 @@ add_action(
 /**
  * Field Album Galeri.
  *
- * tgr_lokasi  — kota/tempat kegiatan
- * tgr_tanggal — tanggal kegiatan (YYYY-MM-DD)
- * tgr_foto    — daftar ID lampiran (attachment) sebagai isi album
+ * tgr_lokasi   — kota/tempat kegiatan
+ * tgr_tanggal  — tanggal kegiatan (YYYY-MM-DD)
+ * tgr_kategori — label jenis kegiatan, mis. "Seminar" (sejak 1.1; kosong =
+ *                frontend menampilkan "Kegiatan")
+ * tgr_foto     — daftar ID lampiran (attachment) sebagai isi album
  */
 add_action(
 	'init',
 	function () {
-		foreach ( array( 'tgr_lokasi', 'tgr_tanggal' ) as $key ) {
+		foreach ( array( 'tgr_lokasi', 'tgr_tanggal', 'tgr_kategori' ) as $key ) {
 			register_post_meta(
 				'tgr_album',
 				$key,

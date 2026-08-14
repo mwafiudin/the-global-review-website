@@ -244,3 +244,81 @@ export async function wpFetchFreshWithTotal<T>(
   const total = Number(res.headers.get("x-wp-total") ?? 0);
   return { data: (await res.json()) as T, total };
 }
+
+/** Batas keras WordPress untuk per_page pada endpoint koleksi. */
+export const WP_MAX_PER_PAGE = 100;
+
+/**
+ * Seluruh isi sebuah koleksi, halaman demi halaman. Tanpa ini, permintaan
+ * ber-per_page 100 terpotong DIAM-DIAM di item ke-101 — konten yang tayang
+ * normal di wp-admin sekadar lenyap dari situs. Berhenti pada halaman
+ * pertama yang tidak penuh; maxPages hanya rem darurat agar salah paham
+ * parameter tidak berubah jadi permintaan tak berujung ke host yang
+ * membatasi burst (500 item jauh di atas skala Podcast/Galeri/Poll).
+ */
+export async function wpFetchAllFresh<T>(
+  path: string,
+  opts: WpFreshOptions & { maxPages?: number } = {}
+): Promise<T[]> {
+  const { maxPages = 5, query, ...rest } = opts;
+  const all: T[] = [];
+  for (let page = 1; page <= maxPages; page++) {
+    const batch = await wpFetchFresh<T[]>(path, {
+      ...rest,
+      query: { ...query, per_page: WP_MAX_PER_PAGE, page },
+    });
+    all.push(...batch);
+    if (batch.length < WP_MAX_PER_PAGE) break;
+  }
+  return all;
+}
+
+/**
+ * Ambil banyak item sekaligus lewat ?include=, dipotong per 100 ID karena
+ * include tetap tunduk pada per_page — 108 ID dalam satu permintaan hanya
+ * mengembalikan 100 item, tanpa galat.
+ */
+export async function wpFetchByIdsFresh<T>(
+  path: string,
+  ids: number[],
+  opts: WpFreshOptions = {}
+): Promise<T[]> {
+  const unik = [...new Set(ids)].filter((id) => id > 0);
+  if (unik.length === 0) return [];
+
+  const potongan: number[][] = [];
+  for (let i = 0; i < unik.length; i += WP_MAX_PER_PAGE) {
+    potongan.push(unik.slice(i, i + WP_MAX_PER_PAGE));
+  }
+  // Berurutan, bukan paralel: semafor host hanya punya 4 slot dan
+  // pemanggilnya kerap sudah mengantre permintaan lain.
+  const hasil: T[] = [];
+  for (const bagian of potongan) {
+    hasil.push(
+      ...(await wpFetchFresh<T[]>(path, {
+        ...opts,
+        query: {
+          ...opts.query,
+          include: bagian.join(","),
+          per_page: WP_MAX_PER_PAGE,
+        },
+      }))
+    );
+  }
+  return hasil;
+}
+
+/**
+ * Dedup in-flight: unstable_cache tidak menyatukan dua pembangunan kunci
+ * yang sama yang berjalan bersamaan (mis. byCategory + adjacentArticles
+ * pada render yang sama saat cache dingin, atau generateMetadata yang
+ * berjalan paralel dengan komponen halaman sejak streaming metadata).
+ */
+const inflight = new Map<string, Promise<unknown>>();
+export function dedup<T>(key: string, run: () => Promise<T>): Promise<T> {
+  const hit = inflight.get(key);
+  if (hit) return hit as Promise<T>;
+  const p = run().finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}

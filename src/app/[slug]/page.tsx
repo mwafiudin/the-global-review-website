@@ -12,8 +12,7 @@ import {
   readingMinutes,
 } from "@/lib/articles";
 import { adjacentArticles, byCategory, getArticle } from "@/lib/wp/articles";
-import { pollsForArticle } from "@/lib/polls";
-import { toPollView } from "@/lib/wp/polls";
+import { toPollViews, wpPollsForArticle } from "@/lib/wp/polls";
 import {
   CardFeature,
   CategoryTag,
@@ -67,7 +66,7 @@ export default async function ArticlePage({
   const [inParent, { prev, next }, articlePolls] = await Promise.all([
     byCategory(parentCategory),
     adjacentArticles(article),
-    Promise.all(pollsForArticle(article.slug).map(toPollView)),
+    wpPollsForArticle(article.slug).then(toPollViews),
   ]);
   const related = inParent
     .filter((a) => a.slug !== article.slug)

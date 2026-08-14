@@ -41,15 +41,41 @@ function stripTags(html: string): string {
 }
 
 /** HTML → teks polos rapi (untuk judul, excerpt, hitung kata). */
-function cleanText(html: string): string {
+export function cleanText(html: string): string {
   return decodeEntities(stripTags(html)).replace(/\s+/g, " ").trim();
 }
 
 /** Buang artefak excerpt WordPress: "[…]", "[...]", "&hellip;" di ujung. */
-function cleanExcerpt(html: string): string {
+export function cleanExcerpt(html: string): string {
   return cleanText(html)
     .replace(/\s*\[\s*(…|\.{3})\s*\]\s*$/u, "…")
     .trim();
+}
+
+/** HTML → daftar paragraf teks polos (pemisah </p>). */
+export function htmlParagraphs(html: string): string[] {
+  return html
+    .split(/<\/p>/i)
+    .map((chunk) => cleanText(chunk))
+    .filter(Boolean);
+}
+
+/**
+ * Tanggal meta CPT → "YYYY-MM-DD", atau null bila bukan tanggal sah.
+ * Field ini diisi lewat kotak Custom Fields teks bebas, jadi "17 Januari
+ * 2024" atau tanggal yang tak pernah ada bisa lolos ke REST; formatDate()
+ * di FE menempelkan "T00:00:00" ke apa pun yang diterimanya dan akan
+ * menampilkan "Invalid Date". Awalan waktu ("2024-01-17 10:00") dipotong,
+ * selebihnya ditolak agar pemanggil bisa jatuh ke tanggal terbit pos.
+ */
+export function isoDate(value: string | undefined): string | null {
+  const m = (value ?? "").trim().match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ]|$)/);
+  if (!m) return null;
+  const [, y, mo, d] = m;
+  const tanggal = `${y}-${mo}-${d}`;
+  // Menolak 2026-02-30 dkk.: Date menormalkannya diam-diam ke bulan depan.
+  const parsed = new Date(`${tanggal}T00:00:00Z`);
+  return parsed.toISOString().slice(0, 10) === tanggal ? tanggal : null;
 }
 
 function truncateWords(text: string, maxWords: number): string {
@@ -160,10 +186,7 @@ export async function wpPostToArticle(
   if (withBody) {
     const safe = sanitizeWpHtml(contentHtml);
     article.bodyHtml = safe;
-    article.body = safe
-      .split(/<\/p>/i)
-      .map((chunk) => cleanText(chunk))
-      .filter(Boolean);
+    article.body = htmlParagraphs(safe);
 
     // Excerpt otomatis WordPress = potongan awal konten. Menampilkannya
     // sebagai lead di halaman detail berarti paragraf pertama tampil dua

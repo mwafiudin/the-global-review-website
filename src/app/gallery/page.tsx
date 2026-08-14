@@ -3,8 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { ImagesSquare } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/PageHeader";
-import { albums, photoSrc } from "@/data/gallery";
+import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
+import { wpAlbums } from "@/lib/wp/gallery";
 
 export const metadata: Metadata = {
   title: "Galeri",
@@ -12,7 +13,8 @@ export const metadata: Metadata = {
     "Album dokumentasi kegiatan Global Future Institute: seminar, diskusi, riset, dan silaturahmi.",
 };
 
-export default function GalleryPage() {
+export default async function GalleryPage() {
+  const albums = await wpAlbums();
   return (
     <>
       <PageHeader
@@ -30,7 +32,7 @@ export default function GalleryPage() {
             >
               <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
                 <Image
-                  src={photoSrc(a.foto[0].seed, 720, 480)}
+                  src={a.foto[0].src ?? photoSrc(a.foto[0].seed, 720, 480)}
                   alt={a.judul}
                   fill
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
