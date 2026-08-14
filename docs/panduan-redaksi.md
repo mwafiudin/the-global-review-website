@@ -116,6 +116,17 @@ Tombol **Tambah pilihan** untuk menambah baris. Minimal dua pilihan.
 Kolom **"Suara awal"** adalah angka pembuka sebelum pembaca ikut memilih —
 isi 0 bila ingin mulai dari nol.
 
+**Melihat hasilnya:** buka kembali jajak pendapat itu, dan di bawah tabel
+pilihan ada bagian **Suara pembaca** — berisi jumlah suara nyata per
+pilihan, terpisah dari angka pembuka yang Anda ketik. Layar daftar Jajak
+Pendapat juga punya kolom **Suara** berisi totalnya. Angka ini dihitung
+otomatis dari situs dan tidak bisa disunting.
+
+Satu pembaca dihitung sekali per jajak pendapat (dibatasi per perangkat dan
+per alamat internet selama 24 jam). Ini penahan wajar, bukan pengaman
+mutlak — sebagaimana jajak pendapat mana pun yang tidak meminta pembaca
+masuk akun.
+
 ### Pelanggan Buletin
 
 Daftar pembaca yang mendaftar lewat formulir di situs. Hanya untuk

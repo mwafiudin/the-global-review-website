@@ -36,11 +36,14 @@ interface WpPoll {
     tgr_tutup?: string;
     tgr_opsi?: Array<{ id?: string; label?: string; base?: number }>;
   };
+  /** Rekap suara pembaca per pilihan (baca-saja dari mu-plugin). */
+  tgr_hasil?: Record<string, number>;
 }
 
 /** Baris tgr_opsi yang tidak lengkap dibuang; base liar dijinakkan ke ≥0. */
 export function wpPollOptions(
-  raw: NonNullable<WpPoll["meta"]>["tgr_opsi"]
+  raw: NonNullable<WpPoll["meta"]>["tgr_opsi"],
+  hasil: Record<string, number> = {}
 ): PollOption[] {
   return (raw ?? [])
     .filter((o) => o.id && o.label)
@@ -48,6 +51,7 @@ export function wpPollOptions(
       id: String(o.id),
       label: String(o.label),
       base: Math.max(0, Math.floor(Number(o.base) || 0)),
+      suara: Math.max(0, Math.floor(Number(hasil[String(o.id)]) || 0)),
     }));
 }
 
@@ -59,12 +63,13 @@ export function wpPollToPoll(
 ): Poll | null {
   const question =
     item.meta?.tgr_pertanyaan?.trim() || cleanText(item.title.rendered);
-  const options = wpPollOptions(item.meta?.tgr_opsi);
+  const options = wpPollOptions(item.meta?.tgr_opsi, item.tgr_hasil);
   const articleSlug = articleSlugById.get(item.meta?.tgr_artikel_id ?? 0);
   if (!question || options.length < 2 || !articleSlug) return null;
 
   return {
     id: item.slug || `poll-${item.id}`,
+    wpId: item.id,
     articleSlug,
     question,
     options,
@@ -78,7 +83,7 @@ export function wpPollToPoll(
 const cachedPolls = unstable_cache(
   async (): Promise<Poll[]> => {
     const items = await wpFetchAllFresh<WpPoll>("/polls", {
-      query: { _fields: "id,slug,date,title,meta" },
+      query: { _fields: "id,slug,date,title,meta,tgr_hasil" },
     });
 
     // Resolve seluruh artikel sumber sekaligus (dipotong per 100 ID).

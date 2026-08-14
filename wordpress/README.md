@@ -183,6 +183,21 @@ Penyimpanan lewat REST tidak terpengaruh kotak-kotak ini (nonce admin tidak
 ada di permintaan REST), jadi pengisian programatik dan pengisian manual
 bisa berjalan berdampingan.
 
+### Suara jajak pendapat (v2.1)
+
+Suara pembaca disimpan di WordPress: tiap pilihan punya penghitung sendiri
+(`tgr_suara_<id>`), dinaikkan lewat satu pernyataan `UPDATE` yang atomik —
+bukan pola baca-ubah-tulis yang membuat dua pemilih bersamaan saling
+menimpa. Rekapnya terbaca di REST sebagai field `tgr_hasil` pada
+`/wp-json/wp/v2/polls`, dan tampil di wp-admin pada layar sunting jajak
+pendapat (bagian **Suara pembaca**) serta kolom **Suara** di daftarnya.
+
+"Suara awal" yang diketik redaksi tetap terpisah dan tidak pernah
+tersentuh; frontend menjumlahkan keduanya. Endpoint `tgr/v1/vote`
+mensyaratkan `X-TGR-Secret` seperti endpoint lain, menolak pilihan yang
+tidak terdaftar, menolak jajak pendapat yang sudah lewat tanggal tutup, dan
+membatasi satu suara per alamat IP per jajak pendapat selama 24 jam.
+
 ### Pelanggan buletin
 
 v2.0 juga menambah menu **Pelanggan Buletin**. Pembaca yang mengisi formulir

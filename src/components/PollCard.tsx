@@ -9,8 +9,8 @@ import {
   WhatsappLogo,
   XLogo,
 } from "@phosphor-icons/react";
-import type { Poll } from "@/data/polls";
-import { pollBaseTotal } from "@/lib/polls";
+import type { Poll, PollOption } from "@/data/polls";
+import { pollTotal } from "@/lib/polls";
 
 // Store kecil untuk suara di localStorage (SSR-safe, tanpa hydration mismatch).
 const listeners = new Set<() => void>();
@@ -219,16 +219,40 @@ export function PollCard({
 }) {
   const voted = useVote(poll.id);
   const [striking, setStriking] = useState<string | null>(null);
+  /** Rekap terbaru dari server, dipakai begitu suara pembaca tercatat. */
+  const [hasil, setHasil] = useState<Record<string, number> | null>(null);
   const timer = useRef<number | undefined>(undefined);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
   const showResults = Boolean(voted) || closed;
-  const base = pollBaseTotal(poll);
-  const total = base + (voted ? 1 : 0);
+  /** Suara pembaca: rekap terbaru bila ada, selain itu angka dari server. */
+  const suara = (opt: PollOption) =>
+    hasil ? (hasil[opt.id] ?? 0) : (opt.suara ?? 0);
+  const total = hasil
+    ? poll.options.reduce((n, o) => n + o.base + suara(o), 0)
+    : pollTotal(poll);
+
+  /** Kirim suara ke server; kegagalan tidak mengubah tampilan. */
+  async function kirimSuara(optionId: string) {
+    if (!poll.wpId) return;
+    try {
+      const res = await fetch("/api/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ poll: poll.wpId, opsi: optionId }),
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { hasil?: Record<string, number> };
+      if (data.hasil) setHasil(data.hasil);
+    } catch {
+      // Suara gagal terkirim — pilihannya tetap tercatat di peramban ini.
+    }
+  }
 
   /** Coret pilihan: gambar tinta + getar kartu, lalu catat suara. */
   function choose(optionId: string) {
     if (striking) return;
+    void kirimSuara(optionId);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       writeVote(poll.id, optionId);
       return;
@@ -282,7 +306,7 @@ export function PollCard({
 
         <div className={compact ? "mt-4 space-y-2" : "mt-5 space-y-2.5"}>
           {poll.options.map((opt) => {
-            const count = opt.base + (voted === opt.id ? 1 : 0);
+            const count = opt.base + suara(opt);
             const pct = total ? Math.round((count / total) * 100) : 0;
             const chosen = voted === opt.id;
 

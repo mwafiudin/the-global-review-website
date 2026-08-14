@@ -1,12 +1,16 @@
 export interface PollOption {
   id: string;
   label: string;
-  /** Jumlah suara dasar (dummy) sebelum vote pengguna. */
+  /** Angka pembuka yang diketik redaksi, sebelum pembaca ikut memilih. */
   base: number;
+  /** Suara pembaca yang tercatat di WordPress. */
+  suara?: number;
 }
 
 export interface Poll {
   id: string;
+  /** ID pos WordPress — alamat tujuan saat pembaca mengirim suaranya. */
+  wpId?: number;
   /** Slug artikel yang membuat poll ini. */
   articleSlug: string;
   question: string;

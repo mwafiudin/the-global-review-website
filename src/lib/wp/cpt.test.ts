@@ -192,8 +192,24 @@ describe("wpPollOptions / wpPollToPoll", () => {
         { id: "c", label: "" },
       ])
     ).toEqual([
-      { id: "a", label: "A", base: 3 },
-      { id: "b", label: "B", base: 0 },
+      { id: "a", label: "A", base: 3, suara: 0 },
+      { id: "b", label: "B", base: 0, suara: 0 },
+    ]);
+  });
+
+  it("menyertakan suara pembaca dari rekap WordPress", () => {
+    expect(
+      wpPollOptions(
+        [
+          { id: "a", label: "A", base: 10 },
+          { id: "b", label: "B", base: 5 },
+        ],
+        { a: 7, b: -3 }
+      )
+    ).toEqual([
+      { id: "a", label: "A", base: 10, suara: 7 },
+      // Rekap liar dijinakkan sama seperti suara awal.
+      { id: "b", label: "B", base: 5, suara: 0 },
     ]);
   });
 

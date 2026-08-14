@@ -4,7 +4,7 @@
  * Description:  Mendaftarkan tipe konten khusus (Podcast, Album Galeri, Jajak
  *               Pendapat) dan field tambahan Bedah Buku, seluruhnya terekspos
  *               ke REST API untuk dikonsumsi frontend Next.js.
- * Version:      2.0.0
+ * Version:      2.1.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -728,6 +728,11 @@ function tgr_kotak_poll( $post ) {
 								<th style="width:3rem"></th>
 							</tr>
 						</thead>
+						<?php
+						// Hasil nyata ditampilkan di luar tabel isian agar tidak
+						// ikut terkirim saat menyimpan — angkanya milik pembaca,
+						// bukan sesuatu yang disunting redaksi.
+						?>
 						<tbody>
 							<?php foreach ( $opsi as $baris ) : ?>
 								<tr>
@@ -752,6 +757,45 @@ function tgr_kotak_poll( $post ) {
 						<button type="button" class="button" id="tgr-opsi-tambah">Tambah pilihan</button>
 						<span class="description">Minimal dua pilihan terisi. &ldquo;Suara awal&rdquo; adalah angka pembuka sebelum pembaca ikut memilih.</span>
 					</p>
+
+					<?php
+					$hasil = tgr_hasil_suara( $post->ID );
+					$total_suara = array_sum( $hasil );
+					?>
+					<h4 style="margin:1.5rem 0 .5rem">Suara pembaca</h4>
+					<?php if ( 0 === $total_suara ) : ?>
+						<p class="description">Belum ada pembaca yang memilih.</p>
+					<?php else : ?>
+						<table class="widefat striped" style="max-width:44rem">
+							<thead>
+								<tr>
+									<th>Pilihan</th>
+									<th style="width:8rem">Suara pembaca</th>
+									<th style="width:8rem">Total tampil</th>
+								</tr>
+							</thead>
+							<tbody>
+								<?php foreach ( $opsi as $baris ) : ?>
+									<?php
+									if ( empty( $baris['id'] ) ) {
+										continue;
+									}
+									$nyata = isset( $hasil[ $baris['id'] ] ) ? (int) $hasil[ $baris['id'] ] : 0;
+									$awal  = isset( $baris['base'] ) ? (int) $baris['base'] : 0;
+									?>
+									<tr>
+										<td><?php echo esc_html( isset( $baris['label'] ) ? $baris['label'] : $baris['id'] ); ?></td>
+										<td><?php echo esc_html( $nyata ); ?></td>
+										<td><?php echo esc_html( $nyata + $awal ); ?></td>
+									</tr>
+								<?php endforeach; ?>
+							</tbody>
+						</table>
+						<p class="description">
+							Total <?php echo esc_html( $total_suara ); ?> suara pembaca.
+							Angka ini dihitung otomatis dari situs dan tidak bisa disunting di sini.
+						</p>
+					<?php endif; ?>
 					<script>
 					jQuery(function ($) {
 						$('#tgr-opsi-tambah').on('click', function () {
@@ -907,6 +951,158 @@ add_action(
 		}
 	},
 	10,
+	2
+);
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Suara jajak pendapat.
+ *
+ * Tiap pilihan punya penghitungnya sendiri (`tgr_suara_<id>`), bukan satu
+ * larik berisi semua: menaikkan larik berarti baca-ubah-tulis, dan dua
+ * pembaca yang memilih pada saat bersamaan akan saling menimpa. Dengan
+ * satu baris meta per pilihan, kenaikannya bisa dilakukan sebagai satu
+ * pernyataan UPDATE yang atomik di sisi basis data.
+ *
+ * "Suara awal" (tgr_opsi[].base) tetap milik redaksi dan tidak tersentuh —
+ * frontend menjumlahkan keduanya.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+function tgr_kunci_suara( $opsi_id ) {
+	return 'tgr_suara_' . sanitize_key( $opsi_id );
+}
+
+/** Rekap suara nyata sebuah jajak pendapat: [id pilihan => jumlah]. */
+function tgr_hasil_suara( $post_id ) {
+	$opsi  = get_post_meta( $post_id, 'tgr_opsi', true );
+	$hasil = array();
+	if ( ! is_array( $opsi ) ) {
+		return $hasil;
+	}
+	foreach ( $opsi as $satu ) {
+		if ( empty( $satu['id'] ) ) {
+			continue;
+		}
+		$hasil[ $satu['id'] ] = (int) get_post_meta( $post_id, tgr_kunci_suara( $satu['id'] ), true );
+	}
+	return $hasil;
+}
+
+/** Rekap dibuka ke REST sebagai field baca-saja. */
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_field(
+			'tgr_poll',
+			'tgr_hasil',
+			array(
+				'get_callback' => function ( $pos ) {
+					return tgr_hasil_suara( $pos['id'] );
+				},
+				'schema'       => array(
+					'description' => 'Jumlah suara pembaca per pilihan.',
+					'type'        => 'object',
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+			)
+		);
+
+		register_rest_route(
+			'tgr/v1',
+			'/vote',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => function ( $request ) {
+					return tgr_secret_cocok( $request->get_header( 'x-tgr-secret' ) );
+				},
+				'callback'            => 'tgr_terima_suara',
+				'args'                => array(
+					'poll' => array( 'required' => true ),
+					'opsi' => array( 'required' => true ),
+				),
+			)
+		);
+	}
+);
+
+function tgr_terima_suara( $request ) {
+	global $wpdb;
+
+	$post_id = absint( $request->get_param( 'poll' ) );
+	$opsi_id = sanitize_key( (string) $request->get_param( 'opsi' ) );
+	$pos     = $post_id ? get_post( $post_id ) : null;
+
+	if ( ! $pos || 'tgr_poll' !== $pos->post_type || 'publish' !== $pos->post_status ) {
+		return new WP_Error( 'tgr_poll_tidak_ada', 'Jajak pendapat tidak ditemukan.', array( 'status' => 404 ) );
+	}
+
+	// Pilihan wajib salah satu yang benar-benar terdaftar — bukan sembarang
+	// teks, agar penghitung liar tidak bisa dibuat dari luar.
+	$opsi = get_post_meta( $post_id, 'tgr_opsi', true );
+	$sah  = false;
+	if ( is_array( $opsi ) ) {
+		foreach ( $opsi as $satu ) {
+			if ( ! empty( $satu['id'] ) && $satu['id'] === $opsi_id ) {
+				$sah = true;
+				break;
+			}
+		}
+	}
+	if ( ! $sah ) {
+		return new WP_Error( 'tgr_opsi_tidak_sah', 'Pilihan tidak dikenal.', array( 'status' => 400 ) );
+	}
+
+	$tutup = get_post_meta( $post_id, 'tgr_tutup', true );
+	if ( $tutup && strtotime( $tutup . ' 23:59:59' ) < time() ) {
+		return new WP_Error( 'tgr_poll_tutup', 'Jajak pendapat sudah ditutup.', array( 'status' => 409 ) );
+	}
+
+	// Satu suara per alamat IP per jajak pendapat. Bukan pengaman mutlak
+	// (IP bisa berbagi atau berganti), melainkan penahan wajar — sama
+	// seperti yang dilakukan hampir semua jajak pendapat tanpa login.
+	$ip    = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$sidik = 'tgr_vote_' . md5( $post_id . '|' . $ip . wp_salt() );
+	if ( get_transient( $sidik ) ) {
+		return array( 'tercatat' => false, 'hasil' => tgr_hasil_suara( $post_id ) );
+	}
+	set_transient( $sidik, 1, DAY_IN_SECONDS );
+
+	$kunci = tgr_kunci_suara( $opsi_id );
+	add_post_meta( $post_id, $kunci, 0, true );
+	// Satu pernyataan UPDATE: tahan terhadap dua pemilih bersamaan, tidak
+	// seperti pola get_post_meta lalu update_post_meta.
+	$wpdb->query(
+		$wpdb->prepare(
+			"UPDATE {$wpdb->postmeta} SET meta_value = meta_value + 1 WHERE post_id = %d AND meta_key = %s",
+			$post_id,
+			$kunci
+		)
+	);
+	wp_cache_delete( $post_id, 'post_meta' );
+
+	return array( 'tercatat' => true, 'hasil' => tgr_hasil_suara( $post_id ) );
+}
+
+/** Kolom "Suara" di layar daftar jajak pendapat. */
+add_filter(
+	'manage_tgr_poll_posts_columns',
+	function ( $kolom ) {
+		$kolom['tgr_suara'] = 'Suara';
+		return $kolom;
+	},
+	20
+);
+
+add_action(
+	'manage_tgr_poll_posts_custom_column',
+	function ( $kolom, $post_id ) {
+		if ( 'tgr_suara' !== $kolom ) {
+			return;
+		}
+		$hasil = tgr_hasil_suara( $post_id );
+		echo esc_html( array_sum( $hasil ) );
+	},
+	20,
 	2
 );
 

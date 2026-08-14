@@ -21,7 +21,7 @@ export function isPollClosed(poll: Poll): boolean {
   return Date.now() > new Date(poll.closesAt + "T23:59:59").getTime();
 }
 
-/** Total suara dasar sebuah poll. */
-export function pollBaseTotal(poll: Poll): number {
-  return poll.options.reduce((n, o) => n + o.base, 0);
+/** Total suara sebuah poll: angka pembuka redaksi + suara pembaca. */
+export function pollTotal(poll: Poll): number {
+  return poll.options.reduce((n, o) => n + o.base + (o.suara ?? 0), 0);
 }
