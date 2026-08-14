@@ -4,77 +4,65 @@ import { unstable_cache } from "next/cache";
 import { wpFetchFresh, type WpCategory, type WpTerm } from "./client";
 
 /**
- * Peta 37 kategori WordPress → rubrik FE (kunci categoryNames di
- * src/data/site.ts). Rubrikasi baru belum dieksekusi di WordPress
- * (wordpress/cli/04-rubrik.sh masih menunggu akses & keputusan redaksi),
- * jadi tabel ini menjembatani sementara agar tidak ada artikel yatim.
+ * Peta kategori WordPress → rubrik FE (kunci categoryNames di
+ * src/data/site.ts).
+ *
+ * Sejak penataan rubrik dijalankan (wordpress/rest/rubrik.mjs, 15 Agu 2026)
+ * struktur WordPress sudah sama dengan struktur situs, jadi hampir seluruh
+ * baris di bawah 1:1 — slug yang sama di kedua sisi. Yang tersisa hanya
+ * anak-anak rubrik yang di situs tidak punya halaman sendiri.
  *
  * Urutan baris = prioritas saat satu post punya beberapa kategori:
  * jalur terdalam menang; bila kedalaman seri, baris lebih atas menang.
- * Baris TODO(editorial) mengikuti daftar TINJAU di 04-rubrik.sh —
- * setelah redaksi memutuskan dan skrip dijalankan, perbarui tabel ini.
+ * Kategori di luar tabel ini memakai slug-nya sendiri sebagai rubrik
+ * (lihat feCategoryFor) — jalankan `node wordpress/rest/periksa-rubrik.mjs`
+ * untuk menemukannya.
  */
 const WP_TO_FE: ReadonlyArray<readonly [wpSlug: string, fePath: string]> = [
   // Sub-rubrik internasional (terdalam, prioritas tertinggi)
-  ["asean", "internasional/asia-tenggara"],
+  ["asia-tenggara", "internasional/asia-tenggara"],
+  ["asia-timur", "internasional/asia-timur"],
+  ["asia-selatan", "internasional/asia-selatan"],
+  ["asia-tengah", "internasional/asia-tengah"],
+  ["australia", "internasional/australia"],
   ["timur-tengah", "internasional/timur-tengah"],
   ["afrika", "internasional/afrika"],
   ["amerika-latin", "internasional/amerika-latin"],
 
-  // Rubrik dengan padanan langsung
+  // Rubrik utama — slug identik di kedua sisi
+  ["analisis", "analisis"],
+  ["internasional", "internasional"],
+  ["geopolitik", "geopolitik"],
+  ["politik-keamanan", "politik-keamanan"],
+  ["ekonomi-bisnis", "ekonomi-bisnis"],
   ["diplomasi", "diplomasi"],
   ["hukum", "hukum"],
-  ["kesehatan", "kesehatan"],
+  ["sosial", "sosial"],
+  ["budaya", "budaya"],
   ["lingkungan-hidup", "lingkungan-hidup"],
+  ["sains-teknologi", "sains-teknologi"],
+  ["kesehatan", "kesehatan"],
   ["sorot-tokoh", "sorot-tokoh"],
+  ["features", "features"],
   ["media", "media"],
   ["bedah-buku", "bedah-buku"],
-  ["iptek", "sains-teknologi"],
+  ["komentar-pembaca", "komentar-pembaca"],
 
-  // Gabungan politik-keamanan (mengikuti GABUNG/INDUK di 04-rubrik.sh)
-  ["politik", "politik-keamanan"],
-  ["hankam", "politik-keamanan"],
+  // Anak rubrik di WordPress yang di situs tidak punya halaman sendiri —
+  // artikelnya tampil di bawah rubrik induknya.
   ["militer", "politik-keamanan"],
   ["intelijen", "politik-keamanan"],
   ["kejahatan-transnasional", "politik-keamanan"],
-
-  // Geopolitik dan turunannya
-  ["geopolitik", "geopolitik"],
-  ["geopolitik-militer", "geopolitik"],
-  ["strategi-global", "geopolitik"], // TODO(editorial)
-
-  // Ekonomi & bisnis beserta anak-anaknya
-  ["ekonomi-bisnis", "ekonomi-bisnis"],
   ["kebijakan", "ekonomi-bisnis"],
   ["keuangan", "ekonomi-bisnis"],
   ["migas-dan-pertambangan", "ekonomi-bisnis"],
 
-  // KHAZANAH dan anak-anaknya (FE memisah Sosial dan Budaya)
-  ["sosial-budaya", "sosial"], // TODO(editorial)
-  ["nusantara", "sosial"], // TODO(editorial)
-  ["pendidikan", "sosial"], // TODO(editorial)
-  ["khazanah", "budaya"], // TODO(editorial)
-
-  // Liputan khusus
-  ["sejarah", "features"], // TODO(editorial)
-  ["wawancara", "features"], // TODO(editorial)
-  ["komentar-pembaca", "features"], // TODO(editorial)
-
-  // Rubrik besar tanpa padanan — sementara ke Analisis
-  ["analisis", "analisis"],
-  ["kepentingan-nasional", "analisis"], // TODO(editorial)
-
-  // Slug TUJUAN 04-rubrik.sh (GANTI/GABUNG) — belum ada di WP hari ini,
-  // dicantumkan sekarang supaya peta tetap benar begitu skrip dijalankan.
-  ["sains-teknologi", "sains-teknologi"],
-  ["asia-tenggara", "internasional/asia-tenggara"],
-  ["politik-keamanan", "politik-keamanan"],
-
-  // Kawasan tanpa rubrik FE sendiri — jatuh ke induk Internasional
-  ["amerika", "internasional"], // TODO(editorial): FE hanya punya Amerika Latin
-  ["asia", "internasional"], // TODO(editorial): menunggu pemecahan per kawasan
+  // Kawasan lama yang menunggu pemilahan redaksi: "asia" akan dipecah ke
+  // Asia Timur/Selatan/Tengah, sementara Amerika dan Eropa belum punya
+  // rubrik sendiri di situs.
+  ["asia", "internasional"], // TODO(editorial)
+  ["amerika", "internasional"], // TODO(editorial)
   ["eropa", "internasional"], // TODO(editorial)
-  ["internasional", "internasional"],
 ];
 
 const WP_TO_FE_MAP = new Map(WP_TO_FE.map(([wp, fe]) => [wp, fe]));

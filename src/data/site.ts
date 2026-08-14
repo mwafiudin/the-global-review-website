@@ -125,6 +125,8 @@ export const categoryNames: Record<string, string> = {
   // halaman rubriknya valid, tapi sengaja tidak dimasukkan ke menu mana pun
   // (kanal Bedah Buku di navigasi tetap menunjuk /bedah-buku).
   "bedah-buku": "Bedah Buku",
+  // Sama halnya: kategori lama yang halamannya tetap valid, tanpa entri menu.
+  "komentar-pembaca": "Komentar Pembaca",
 };
 
 /** Diperiksa Agustus 2026 — seluruh tautan menjawab dengan normal. */

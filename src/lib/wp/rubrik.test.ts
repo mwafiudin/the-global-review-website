@@ -25,10 +25,10 @@ const category = (id: number, slug: string): WpCategory => ({
 
 describe("feCategoryFor", () => {
   it("memilih jalur terdalam, apa pun urutan termnya", () => {
-    expect(feCategoryFor([term("internasional"), term("asean")])).toBe(
+    expect(feCategoryFor([term("internasional"), term("asia-tenggara")])).toBe(
       "internasional/asia-tenggara"
     );
-    expect(feCategoryFor([term("asean"), term("internasional")])).toBe(
+    expect(feCategoryFor([term("asia-tenggara"), term("internasional")])).toBe(
       "internasional/asia-tenggara"
     );
   });
@@ -44,12 +44,12 @@ describe("feCategoryFor", () => {
   });
 
   it("mengabaikan term non-kategori", () => {
-    expect(feCategoryFor([term("asean", "post_tag")])).toBe("analisis");
+    expect(feCategoryFor([term("asia-tenggara", "post_tag")])).toBe("analisis");
   });
 
   it("jatuh ke analisis hanya bila tidak ada kategori sama sekali", () => {
     expect(feCategoryFor([])).toBe("analisis");
-    expect(feCategoryFor([term("asean", "post_tag")])).toBe("analisis");
+    expect(feCategoryFor([term("asia-tenggara", "post_tag")])).toBe("analisis");
   });
 
   it("kategori baru yang belum dipetakan memakai slug-nya sendiri", () => {
@@ -65,7 +65,7 @@ describe("feCategoryFor", () => {
     expect(feCategoryFor([term("kripto-aset"), term("diplomasi")])).toBe(
       "diplomasi"
     );
-    expect(feCategoryFor([term("kripto-aset"), term("asean")])).toBe(
+    expect(feCategoryFor([term("kripto-aset"), term("asia-tenggara")])).toBe(
       "internasional/asia-tenggara"
     );
     warn.mockRestore();
@@ -73,7 +73,7 @@ describe("feCategoryFor", () => {
 });
 
 describe("feCategoryForIds", () => {
-  const categories = [category(10, "hukum"), category(20, "asean")];
+  const categories = [category(10, "hukum"), category(20, "asia-tenggara")];
 
   it("meresolusi id term lewat daftar kategori yang disuplai", () => {
     expect(feCategoryForIds([10], categories)).toBe("hukum");

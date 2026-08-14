@@ -63,6 +63,12 @@ const INDUK = [
   ["intelijen", "politik-keamanan"],
   ["kejahatan-transnasional", "politik-keamanan"],
   ["diplomasi", null],
+  // khazanah dulunya induk dari ketiganya; setelah ia berganti nama jadi
+  // Budaya, ketiganya ikut jadi anak Budaya. Di situs keempatnya rubrik
+  // setingkat, jadi dinaikkan kembali.
+  ["sosial", null],
+  ["features", null],
+  ["media", null],
 ];
 
 /** [slug asal, slug tujuan] — tulisan dipindahkan, asal dihapus. */

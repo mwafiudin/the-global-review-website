@@ -30,6 +30,26 @@ di kode (meta `tgr_buku_*` belum punya slot UI). Suara poll pengunjung
 masih di sisi klien — penyimpanan suara ke WP = Fase 2b (butuh endpoint
 tulis di mu-plugin + Application Password).
 
+**Fase 2b — akses tulis & pekerjaan sisi WordPress.** User `frontend-api`
+(peran Editor) + Application Password membuka jalur tulis lewat REST;
+perkakasnya di `wordpress/rest/` (`wp.mjs` klien bersemafor,
+`arsipkan-lama.mjs`, `rubrik.mjs`, `periksa-rubrik.mjs`), semuanya
+tinjauan-dulu kecuali `APPLY=1`. Ini menggantikan `wordpress/cli/*.sh` yang
+ditulis untuk WP-CLI dan tidak pernah bisa dijalankan: SSH host menjawab
+`kex_exchange_identification … abort` (layanan ada, diblokir penyedia) dan
+cPanel tidak menyediakan Terminal. REST punya 67 endpoint tulis — yang
+tersisa hanya `search-replace` DB (saat cutover), ekspor DB, dan update
+core.
+
+`tgr-headless.php` naik ke **v2.0**: layar editor untuk ketiga tipe konten
+(tanpa ini `tgr_opsi` dan `tgr_foto` yang berbentuk larik mustahil diisi
+redaksi), plus tipe konten `tgr_subscriber` dengan ekspor CSV dan endpoint
+`tgr/v1/subscribe` bersecret. `tgr-revalidate.php` kini melewati
+penghapusan dari Tong Sampah supaya tombol "Kosongkan Tong Sampah" tidak
+menggantungkan layar admin.
+
+Panduan non-teknis untuk penulis/editor: `docs/panduan-redaksi.md`.
+
 **Batas arsip (proposal §3.2).** Tulisan yang terbit sebelum
 `WP_ARCHIVE_AFTER` (bawaan `2022-12-31T23:59:59`) tidak ditampilkan:
 **5.683 → 876 artikel**. Ambangnya disisipkan terpusat lewat `withArchive()`
