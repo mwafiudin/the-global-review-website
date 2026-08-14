@@ -16,7 +16,17 @@ export function inCategory(article: Article, categorySlug: string): boolean {
 }
 
 export function categoryName(slug: string): string {
-  return categoryNames[slug] ?? slug;
+  const terdaftar = categoryNames[slug];
+  if (terdaftar) return terdaftar;
+  // Rubrik di luar daftar — kategori baru yang dibuat redaksi di wp-admin
+  // sebelum sempat didaftarkan di sini. Slug-nya dirapikan jadi teks yang
+  // layak baca alih-alih tampil mentah sebagai "sains-teknologi".
+  const akhir = slug.split("/").pop() ?? slug;
+  return akhir
+    .split("-")
+    .filter(Boolean)
+    .map((kata) => kata.charAt(0).toUpperCase() + kata.slice(1))
+    .join(" ");
 }
 
 export function categoryHref(slug: string): string {

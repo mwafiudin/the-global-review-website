@@ -47,11 +47,27 @@ describe("feCategoryFor", () => {
     expect(feCategoryFor([term("asean", "post_tag")])).toBe("analisis");
   });
 
-  it("jatuh ke analisis bila kosong atau tak terpetakan", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("jatuh ke analisis hanya bila tidak ada kategori sama sekali", () => {
     expect(feCategoryFor([])).toBe("analisis");
-    expect(feCategoryFor([term("slug-yang-tidak-ada")])).toBe("analisis");
+    expect(feCategoryFor([term("asean", "post_tag")])).toBe("analisis");
+  });
+
+  it("kategori baru yang belum dipetakan memakai slug-nya sendiri", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    // Dulu dilabeli "analisis" — pembaca diberi rubrik yang salah tanpa jejak.
+    expect(feCategoryFor([term("kripto-aset")])).toBe("kripto-aset");
     expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
+  });
+
+  it("kategori terpetakan tetap menang atas yang belum dipetakan", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    expect(feCategoryFor([term("kripto-aset"), term("diplomasi")])).toBe(
+      "diplomasi"
+    );
+    expect(feCategoryFor([term("kripto-aset"), term("asean")])).toBe(
+      "internasional/asia-tenggara"
+    );
     warn.mockRestore();
   });
 });

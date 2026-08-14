@@ -6,6 +6,7 @@ import { categoryNames, mainMenu } from "@/data/site";
 import { getAuthor } from "@/data/authors";
 import { categoryName } from "@/lib/articles";
 import { byCategoryWithTotal } from "@/lib/wp/articles";
+import { wpCategoryIds } from "@/lib/wp/rubrik";
 import { categoryIcon } from "@/lib/categoryIcons";
 import { CardRow } from "@/components/ArticleCard";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
@@ -28,11 +29,22 @@ export async function generateMetadata({
   const { slug } = await params;
   const key = slug.join("/");
   // Streaming (loading.tsx): status 404 diputuskan sebelum shell terkirim.
-  if (!categoryNames[key]) notFound();
+  if (!(await rubrikAda(key))) notFound();
+  const nama = categoryName(key);
   return {
-    title: `Rubrik ${categoryNames[key]}`,
-    description: `Kumpulan artikel The Global Review pada rubrik ${categoryNames[key]}.`,
+    title: `Rubrik ${nama}`,
+    description: `Kumpulan artikel The Global Review pada rubrik ${nama}.`,
   };
+}
+
+/**
+ * Rubrik sah bila terdaftar di menu situs, ATAU merupakan kategori yang
+ * benar-benar ada di WordPress — kategori baru buatan redaksi tetap punya
+ * halaman sambil menunggu didaftarkan. Slug karangan tetap 404.
+ */
+async function rubrikAda(key: string): Promise<boolean> {
+  if (categoryNames[key]) return true;
+  return (await wpCategoryIds(key)).length > 0;
 }
 
 export default async function CategoryPage({
@@ -42,7 +54,7 @@ export default async function CategoryPage({
 }) {
   const { slug } = await params;
   const key = slug.join("/");
-  if (!categoryNames[key]) notFound();
+  if (!(await rubrikAda(key))) notFound();
 
   // list dibatasi 100 terbaru (payload ke browser); total = jumlah sebenarnya.
   const { list, total } = await byCategoryWithTotal(key);

@@ -85,19 +85,26 @@ function depth(fePath: string): number {
 
 /**
  * Tentukan rubrik FE sebuah post dari daftar term kategorinya.
- * Term tak dikenal diabaikan; bila tak ada satu pun yang terpetakan
- * (seharusnya mustahil — seluruh 37 term ada di tabel), jatuh ke Analisis.
+ *
+ * Kategori yang belum ada di tabel (redaksi membuat kategori baru di
+ * wp-admin) memakai slug-nya sendiri sebagai rubrik, dengan prioritas
+ * paling rendah. Sebelumnya kategori semacam itu diabaikan dan artikelnya
+ * dilabeli "Analisis" — pembaca diberi rubrik yang salah tanpa jejak apa
+ * pun. Rubrik apa adanya lebih jujur: label memakai nama slug, halaman
+ * /category/{slug} tetap terbuka, hanya belum masuk menu.
  */
 export function feCategoryFor(terms: WpTerm[]): string {
   let best: { fePath: string; order: number } | undefined;
   for (const term of terms) {
     if (term.taxonomy !== "category") continue;
-    const fePath = WP_TO_FE_MAP.get(term.slug);
-    if (!fePath) {
+    const terpetakan = WP_TO_FE_MAP.get(term.slug);
+    if (!terpetakan) {
       console.warn(`[wp] kategori tak terpetakan: ${term.slug}`);
-      continue;
     }
-    const order = WP_TO_FE.findIndex(([wp]) => wp === term.slug);
+    const fePath = terpetakan ?? term.slug;
+    const order = terpetakan
+      ? WP_TO_FE.findIndex(([wp]) => wp === term.slug)
+      : WP_TO_FE.length;
     if (
       !best ||
       depth(fePath) > depth(best.fePath) ||
@@ -152,7 +159,9 @@ export const wpCategories = unstable_cache(
  */
 export async function wpCategoryIds(fePath: string): Promise<number[]> {
   const wanted = new Set(wpSlugsFor(fePath));
-  if (wanted.size === 0) return [];
+  // Rubrik di luar tabel (kategori baru buatan redaksi) tetap punya
+  // halaman: jalurnya dicocokkan langsung dengan slug WordPress.
+  if (wanted.size === 0) wanted.add(fePath);
   const categories = await wpCategories();
   return categories.filter((c) => wanted.has(c.slug)).map((c) => c.id);
 }

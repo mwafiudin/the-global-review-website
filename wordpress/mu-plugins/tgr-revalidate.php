@@ -125,11 +125,22 @@ add_action(
 	3
 );
 
-/** Hapus permanen (lolos dari transition_post_status). */
+/**
+ * Hapus permanen (lolos dari transition_post_status).
+ *
+ * Yang dihapus dari Tong Sampah sengaja dilewati: frontend sudah berhenti
+ * menampilkannya sejak ia masuk Tong Sampah, jadi kirimannya mubazir.
+ * Ini juga yang membuat tombol "Kosongkan Tong Sampah" tetap bisa dipakai —
+ * tanpa penjaga ini, mengosongkan ribuan tulisan berarti ribuan kiriman
+ * blocking berturut-turut dan layar admin menggantung sampai timeout.
+ */
 add_action(
 	'deleted_post',
 	function ( $post_id, $post ) {
 		if ( ! $post || ! in_array( $post->post_type, tgr_revalidate_post_types(), true ) ) {
+			return;
+		}
+		if ( 'trash' === $post->post_status ) {
 			return;
 		}
 		tgr_revalidate_send( $post, 'deleted', $post->post_status );
