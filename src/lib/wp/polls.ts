@@ -104,8 +104,8 @@ export async function wpActivePolls(): Promise<Poll[]> {
     try {
       const items = await cachedPolls();
       if (items.length > 0) return items;
-    } catch {
-      // WP tak terjangkau — data contoh menjaga seksi tetap hidup.
+    } catch (err) {
+      console.error("[wp] jajak pendapat gagal dibaca, memakai data contoh:", err);
     }
     return [...contohPolls].sort((a, b) => b.date.localeCompare(a.date));
   });

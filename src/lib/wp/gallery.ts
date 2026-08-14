@@ -107,8 +107,8 @@ export async function wpAlbums(): Promise<Album[]> {
     try {
       const items = await cachedAlbums();
       if (items.length > 0) return items;
-    } catch {
-      // WP tak terjangkau — data contoh menjaga halaman tetap hidup.
+    } catch (err) {
+      console.error("[wp] album gagal dibaca, memakai data contoh:", err);
     }
     return contohAlbums;
   });

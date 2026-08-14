@@ -90,8 +90,11 @@ export async function wpPodcasts(): Promise<Podcast[]> {
     try {
       const items = await cachedPodcasts();
       if (items.length > 0) return items;
-    } catch {
-      // WP tak terjangkau — data contoh menjaga halaman tetap hidup.
+    } catch (err) {
+      // WP tak terjangkau — data contoh menjaga halaman tetap hidup, tapi
+      // kegagalannya harus terlihat: jatuh ke data contoh tanpa jejak
+      // membuat seksi yang seharusnya sudah hidup tampak baik-baik saja.
+      console.error("[wp] podcast gagal dibaca, memakai data contoh:", err);
     }
     return allPodcasts();
   });
