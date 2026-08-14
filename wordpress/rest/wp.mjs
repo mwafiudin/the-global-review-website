@@ -78,8 +78,15 @@ function lepasSlot() {
  * Satu permintaan REST ber-autentikasi. Mengulang pada 429/5xx dengan jeda
  * menaik: host ini menjawab 503 bila diberondong, dan operasi massal
  * ribuan tulisan pasti menyentuh batas itu.
+ *
+ * Pengulangan HANYA untuk GET. POST tidak idempoten: pernah terjadi satu
+ * pembuatan podcast berhasil di server tetapi responsnya tidak kembali
+ * tepat waktu, lalu pengulangan membuat pos kedua dan WordPress menambahkan
+ * akhiran "-2" pada slug-nya. Untuk POST/DELETE lebih baik satu kegagalan
+ * yang kelihatan daripada satu duplikat yang senyap.
  */
 export async function wp(jalur, { metode = "GET", data, query } = {}) {
+  const bolehUlang = metode === "GET";
   const url = new URL(`${BASE}/wp/v2${jalur}`);
   for (const [k, v] of Object.entries(query ?? {})) {
     if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, String(v));
@@ -88,7 +95,8 @@ export async function wp(jalur, { metode = "GET", data, query } = {}) {
   await ambilSlot();
   try {
     let galatTerakhir;
-    for (let percobaan = 0; percobaan < 4; percobaan++) {
+    const maksPercobaan = bolehUlang ? 4 : 1;
+    for (let percobaan = 0; percobaan < maksPercobaan; percobaan++) {
       if (percobaan > 0) {
         await new Promise((r) => setTimeout(r, JEDA_ULANG_MS * percobaan));
       }
