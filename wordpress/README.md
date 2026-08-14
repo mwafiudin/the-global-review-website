@@ -158,12 +158,30 @@ dengan aturan: **koleksi kosong → tampilkan data contoh**. Artinya begitu
 redaksi menerbitkan podcast/album/poll pertamanya, seksi terkait berpindah
 ke konten WordPress dengan sendirinya, tanpa deploy.
 
-**Pembaruan v1.1** (timpa `tgr-headless.php` lama di `mu-plugins/` lewat
-File Manager, cek beranda sesudahnya; tidak perlu flush permalink karena
-hanya menambah meta): `tgr_kategori` pada album (label jenis kegiatan,
-mis. "Seminar"; kosong = frontend menampilkan "Kegiatan") dan
-`tgr_unggulan` pada podcast (isi `1` untuk penampilan utama halaman
-Podcast; kosong = frontend memakai yang terbaru).
+**Pembaruan v2.0 — layar editor** (timpa `tgr-headless.php` lama di
+`mu-plugins/` lewat File Manager, cek beranda sesudahnya; tidak perlu flush
+permalink karena hanya menambah meta + layar admin).
+
+Sebelum versi ini, ketiga tipe konten **tidak bisa diisi redaksi**: field
+`tgr_opsi` (daftar pilihan jawaban) dan `tgr_foto` (daftar lampiran)
+berbentuk larik, sedangkan kotak Custom Fields bawaan hanya menerima
+sepasang teks. v2.0 menambahkan kotak isian yang sebenarnya:
+
+| Layar | Isi kotak |
+|---|---|
+| **Jajak Pendapat** | Pertanyaan · pemilih artikel sumber · tanggal tutup (kalender) · tabel pilihan jawaban yang bisa ditambah/dikurangi, lengkap dengan suara awal |
+| **Podcast** | Kanal · narasumber · format · kolom video yang **menerima URL YouTube penuh** (ID-nya diambil otomatis) · tanggal tayang · centang "penampilan utama" (otomatis melepas tanda dari yang lain) |
+| **Album Galeri** | Jenis kegiatan · lokasi · tanggal · **pemilih foto dari Media Library**, bisa banyak sekaligus dan urutannya digeser |
+
+Semua tanggal memakai pemilih kalender sehingga formatnya dijamin
+`YYYY-MM-DD` — frontend menempelkan jam ke nilai ini, jadi teks bebas akan
+tampil sebagai "Invalid Date" di situs. Layar daftar (Semua Podcast/Album/
+Jajak Pendapat) juga mendapat kolom ringkas: kanal, jumlah foto, jumlah
+pilihan, artikel sumber, dan tanda penampilan utama.
+
+Penyimpanan lewat REST tidak terpengaruh kotak-kotak ini (nonce admin tidak
+ada di permintaan REST), jadi pengisian programatik dan pengisian manual
+bisa berjalan berdampingan.
 
 Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 
