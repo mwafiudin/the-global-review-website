@@ -19,7 +19,7 @@ jobs:
     name: Lint, typecheck & test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v7
         with:
@@ -42,7 +42,7 @@ jobs:
     name: Lint mu-plugin & skrip
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # mu-plugin dipasang manual ke host produksi tanpa SSH; syntax error di
       # sini berarti situs WP putih dan mahal dipulihkan lewat cPanel.
