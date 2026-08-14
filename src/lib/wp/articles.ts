@@ -147,8 +147,16 @@ const cachedCount = unstable_cache(
 
 const cachedSearch = unstable_cache(
   async (q: string, limit: number): Promise<Article[]> => {
+    // search= bawaan menggeledah isi lengkap ±5.700 pos: 5–9 dtk di host
+    // ini, kerap melewati batas waktu sehingga panel tampak "tanpa hasil".
+    // Kolom judul saja ±0,9 dtk (butuh WP ≥6.2) dan lebih relevan untuk
+    // pencarian situs.
     const posts = await wpFetchFresh<WpPost[]>("/posts", {
-      query: listQuery({ search: q, per_page: limit }),
+      query: listQuery({
+        search: q,
+        search_columns: "post_title",
+        per_page: limit,
+      }),
     });
     return mapListPosts(posts);
   },
@@ -268,7 +276,7 @@ export async function adjacentArticles(article: Article): Promise<{
   return { prev: newer[0], next: older[0] };
 }
 
-/** Pencarian full-text WordPress (urutan relevansi) untuk /api/search. */
+/** Pencarian judul WordPress (urutan relevansi) untuk /api/search. */
 export async function searchArticles(q: string, limit = 8): Promise<Article[]> {
   return dedup(`search:${q}:${limit}`, () => cachedSearch(q, perPage(limit)));
 }
