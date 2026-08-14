@@ -32,6 +32,11 @@ Node 22 (lihat `.nvmrc`). Salin `.env.example` ke `.env.local` sebelum
 | `npm run typecheck` | `next typegen` lalu `tsc --noEmit` |
 | `npm test` | Unit test Vitest untuk `src/lib/wp/` |
 | `npm run build` | Build produksi (menghubungi WordPress) |
+| `npm run ikon` | Regenerasi favicon dkk dari `public/tgr-gold-compass.svg` |
+
+Ikon situs (`icon.svg`, `favicon.ico`, `apple-icon.png`, dan ikon manifest)
+adalah keluaran `npm run ikon` — jangan disunting satu per satu; ubah SVG
+kompasnya lalu jalankan ulang perintah itu.
 
 Sebelum push, jalankan gate yang sama dengan CI:
 
