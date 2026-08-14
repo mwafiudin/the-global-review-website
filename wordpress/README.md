@@ -183,6 +183,28 @@ Penyimpanan lewat REST tidak terpengaruh kotak-kotak ini (nonce admin tidak
 ada di permintaan REST), jadi pengisian programatik dan pengisian manual
 bisa berjalan berdampingan.
 
+### Pelanggan buletin
+
+v2.0 juga menambah menu **Pelanggan Buletin**. Pembaca yang mengisi formulir
+di situs baru tersimpan sebagai tipe konten `tgr_subscriber` — alamat email
+jadi judulnya, sehingga langsung terlihat, tercari, dan bisa diurutkan di
+wp-admin. Tombol **Unduh CSV** di atas daftar mengekspor seluruhnya (email,
+tanggal daftar, halaman asal) kapan pun dibutuhkan.
+
+Catatan keamanan yang disengaja:
+
+- Tipe konten ini **tidak diekspos ke REST** (`show_in_rest` false). Endpoint
+  `wp/v2` situs ini terbuka dibaca siapa pun, dan daftar alamat email adalah
+  data pribadi.
+- Endpoint penerimanya (`tgr/v1/subscribe`) mensyaratkan header
+  `X-TGR-Secret` — sama seperti webhook revalidasi. Browser tidak pernah
+  memegang secret itu; frontend meneruskan pendaftaran dari sisi server.
+- Alamat IP pendaftar disimpan sebagai sidik (hash), bukan apa adanya:
+  cukup untuk menelusuri penyalahgunaan tanpa menyimpan data yang tidak
+  diperlukan. Rem per IP berlaku di kedua sisi.
+- Menambah pelanggan lewat wp-admin sengaja dimatikan (`create_posts` =
+  `do_not_allow`) — daftar ini hanya boleh tumbuh dari pendaftaran nyata.
+
 Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 
 | Meta | Kegunaan |

@@ -54,7 +54,40 @@ function GlobeLines({ className = "" }: { className?: string }) {
 
 export function NewsletterForm() {
   const [sent, setSent] = useState(false);
+  const [email, setEmail] = useState("");
+  const [mengirim, setMengirim] = useState(false);
+  const [galat, setGalat] = useState("");
   const { t } = useLang();
+
+  async function daftar(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (mengirim) return;
+    setMengirim(true);
+    setGalat("");
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          // Umpan bot: kolom tersembunyi yang tak pernah diisi manusia.
+          situs: (e.currentTarget.elements.namedItem("situs") as HTMLInputElement)
+            ?.value,
+          sumber: window.location.pathname,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setGalat(data.error || t("Pendaftaran gagal, coba lagi nanti."));
+        return;
+      }
+      setSent(true);
+    } catch {
+      setGalat(t("Pendaftaran gagal, coba lagi nanti."));
+    } finally {
+      setMengirim(false);
+    }
+  }
 
   return (
     <section
@@ -99,30 +132,39 @@ export function NewsletterForm() {
             {t("Terima kasih, Anda sudah terdaftar.")}
           </p>
         ) : (
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              setSent(true);
-            }}
-            className="flex w-full gap-3 md:w-[400px]"
-          >
-            <label htmlFor="newsletter-email" className="sr-only">
-              Alamat email
-            </label>
-            <input
-              id="newsletter-email"
-              type="email"
-              required
-              placeholder={t("Alamat email Anda")}
-              className="w-full rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-white/50 focus:border-[#d9b14a] focus:outline-none focus:ring-2 focus:ring-[#d9b14a]/30"
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#011840] transition-colors hover:bg-[#d9b14a] active:scale-[0.98] dark:text-[#18181b]"
-            >
-              {t("Berlangganan")}
-            </button>
-          </form>
+          <div className="w-full md:w-[400px]">
+            <form onSubmit={daftar} className="flex w-full gap-3">
+              <label htmlFor="newsletter-email" className="sr-only">
+                Alamat email
+              </label>
+              <input
+                id="newsletter-email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("Alamat email Anda")}
+                className="w-full rounded-lg border border-white/25 bg-white/10 px-4 py-2.5 text-sm text-white placeholder:text-white/50 focus:border-[#d9b14a] focus:outline-none focus:ring-2 focus:ring-[#d9b14a]/30"
+              />
+              {/* Umpan bot: disembunyikan dari mata dan dari pembaca layar. */}
+              <input
+                type="text"
+                name="situs"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden
+                className="hidden"
+              />
+              <button
+                type="submit"
+                disabled={mengirim}
+                className="shrink-0 rounded-lg bg-white px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-[#011840] transition-colors hover:bg-[#d9b14a] active:scale-[0.98] disabled:opacity-60 dark:text-[#18181b]"
+              >
+                {t("Berlangganan")}
+              </button>
+            </form>
+            {galat && <p className="mt-2 text-sm text-white/85">{galat}</p>}
+          </div>
         )}
       </div>
     </section>

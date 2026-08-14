@@ -910,6 +910,240 @@ add_action(
 	2
 );
 
+/* ═══════════════════════════════════════════════════════════════════════
+ * Pelanggan buletin.
+ *
+ * Disimpan sebagai tipe konten tersendiri supaya redaksi bisa melihat,
+ * mencari, dan mengekspornya kapan saja dari wp-admin tanpa plugin lain.
+ * Alamat email disimpan sebagai judul pos agar langsung tampil di daftar
+ * dan ikut mesin pencarian bawaan.
+ *
+ * TIDAK diekspos ke REST (show_in_rest false): daftar alamat email adalah
+ * data pribadi, dan endpoint wp/v2 situs ini terbuka untuk dibaca siapa pun.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+add_action(
+	'init',
+	function () {
+		register_post_type(
+			'tgr_subscriber',
+			array(
+				'labels'        => array(
+					'name'          => 'Pelanggan Buletin',
+					'singular_name' => 'Pelanggan',
+					'all_items'     => 'Semua Pelanggan',
+					'search_items'  => 'Cari Pelanggan',
+				),
+				'public'        => false,
+				'show_ui'       => true,
+				'show_in_menu'  => true,
+				'show_in_rest'  => false,
+				'menu_icon'     => 'dashicons-email-alt',
+				'menu_position' => 24,
+				'supports'      => array( 'title' ),
+				'capabilities'  => array( 'create_posts' => 'do_not_allow' ),
+				'map_meta_cap'  => true,
+			)
+		);
+
+		foreach ( array( 'tgr_sumber', 'tgr_ip_hash' ) as $key ) {
+			register_post_meta(
+				'tgr_subscriber',
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => false,
+					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_others_posts' );
+					},
+				)
+			);
+		}
+	}
+);
+
+add_filter(
+	'manage_tgr_subscriber_posts_columns',
+	function ( $kolom ) {
+		return array(
+			'cb'         => isset( $kolom['cb'] ) ? $kolom['cb'] : '',
+			'title'      => 'Email',
+			'tgr_sumber' => 'Sumber',
+			'date'       => 'Terdaftar',
+		);
+	}
+);
+
+add_action(
+	'manage_tgr_subscriber_posts_custom_column',
+	function ( $kolom, $post_id ) {
+		if ( 'tgr_sumber' === $kolom ) {
+			echo esc_html( tgr_meta( $post_id, 'tgr_sumber', '—' ) );
+		}
+	},
+	10,
+	2
+);
+
+/** Tombol ekspor di atas daftar pelanggan. */
+add_action(
+	'restrict_manage_posts',
+	function ( $post_type ) {
+		if ( 'tgr_subscriber' !== $post_type || ! current_user_can( 'edit_others_posts' ) ) {
+			return;
+		}
+		$url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=tgr_ekspor_pelanggan' ),
+			'tgr_ekspor_pelanggan'
+		);
+		printf(
+			'<a href="%s" class="button" style="margin-left:8px">Unduh CSV</a>',
+			esc_url( $url )
+		);
+	}
+);
+
+/**
+ * Ekspor seluruh pelanggan sebagai CSV. Sengaja tanpa paginasi: daftarnya
+ * memang dimaksudkan untuk diunduh utuh, dan hanya berisi tiga kolom.
+ */
+add_action(
+	'admin_post_tgr_ekspor_pelanggan',
+	function () {
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			wp_die( 'Tidak punya izin mengekspor daftar pelanggan.', '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'tgr_ekspor_pelanggan' );
+
+		$pelanggan = get_posts(
+			array(
+				'post_type'   => 'tgr_subscriber',
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'orderby'     => 'date',
+				'order'       => 'ASC',
+			)
+		);
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=pelanggan-buletin-' . gmdate( 'Y-m-d' ) . '.csv' );
+
+		$keluaran = fopen( 'php://output', 'w' );
+		fputcsv( $keluaran, array( 'email', 'terdaftar', 'sumber' ) );
+		foreach ( $pelanggan as $satu ) {
+			fputcsv(
+				$keluaran,
+				array(
+					$satu->post_title,
+					$satu->post_date,
+					get_post_meta( $satu->ID, 'tgr_sumber', true ),
+				)
+			);
+		}
+		fclose( $keluaran );
+		exit;
+	}
+);
+
+/** Secret dibandingkan timing-safe; daftar dipisah koma agar bisa dirotasi. */
+function tgr_secret_cocok( $dikirim ) {
+	if ( ! defined( 'TGR_REVALIDATE_SECRET' ) || ! TGR_REVALIDATE_SECRET || ! $dikirim ) {
+		return false;
+	}
+	foreach ( explode( ',', TGR_REVALIDATE_SECRET ) as $secret ) {
+		$secret = trim( $secret );
+		if ( '' !== $secret && hash_equals( $secret, $dikirim ) ) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/**
+ * Penerima pendaftaran dari frontend. Bukan endpoint publik: frontend
+ * meneruskannya dari server dengan secret yang sama seperti webhook
+ * revalidasi, sehingga alamat ini tidak bisa dibanjiri langsung dari
+ * peramban siapa pun.
+ */
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'tgr/v1',
+			'/subscribe',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => function ( $request ) {
+					return tgr_secret_cocok( $request->get_header( 'x-tgr-secret' ) );
+				},
+				'callback'            => 'tgr_terima_pelanggan',
+				'args'                => array(
+					'email'  => array( 'required' => true ),
+					'sumber' => array( 'required' => false ),
+				),
+			)
+		);
+	}
+);
+
+function tgr_terima_pelanggan( $request ) {
+	$email = sanitize_email( (string) $request->get_param( 'email' ) );
+	if ( ! $email || ! is_email( $email ) ) {
+		return new WP_Error( 'tgr_email_tidak_sah', 'Alamat email tidak sah.', array( 'status' => 400 ) );
+	}
+
+	// Rem sederhana per alamat IP; frontend juga membatasi, ini lapis kedua
+	// bila secret bocor.
+	$ip    = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$sidik = 'tgr_sub_' . md5( $ip . wp_salt() );
+	$hitung = (int) get_transient( $sidik );
+	if ( $hitung >= 10 ) {
+		return new WP_Error( 'tgr_terlalu_sering', 'Terlalu banyak percobaan, coba lagi nanti.', array( 'status' => 429 ) );
+	}
+	set_transient( $sidik, $hitung + 1, HOUR_IN_SECONDS );
+
+	$sudah_ada = get_posts(
+		array(
+			'post_type'              => 'tgr_subscriber',
+			'post_status'            => 'any',
+			'title'                  => $email,
+			'numberposts'            => 1,
+			'fields'                 => 'ids',
+			'no_found_rows'          => true,
+			'update_post_meta_cache' => false,
+			'update_post_term_cache' => false,
+		)
+	);
+	if ( ! empty( $sudah_ada ) ) {
+		// Sengaja 200: pendaftar tidak perlu tahu alamat mana yang sudah
+		// terdaftar, dan pengalaman di sisi pembaca tetap sama.
+		return array( 'terdaftar' => true, 'baru' => false );
+	}
+
+	$id = wp_insert_post(
+		array(
+			'post_type'   => 'tgr_subscriber',
+			'post_status' => 'publish',
+			'post_title'  => $email,
+		),
+		true
+	);
+	if ( is_wp_error( $id ) ) {
+		return new WP_Error( 'tgr_gagal_simpan', 'Gagal menyimpan pendaftaran.', array( 'status' => 500 ) );
+	}
+
+	update_post_meta( $id, 'tgr_sumber', sanitize_text_field( (string) $request->get_param( 'sumber' ) ) );
+	// IP disimpan sebagai sidik, bukan apa adanya: cukup untuk menelusuri
+	// penyalahgunaan, tanpa menyimpan data pribadi yang tidak diperlukan.
+	update_post_meta( $id, 'tgr_ip_hash', $ip ? wp_hash( $ip ) : '' );
+
+	return array( 'terdaftar' => true, 'baru' => true );
+}
+
 /**
  * Naikkan batas per_page REST dari 100 ke 200 khusus permintaan ber-token,
  * agar sinkronisasi 5.678 artikel tidak perlu terlalu banyak putaran.
