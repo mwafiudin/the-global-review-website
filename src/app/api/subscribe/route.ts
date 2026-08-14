@@ -85,9 +85,12 @@ export async function POST(request: NextRequest) {
       cache: "no-store",
     });
     if (!res.ok) {
+      // Sama seperti /api/vote: penolakan yang memang salah pengirim
+      // diteruskan apa adanya, 502 hanya untuk kegagalan di luar itu.
+      const diteruskan = [400, 429].includes(res.status);
       return Response.json(
         { error: "Pendaftaran gagal, coba lagi nanti" },
-        { status: res.status === 429 ? 429 : 502 }
+        { status: diteruskan ? res.status : 502 }
       );
     }
     return Response.json({ terdaftar: true });

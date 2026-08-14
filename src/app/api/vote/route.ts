@@ -57,9 +57,13 @@ export async function POST(request: NextRequest) {
       hasil?: Record<string, number>;
     } | null;
     if (!res.ok) {
+      // Penolakan WordPress diteruskan apa adanya bila memang salah
+      // pengguna (pilihan tak dikenal, poll hilang, poll sudah ditutup);
+      // 502 hanya untuk kegagalan yang bukan salah pengirim.
+      const diteruskan = [400, 404, 409].includes(res.status);
       return Response.json(
         { error: "Suara gagal dicatat" },
-        { status: res.status === 409 ? 409 : 502 }
+        { status: diteruskan ? res.status : 502 }
       );
     }
     return Response.json({ hasil: data?.hasil ?? {} });
