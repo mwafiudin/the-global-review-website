@@ -20,6 +20,28 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Pengembangan
+
+Node 22 (lihat `.nvmrc`). Salin `.env.example` ke `.env.local` sebelum
+`npm run dev` — `WP_API_URL` wajib terisi.
+
+| Perintah | Isi |
+| --- | --- |
+| `npm run dev` | Server pengembangan di <http://localhost:3000> |
+| `npm run lint` | ESLint, warning dihitung sebagai kegagalan |
+| `npm run typecheck` | `next typegen` lalu `tsc --noEmit` |
+| `npm test` | Unit test Vitest untuk `src/lib/wp/` |
+| `npm run build` | Build produksi (menghubungi WordPress) |
+
+Sebelum push, jalankan gate yang sama dengan CI:
+
+```bash
+npm run lint && npm run typecheck && npm test
+```
+
+Rinciannya di [`docs/ci.md`](docs/ci.md). Integrasi WordPress-nya di
+[`docs/integrasi-wordpress.md`](docs/integrasi-wordpress.md).
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# GITHUB_TOKEN bawaan bisa terlalu longgar; kedua job hanya perlu baca kode.
+permissions:
+  contents: read
+
+# Push beruntun di ref yang sama: batalkan run lama, hanya yang terakhir relevan.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Lint, typecheck & test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # npm ci, bukan npm install: patuh 100% ke package-lock.json.
+      - run: npm ci
+
+      - run: npm run lint
+
+      # next typegen menulis next-env.d.ts + .next/types yang di-include
+      # tsconfig tapi gitignored — tanpa itu tsc gagal di clone bersih.
+      # Hanya membaca next.config.ts, jadi tidak butuh WP_API_URL.
+      - run: npm run typecheck
+
+      - run: npm test
+
+  wordpress:
+    name: Lint mu-plugin & skrip
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # mu-plugin dipasang manual ke host produksi tanpa SSH; syntax error di
+      # sini berarti situs WP putih dan mahal dipulihkan lewat cPanel.
+      - name: Cek sintaks PHP
+        run: |
+          for file in wordpress/mu-plugins/*.php; do
+            php -l "$file"
+          done
+
+      # severity=warning, bukan default: skrip ini sudah rapi (set -euo
+      # pipefail, variabel dikutip), dan temuan level info/style tidak
+      # mencegah satu pun outage — yang dicari di sini bug sungguhan.
+      - name: Cek skrip CLI
+        run: shellcheck --severity=warning wordpress/cli/*.sh

@@ -1,0 +1,25 @@
+version: 2
+
+updates:
+  # next & react di-pin eksak di package.json, jadi PR update-nya memang perlu
+  # muncul untuk direview — tidak ada caret yang diam-diam menaikkannya.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # Satu PR untuk semua minor & patch; major tetap sendiri-sendiri supaya
+      # catatan rilisnya sempat dibaca.
+      minor-dan-patch:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Pasangan wajib dari keputusan mem-pin action ke tag mayor (@v5): tag bisa
+  # bergeser, dan action pihak ketiga yang basi adalah jalur masuk supply-chain.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
