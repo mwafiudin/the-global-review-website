@@ -222,6 +222,9 @@ Perlu disepakati: setelah frontend baru hidup, WordPress ditaruh di mana?
 - Konsekuensinya: alamat media ikut berubah, perlu diputuskan apakah 7.000 media
   tetap dilayani WordPress atau dipindah ke CDN/object storage.
 
+Langkah rincinya — beserta alasan mengapa redirect di cPanel bukan jalannya —
+ada di [`peralihan-domain.md`](peralihan-domain.md).
+
 ---
 
 ## 4. Yang perlu disiapkan

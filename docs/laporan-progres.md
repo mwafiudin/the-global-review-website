@@ -147,5 +147,7 @@ dari data contoh.
    kosong di tengah jalan.
 3. Paginasi arsip rubrik (saat ini menampilkan 100 terbaru; jumlah
    sebenarnya sudah ditampilkan di header).
-4. Persiapan pemindahan domain: rencana teknisnya sudah tersusun, tinggal
-   menunggu waktu yang disepakati.
+4. Persiapan pemindahan domain: runbook lengkapnya tersedia di
+   `docs/peralihan-domain.md`, tinggal menunggu waktu yang disepakati
+   dan tiga prasyarat di dalamnya (kepemilikan project Vercel, sitemap,
+   `robots.txt`).
