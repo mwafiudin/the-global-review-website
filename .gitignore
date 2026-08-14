@@ -27,6 +27,9 @@
 # setelan lokal per-mesin (bukan konfigurasi tim)
 .claude/settings.local.json
 
+# keluaran tool analisis lokal (knowledge graph + cache-nya, ~1 MB)
+/graphify-out
+
 # debug
 npm-debug.log*
 yarn-debug.log*
