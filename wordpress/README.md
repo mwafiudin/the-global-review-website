@@ -9,12 +9,22 @@ wordpress/
 │   ├── tgr-headless.php     # CPT Podcast, Album, Jajak Pendapat + field Bedah Buku
 │   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
 │   └── tgr-alih-sementara.php  # SEMENTARA: beranda lama → situs baru (302)
-└── cli/
+├── rest/                    # perkakas yang benar-benar dipakai (lihat catatan SSH)
+│   ├── wp.mjs               # klien REST + Application Password, semafor & jeda
+│   ├── arsipkan-lama.mjs    # pindahkan tulisan lama ke Tong Sampah
+│   ├── rubrik.mjs           # tata ulang kategori (buat/ganti/induk/gabung)
+│   ├── periksa-rubrik.mjs   # laporkan selisih kategori WP ↔ peta di kode
+│   ├── impor-podcast.mjs    # pindahkan daftar podcast dari kode ke wp-admin
+│   └── sorotan.mjs          # isi tgr_sorotan dari kosakata korpus judul
+└── cli/                     # versi WP-CLI, tidak terpakai (host tanpa SSH)
     ├── 01-backup.sh         # cadangkan basis data + wp-content
     ├── 02-inventaris.sh     # tarik CSV konten untuk bahan pemetaan rubrik
     ├── 03-pasang-mu-plugin.sh
     └── 04-rubrik.sh         # tata ulang 37 kategori → rubrikasi desain baru
 ```
+
+Semua skrip di `rest/` **mode tinjauan secara bawaan**; tambahkan `APPLY=1`
+untuk benar-benar menulis, dan semuanya aman dijalankan ulang.
 
 ---
 
