@@ -5,6 +5,7 @@ import type { Article } from "@/lib/types";
 import { wpFetchFresh, type WpPost, type WpUser } from "./client";
 import { feCategoryFor } from "./rubrik";
 import { sanitizeWpHtml } from "./sanitize";
+import { cleanExcerpt, cleanText, htmlParagraphs } from "./text";
 
 /**
  * Pemetaan payload WordPress → tipe FE yang sudah ada (Article dkk.),
@@ -13,52 +14,9 @@ import { sanitizeWpHtml } from "./sanitize";
 
 /* ── Teks: strip tag + decode entity tanpa DOM ─────────────────────── */
 
-const NAMED_ENTITIES: Record<string, string> = {
-  amp: "&", lt: "<", gt: ">", quot: '"', apos: "'",
-  nbsp: " ", hellip: "…", ndash: "–", mdash: "—",
-  ldquo: "“", rdquo: "”", lsquo: "‘", rsquo: "’",
-  laquo: "«", raquo: "»", deg: "°", middot: "·",
-};
-
-/** Codepoint liar (surrogate/di luar rentang) tidak boleh meruntuhkan halaman. */
-function safeCodePoint(n: number): string {
-  try {
-    return String.fromCodePoint(n);
-  } catch {
-    return "";
-  }
-}
-
-function decodeEntities(text: string): string {
-  return text
-    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => safeCodePoint(parseInt(hex, 16)))
-    .replace(/&#(\d+);/g, (_, dec) => safeCodePoint(Number(dec)))
-    .replace(/&([a-z]+);/gi, (m, name) => NAMED_ENTITIES[name.toLowerCase()] ?? m);
-}
-
-function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, " ");
-}
-
-/** HTML → teks polos rapi (untuk judul, excerpt, hitung kata). */
-export function cleanText(html: string): string {
-  return decodeEntities(stripTags(html)).replace(/\s+/g, " ").trim();
-}
-
-/** Buang artefak excerpt WordPress: "[…]", "[...]", "&hellip;" di ujung. */
-export function cleanExcerpt(html: string): string {
-  return cleanText(html)
-    .replace(/\s*\[\s*(…|\.{3})\s*\]\s*$/u, "…")
-    .trim();
-}
-
-/** HTML → daftar paragraf teks polos (pemisah </p>). */
-export function htmlParagraphs(html: string): string[] {
-  return html
-    .split(/<\/p>/i)
-    .map((chunk) => cleanText(chunk))
-    .filter(Boolean);
-}
+// Pindah ke ./text agar bisa dipakai perkakas Node juga (map.ts memuat
+// `server-only`). Diekspor ulang supaya pemanggil lama tidak perlu berubah.
+export { cleanExcerpt, cleanText, htmlParagraphs } from "./text";
 
 /**
  * Tanggal meta CPT → "YYYY-MM-DD", atau null bila bukan tanggal sah.
