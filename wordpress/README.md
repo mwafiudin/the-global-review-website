@@ -225,7 +225,7 @@ Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 
 | Meta | Kegunaan |
 |---|---|
-| `tgr_sorotan` | Frasa judul yang diberi coretan penanda di frontend |
+| `tgr_sorotan` | Frasa judul yang diberi coretan penanda di frontend (kotak **Sorotan Judul** di sisi kanan layar edit, sejak v2.2) |
 | `tgr_buku_judul`, `tgr_buku_penulis`, `tgr_buku_penerbit`, `tgr_buku_tahun`, `tgr_buku_isbn`, `tgr_buku_sampul` | Data ulasan Bedah Buku |
 
 **Bedah Buku sengaja tetap berupa kategori**, bukan tipe konten tersendiri,

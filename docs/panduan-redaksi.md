@@ -63,6 +63,21 @@ spesifik (misalnya "Asia Tenggara" menang atas "Internasional").
 Tata letak sudah menangani judul panjang. Namun judul di atas ±15 kata
 akan mendominasi kartunya dan menenggelamkan yang lain.
 
+### 6. Sorotan Judul: coretan penanda pada frasa kunci
+
+Di sisi kanan layar edit ada kotak **Sorotan Judul**. Isi dengan satu
+frasa yang disalin **persis dari judul** — frasa itu akan diberi coretan
+penanda (navy, atau emas pada mode gelap) di situs baru.
+
+- Pada artikel utama beranda dan halaman artikelnya, coretan langsung tampil.
+- Pada kartu artikel di daftar, coretan muncul saat kursor menyapu kartunya.
+- Kosongkan bila judulnya tidak perlu penanda — ini opsional.
+
+Frasa yang tidak ada di judul akan dikosongkan saat disimpan. Jadi kalau
+kotaknya kembali kosong setelah Perbarui, artinya frasanya belum cocok
+dengan judul — bukan gagal tersimpan. (Beda huruf besar-kecil dibetulkan
+otomatis.)
+
 ---
 
 ## Tiga hal yang perlu dikabarkan ke pengelola situs

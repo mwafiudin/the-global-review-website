@@ -4,7 +4,7 @@
  * Description:  Mendaftarkan tipe konten khusus (Podcast, Album Galeri, Jajak
  *               Pendapat) dan field tambahan Bedah Buku, seluruhnya terekspos
  *               ke REST API untuk dikonsumsi frontend Next.js.
- * Version:      2.1.0
+ * Version:      2.2.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -403,6 +403,7 @@ add_action(
 		add_meta_box( 'tgr_isi_podcast', 'Detail Penampilan', 'tgr_kotak_podcast', 'tgr_podcast', 'normal', 'high' );
 		add_meta_box( 'tgr_isi_album', 'Detail Album', 'tgr_kotak_album', 'tgr_album', 'normal', 'high' );
 		add_meta_box( 'tgr_isi_poll', 'Isi Jajak Pendapat', 'tgr_kotak_poll', 'tgr_poll', 'normal', 'high' );
+		add_meta_box( 'tgr_isi_sorotan', 'Sorotan Judul', 'tgr_kotak_sorotan', 'post', 'side', 'default' );
 	}
 );
 
@@ -861,6 +862,55 @@ add_action(
 			);
 		}
 		update_post_meta( $post_id, 'tgr_opsi', $opsi );
+	}
+);
+
+/* ── Sorotan judul (tulisan biasa) ─────────────────────────────────── */
+
+function tgr_kotak_sorotan( $post ) {
+	wp_nonce_field( 'tgr_simpan_meta', 'tgr_meta_nonce' );
+	?>
+	<p>
+		<input type="text" id="tgr_sorotan" name="tgr_sorotan" class="widefat"
+			value="<?php echo esc_attr( tgr_meta( $post->ID, 'tgr_sorotan' ) ); ?>"
+			placeholder="mis. Poros Maritim">
+	</p>
+	<p class="description">
+		Satu frasa <strong>dari judul</strong> yang diberi coretan penanda di
+		situs baru. Kosongkan bila judulnya tidak perlu penanda.
+	</p>
+	<p class="description">
+		Frasa yang tidak ada di judul dikosongkan saat disimpan &mdash; jadi
+		kotak yang kembali kosong berarti frasanya belum cocok, bukan gagal
+		tersimpan.
+	</p>
+	<?php if ( '' !== trim( (string) $post->post_title ) ) : ?>
+		<p class="description">
+			Judul saat ini: <em><?php echo esc_html( $post->post_title ); ?></em>
+		</p>
+	<?php endif; ?>
+	<?php
+}
+
+add_action(
+	'save_post_post',
+	function ( $post_id ) {
+		if ( ! tgr_boleh_simpan( $post_id ) ) {
+			return;
+		}
+		$frasa = tgr_kiriman_teks( 'tgr_sorotan' );
+		$judul = get_post_field( 'post_title', $post_id );
+
+		// Frontend mencocokkan frasa ini persis di dalam judul; kalau meleset
+		// satu huruf besar saja, judul dirender polos tanpa keluhan apa pun.
+		// Beda kapitalisasi diperbaiki di sini — itu salah ketik yang paling
+		// sering terjadi, dan menolaknya cuma memindahkan tebak-tebakan ke
+		// redaksi.
+		if ( '' !== $frasa && false === strpos( $judul, $frasa ) ) {
+			$posisi = stripos( $judul, $frasa );
+			$frasa  = false === $posisi ? '' : substr( $judul, $posisi, strlen( $frasa ) );
+		}
+		update_post_meta( $post_id, 'tgr_sorotan', $frasa );
 	}
 );
 
