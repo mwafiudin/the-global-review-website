@@ -127,7 +127,7 @@ dari data contoh.
 | Rumah untuk kategori "Amerika" (47) dan "Eropa" (30) | Artikelnya tampil di bawah rubrik Internasional |
 | Melekatkan artikel 2023+ sebagai Isu Utama | Beranda menampilkan artikel terbaru (dua artikel lekat yang lama bertanggal 2021 dan 2017, ikut tersembunyi bersama arsip) |
 | Atribusi tulisan M. Arief Pranoto | Halaman penulisnya kosong; ia ada di daftar redaksi tetapi bukan pengguna WordPress |
-| Bedah Buku: tetap di kode atau pindah ke WordPress | Enam ulasan buku belum bisa disunting redaksi |
+| Bedah Buku: halaman `/bedah-buku` tetap di kode atau dibaca dari WordPress | Halaman itu menampilkan 4 ulasan yang tertulis di kode dan tidak bisa disunting redaksi, sementara kategori Bedah Buku di wp-admin berisi 32 ulasan yang hanya terjangkau lewat `/category/bedah-buku` — tidak dari menu |
 
 ### Menunggu tindakan pemilik akses
 
