@@ -78,6 +78,11 @@ kotaknya kembali kosong setelah Perbarui, artinya frasanya belum cocok
 dengan judul — bukan gagal tersimpan. (Beda huruf besar-kecil dibetulkan
 otomatis.)
 
+Tulisan lama sudah diisikan sekali secara otomatis. **Tulisan baru tidak** —
+jadi kotak ini perlu diisi saat menulis. Di daftar **Tulisan** ada kolom
+**Sorotan** yang memperlihatkan mana yang masih kosong (bertanda "—"),
+supaya tidak perlu membuka satu per satu untuk memeriksanya.
+
 ---
 
 ## Tiga hal yang perlu dikabarkan ke pengelola situs

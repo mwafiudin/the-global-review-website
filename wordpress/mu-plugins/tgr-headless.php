@@ -916,6 +916,38 @@ add_action(
 
 /* ── Kolom daftar admin ────────────────────────────────────────────── */
 
+/**
+ * Kolom "Sorotan" di daftar Tulisan.
+ *
+ * Field yang tidak terlihat tidak akan pernah diisi. Tanpa kolom ini,
+ * satu-satunya cara mengetahui sebuah tulisan belum punya sorotan adalah
+ * membuka layar suntingnya satu per satu — dan itu berarti tidak ada yang
+ * akan melakukannya.
+ */
+add_filter(
+	'manage_post_posts_columns',
+	function ( $kolom ) {
+		return array_slice( $kolom, 0, 2, true ) +
+			array( 'tgr_sorotan' => 'Sorotan' ) +
+			array_slice( $kolom, 2, null, true );
+	}
+);
+
+add_action(
+	'manage_post_posts_custom_column',
+	function ( $kolom, $post_id ) {
+		if ( 'tgr_sorotan' !== $kolom ) {
+			return;
+		}
+		$frasa = tgr_meta( $post_id, 'tgr_sorotan' );
+		echo $frasa
+			? esc_html( $frasa )
+			: '<span style="color:#a7aaad">&mdash;</span>';
+	},
+	10,
+	2
+);
+
 add_filter(
 	'manage_tgr_podcast_posts_columns',
 	function ( $kolom ) {
