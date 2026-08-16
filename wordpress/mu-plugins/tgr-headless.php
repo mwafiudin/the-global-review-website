@@ -4,7 +4,7 @@
  * Description:  Mendaftarkan tipe konten khusus (Podcast, Album Galeri, Jajak
  *               Pendapat) dan field tambahan Bedah Buku, seluruhnya terekspos
  *               ke REST API untuk dikonsumsi frontend Next.js.
- * Version:      2.2.0
+ * Version:      2.3.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -270,11 +270,13 @@ add_action(
  */
 function tgr_register_book_meta() {
 	$fields = array(
-		'tgr_buku_judul'    => 'string',
-		'tgr_buku_penulis'  => 'string',
-		'tgr_buku_penerbit' => 'string',
-		'tgr_buku_tahun'    => 'string',
-		'tgr_buku_isbn'     => 'string',
+		'tgr_buku_judul'           => 'string',
+		'tgr_buku_penulis'         => 'string',
+		'tgr_buku_penulis_lengkap' => 'string',
+		'tgr_buku_penerbit'        => 'string',
+		'tgr_buku_tahun'           => 'string',
+		'tgr_buku_isbn'            => 'string',
+		'tgr_buku_podcast'         => 'string',
 	);
 
 	foreach ( $fields as $key => $type ) {
@@ -404,6 +406,7 @@ add_action(
 		add_meta_box( 'tgr_isi_album', 'Detail Album', 'tgr_kotak_album', 'tgr_album', 'normal', 'high' );
 		add_meta_box( 'tgr_isi_poll', 'Isi Jajak Pendapat', 'tgr_kotak_poll', 'tgr_poll', 'normal', 'high' );
 		add_meta_box( 'tgr_isi_sorotan', 'Sorotan Judul', 'tgr_kotak_sorotan', 'post', 'side', 'default' );
+		add_meta_box( 'tgr_isi_buku', 'Identitas Buku — rubrik Bedah Buku', 'tgr_kotak_buku', 'post', 'normal', 'low' );
 	}
 );
 
@@ -415,9 +418,16 @@ add_action(
 			return;
 		}
 		$layar = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
-		if ( $layar && 'tgr_album' === $layar->post_type ) {
+		if ( ! $layar ) {
+			return;
+		}
+		if ( 'tgr_album' === $layar->post_type ) {
 			wp_enqueue_media();
 			wp_enqueue_script( 'jquery-ui-sortable' );
+		}
+		// Tulisan biasa: pemilih sampul di kotak Identitas Buku.
+		if ( 'post' === $layar->post_type ) {
+			wp_enqueue_media();
 		}
 	}
 );
@@ -892,12 +902,108 @@ function tgr_kotak_sorotan( $post ) {
 	<?php
 }
 
+/* ── Identitas buku (rubrik Bedah Buku) ────────────────────────────── */
+
+/**
+ * Kotak ini muncul di semua tulisan, bukan hanya yang berkategori Bedah
+ * Buku: kategori baru dipilih saat menulis, jadi menyembunyikannya
+ * berdasarkan kategori berarti kotaknya justru absen persis ketika
+ * dibutuhkan. Dibiarkan kosong pada tulisan lain, tidak berpengaruh apa pun.
+ */
+function tgr_kotak_buku( $post ) {
+	wp_nonce_field( 'tgr_simpan_meta', 'tgr_meta_nonce' );
+	$sampul = (int) tgr_meta( $post->ID, 'tgr_buku_sampul', 0 );
+	$baris  = array(
+		'tgr_buku_judul'           => array( 'Judul buku', 'Kosong &rarr; memakai judul tulisan ini.' ),
+		'tgr_buku_penulis'         => array( 'Penulis (ringkas)', 'Untuk baris kartu, mis. &ldquo;Hendrajit dkk.&rdquo;' ),
+		'tgr_buku_penulis_lengkap' => array( 'Penulis (lengkap)', 'Opsional; daftar kontributor di halaman ulasan.' ),
+		'tgr_buku_penerbit'        => array( 'Penerbit', '' ),
+		'tgr_buku_tahun'           => array( 'Tahun terbit', '' ),
+		'tgr_buku_isbn'            => array( 'ISBN', 'Opsional; disembunyikan bila kosong.' ),
+		'tgr_buku_podcast'         => array( 'Slug podcast terkait', 'Opsional; menyematkan videonya di bawah ulasan.' ),
+	);
+	?>
+	<table class="form-table" role="presentation">
+		<tbody>
+			<?php foreach ( $baris as $kunci => $isi ) : ?>
+				<tr>
+					<th scope="row"><label for="<?php echo esc_attr( $kunci ); ?>"><?php echo esc_html( $isi[0] ); ?></label></th>
+					<td>
+						<input type="text" id="<?php echo esc_attr( $kunci ); ?>" name="<?php echo esc_attr( $kunci ); ?>"
+							class="regular-text" value="<?php echo esc_attr( tgr_meta( $post->ID, $kunci ) ); ?>">
+						<?php if ( $isi[1] ) : ?>
+							<p class="description"><?php echo wp_kses_post( $isi[1] ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+			<tr>
+				<th scope="row">Sampul buku</th>
+				<td>
+					<input type="hidden" id="tgr_buku_sampul" name="tgr_buku_sampul" value="<?php echo esc_attr( $sampul ); ?>">
+					<div id="tgr-sampul-pratinjau" style="margin-bottom:8px;">
+						<?php echo $sampul ? wp_get_attachment_image( $sampul, 'medium', false, array( 'style' => 'max-width:140px;height:auto;border-radius:4px;' ) ) : ''; ?>
+					</div>
+					<button type="button" class="button" id="tgr-sampul-pilih">Pilih sampul</button>
+					<button type="button" class="button-link" id="tgr-sampul-hapus" style="margin-left:8px;">Hapus</button>
+					<p class="description">
+						Kosong &rarr; memakai Gambar Unggulan tulisan ini. Sampul buku
+						sebaiknya potret (3:4), bukan gambar artikel biasa.
+					</p>
+					<script>
+					jQuery(function ($) {
+						var pemilih;
+						$('#tgr-sampul-pilih').on('click', function () {
+							pemilih = pemilih || wp.media({
+								title: 'Pilih sampul buku',
+								button: { text: 'Pakai sampul ini' },
+								library: { type: 'image' },
+								multiple: false
+							});
+							pemilih.off('select').on('select', function () {
+								var berkas = pemilih.state().get('selection').first().toJSON();
+								$('#tgr_buku_sampul').val(berkas.id);
+								$('#tgr-sampul-pratinjau').html(
+									$('<img>').attr('src', (berkas.sizes && berkas.sizes.medium ? berkas.sizes.medium.url : berkas.url))
+										.css({ maxWidth: '140px', height: 'auto', borderRadius: '4px' })
+								);
+							});
+							pemilih.open();
+						});
+						$('#tgr-sampul-hapus').on('click', function () {
+							$('#tgr_buku_sampul').val(0);
+							$('#tgr-sampul-pratinjau').empty();
+						});
+					});
+					</script>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<?php
+}
+
 add_action(
 	'save_post_post',
 	function ( $post_id ) {
 		if ( ! tgr_boleh_simpan( $post_id ) ) {
 			return;
 		}
+
+		foreach ( array(
+			'tgr_buku_judul',
+			'tgr_buku_penulis',
+			'tgr_buku_penulis_lengkap',
+			'tgr_buku_penerbit',
+			'tgr_buku_tahun',
+			'tgr_buku_isbn',
+		) as $kunci ) {
+			update_post_meta( $post_id, $kunci, tgr_kiriman_teks( $kunci ) );
+		}
+		// Slug podcast diinterpolasi ke URL /podcast/{slug} di frontend.
+		update_post_meta( $post_id, 'tgr_buku_podcast', sanitize_title( tgr_kiriman_teks( 'tgr_buku_podcast' ) ) );
+		update_post_meta( $post_id, 'tgr_buku_sampul', absint( tgr_kiriman_teks( 'tgr_buku_sampul' ) ) );
+
 		$frasa = tgr_kiriman_teks( 'tgr_sorotan' );
 		$judul = get_post_field( 'post_title', $post_id );
 

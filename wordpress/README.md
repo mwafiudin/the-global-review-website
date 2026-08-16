@@ -15,7 +15,8 @@ wordpress/
 │   ├── rubrik.mjs           # tata ulang kategori (buat/ganti/induk/gabung)
 │   ├── periksa-rubrik.mjs   # laporkan selisih kategori WP ↔ peta di kode
 │   ├── impor-podcast.mjs    # pindahkan daftar podcast dari kode ke wp-admin
-│   └── sorotan.mjs          # isi tgr_sorotan dari kosakata korpus judul
+│   ├── sorotan.mjs          # isi tgr_sorotan dari kosakata korpus judul
+│   └── impor-buku.mjs       # pindahkan 4 ulasan Bedah Buku dari kode ke wp-admin
 └── cli/                     # versi WP-CLI, tidak terpakai (host tanpa SSH)
     ├── 01-backup.sh         # cadangkan basis data + wp-content
     ├── 02-inventaris.sh     # tarik CSV konten untuk bahan pemetaan rubrik
@@ -236,7 +237,7 @@ Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 | Meta | Kegunaan |
 |---|---|
 | `tgr_sorotan` | Frasa judul yang diberi coretan penanda di frontend (kotak **Sorotan Judul** di sisi kanan layar edit, sejak v2.2) |
-| `tgr_buku_judul`, `tgr_buku_penulis`, `tgr_buku_penerbit`, `tgr_buku_tahun`, `tgr_buku_isbn`, `tgr_buku_sampul` | Data ulasan Bedah Buku |
+| `tgr_buku_judul`, `tgr_buku_penulis`, `tgr_buku_penulis_lengkap`, `tgr_buku_penerbit`, `tgr_buku_tahun`, `tgr_buku_isbn`, `tgr_buku_sampul`, `tgr_buku_podcast` | Identitas buku untuk rubrik Bedah Buku (kotak **Identitas Buku** di layar edit, sejak v2.3) |
 
 **Bedah Buku sengaja tetap berupa kategori**, bukan tipe konten tersendiri,
 agar 78 URL ulasan yang sudah terindeks tidak berubah.

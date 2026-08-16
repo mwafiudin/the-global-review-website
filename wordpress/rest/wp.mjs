@@ -132,6 +132,38 @@ export async function wp(jalur, { metode = "GET", data, query } = {}) {
   }
 }
 
+/**
+ * Unggah berkas ke Pustaka Media.
+ *
+ * Terpisah dari wp() karena badannya biner dan nama berkasnya dikirim lewat
+ * Content-Disposition, bukan JSON. Tidak diulang saat gagal — alasan yang
+ * sama seperti POST lain: satu kegagalan yang terlihat lebih baik daripada
+ * satu lampiran ganda yang senyap.
+ */
+export async function unggah(namaBerkas, isi, tipe = "image/jpeg") {
+  await ambilSlot();
+  try {
+    const res = await fetch(`${BASE}/wp/v2/media`, {
+      method: "POST",
+      headers: {
+        Authorization: AUTH,
+        "User-Agent": USER_AGENT,
+        "Content-Type": tipe,
+        "Content-Disposition": `attachment; filename="${namaBerkas}"`,
+      },
+      body: isi,
+      signal: AbortSignal.timeout(BATAS_WAKTU_MS * 3),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      throw new Error(`unggah ${namaBerkas} gagal: ${data?.message ?? res.status}`);
+    }
+    return data;
+  } finally {
+    lepasSlot();
+  }
+}
+
 /** Jalankan tugas berkelompok sambil melaporkan kemajuan. */
 export async function berkelompok(daftar, kerjakan, { label = "", tiap = 50 } = {}) {
   let selesai = 0;

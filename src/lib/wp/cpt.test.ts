@@ -3,6 +3,8 @@ import { isoDate } from "./map";
 import { parseYoutubeId, wpPodcastToPodcast } from "./podcasts";
 import { wpAlbumToAlbum, wpAttachmentToPhoto } from "./gallery";
 import { wpPollOptions, wpPollToPoll } from "./polls";
+import { wpPostToBook } from "./books";
+import { bookByline } from "@/data/books";
 
 /**
  * Seluruh mapper CPT murni: payload disuplai langsung, tidak ada satu pun
@@ -247,5 +249,69 @@ describe("wpPollOptions / wpPollToPoll", () => {
       slugById
     );
     expect(p?.question).toBe("Poll Indo-Pasifik");
+  });
+});
+
+describe("wpPostToBook", () => {
+  const media = new Map([
+    [11, "https://cms.example/sampul.jpg"],
+    [22, "https://cms.example/unggulan.jpg"],
+  ]);
+
+  const berbuku = {
+    id: 1,
+    slug: "tangan-tangan-amerika",
+    date: "2026-07-25T09:00:00",
+    title: { rendered: "Tangan-Tangan Amerika" },
+    excerpt: { rendered: "<p>Menelusuri jejak operasi AS. [&hellip;]</p>" },
+    content: { rendered: "<p>Paragraf satu.</p>\n<p>Paragraf dua.</p>" },
+    featured_media: 22,
+    meta: {
+      tgr_buku_judul: "Tangan-Tangan Amerika: Kisah Operasi AS",
+      tgr_buku_penulis: "Hendrajit dkk.",
+      tgr_buku_penerbit: "Global Future Institute",
+      tgr_buku_tahun: "2010",
+      tgr_buku_isbn: "978-602-97209-0-7",
+      tgr_buku_sampul: 11,
+    },
+  };
+
+  it("memetakan identitas buku dan memakai sampul khusus", () => {
+    expect(wpPostToBook(berbuku, media)).toMatchObject({
+      slug: "tangan-tangan-amerika",
+      judul: "Tangan-Tangan Amerika: Kisah Operasi AS",
+      penulis: "Hendrajit dkk.",
+      penerbit: "Global Future Institute",
+      tahun: "2010",
+      isbn: "978-602-97209-0-7",
+      cover: "https://cms.example/sampul.jpg",
+      ulasan: ["Paragraf satu.", "Paragraf dua."],
+    });
+  });
+
+  it("ulasan biasa tanpa identitas buku tetap utuh, sampul dari gambar unggulan", () => {
+    const b = wpPostToBook(
+      { ...berbuku, meta: {}, title: { rendered: "Membaca &#8220;Defensive Nationalism&#8221;" } },
+      media
+    );
+    // Penerbit kosong bukan "undefined" di layar: bylinenya ikut menyusut.
+    expect(b.penerbit).toBe("");
+    expect(b.tahun).toBeUndefined();
+    expect(b.isbn).toBeUndefined();
+    expect(b.judul).toBe("Membaca “Defensive Nationalism”");
+    expect(b.penulis).toBe("Redaksi");
+    expect(b.cover).toBe("https://cms.example/unggulan.jpg");
+    expect(bookByline(b)).toBe("Redaksi");
+  });
+
+  it("tanpa sampul maupun gambar unggulan → seed, bukan alamat kosong", () => {
+    const b = wpPostToBook({ ...berbuku, meta: {}, featured_media: 0 }, media);
+    expect(b.cover).toContain("tangan-tangan-amerika");
+  });
+
+  it("byline menggabungkan penulis dan imprint bila keduanya ada", () => {
+    expect(bookByline(wpPostToBook(berbuku, media))).toBe(
+      "Hendrajit dkk., Global Future Institute (2010)"
+    );
   });
 });

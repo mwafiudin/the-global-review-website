@@ -3,13 +3,15 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
-import { bookImprint, books, getBook } from "@/data/books";
+import { bookImprint } from "@/data/books";
+import { wpBook, wpBooks } from "@/lib/wp/books";
 import { wpPodcast } from "@/lib/wp/podcasts";
 import { VideoEmbed } from "@/components/VideoEmbed";
 import { EndMark } from "@/components/Ornaments";
 
+/** Kosong dengan sengaja: halaman ber-WordPress dirender on-demand + ISR. */
 export function generateStaticParams() {
-  return books.map((b) => ({ slug: b.slug }));
+  return [];
 }
 
 export async function generateMetadata({
@@ -18,9 +20,16 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const book = getBook(slug);
+  const book = await wpBook(slug);
   if (!book) return {};
-  return { title: `Ulasan: ${book.judul}`, description: book.ringkasan };
+  return {
+    title: `Ulasan: ${book.judul}`,
+    description: book.ringkasan,
+    // Ulasannya juga tayang sebagai tulisan biasa di /{slug} — itulah URL
+    // yang sudah terindeks. Halaman ini bentuk sajian lain dari isi yang
+    // sama, jadi jangan ikut diindeks agar tidak bersaing dengan aslinya.
+    robots: { index: false, follow: true },
+  };
 }
 
 export default async function BookReviewPage({
@@ -29,7 +38,8 @@ export default async function BookReviewPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const book = getBook(slug);
+  const semua = await wpBooks();
+  const book = semua.find((b) => b.slug === slug);
   if (!book) notFound();
 
   // Lewat lapisan WordPress, bukan data contoh: /podcast/{slug} me-resolve
@@ -37,7 +47,9 @@ export default async function BookReviewPage({
   const podcast = book.podcastTerkait
     ? await wpPodcast(book.podcastTerkait)
     : undefined;
-  const lainnya = books.filter((b) => b.slug !== book.slug);
+  // Kini koleksinya puluhan, bukan empat: seksi penutup dibatasi agar tidak
+  // berubah jadi daftar panjang di bawah setiap ulasan.
+  const lainnya = semua.filter((b) => b.slug !== book.slug).slice(0, 3);
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-14 md:py-20">
@@ -80,7 +92,11 @@ export default async function BookReviewPage({
           <p className="mt-4 text-sm font-semibold text-accent">
             {book.penulis}
           </p>
-          <p className="mt-1 text-sm text-meta">{bookImprint(book)}</p>
+          {/* Ulasan dari kategori WordPress belum tentu punya penerbit —
+              barisnya dihilangkan, bukan dibiarkan kosong berjarak. */}
+          {bookImprint(book) && (
+            <p className="mt-1 text-sm text-meta">{bookImprint(book)}</p>
+          )}
           {book.isbn && (
             <p className="mt-1 text-xs text-meta">ISBN {book.isbn}</p>
           )}

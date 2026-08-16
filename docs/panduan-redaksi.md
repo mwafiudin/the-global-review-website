@@ -147,6 +147,18 @@ per alamat internet selama 24 jam). Ini penahan wajar, bukan pengaman
 mutlak — sebagaimana jajak pendapat mana pun yang tidak meminta pembaca
 masuk akun.
 
+### Bedah Buku
+
+Bukan menu tersendiri — **ulasan buku ditulis seperti tulisan biasa**, cukup
+beri kategori **Bedah Buku**. Ulasan itu otomatis muncul di halaman Bedah
+Buku situs baru.
+
+Bila yang diulas memang sebuah buku, isi kotak **Identitas Buku** di bagian
+bawah layar edit: judul buku, penulis, penerbit, tahun, ISBN, dan sampul.
+Semuanya opsional — yang kosong disembunyikan, tidak menyisakan ruang
+kosong. Sampul sebaiknya foto sampul buku (potret), bukan gambar artikel
+biasa; kalau dikosongkan, Gambar Unggulan tulisan yang dipakai.
+
 ### Pelanggan Buletin
 
 Daftar pembaca yang mendaftar lewat formulir di situs. Hanya untuk

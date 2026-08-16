@@ -102,3 +102,13 @@ export function getBook(slug: string): Book | undefined {
 export function bookImprint(book: Book): string {
   return book.tahun ? `${book.penerbit} (${book.tahun})` : book.penerbit;
 }
+
+/**
+ * "Hendrajit, Global Future Institute (2010)" — bagian yang kosong ikut
+ * hilang beserta pemisahnya. Ulasan yang datang dari kategori Bedah Buku
+ * di WordPress belum tentu punya identitas penerbit, dan tanpa ini
+ * barisnya berakhir dengan koma menggantung.
+ */
+export function bookByline(book: Book): string {
+  return [book.penulis, bookImprint(book)].filter(Boolean).join(", ");
+}
