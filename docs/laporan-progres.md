@@ -10,6 +10,68 @@ dan SUBSCRIBER. Butir 3.4 REAL-TIME dan 3.5 (analitik) dikerjakan pihak lain.
 
 ---
 
+## Periode 19 Agustus 2026
+
+### Status: situs berbahasa dua — English tersedia di /en
+
+Tombol ID/EN di header kini sungguhan: seluruh antarmuka (navigasi, footer,
+pencarian, arsip rubrik, halaman 404, dan lima halaman statis termasuk
+Tentang, Redaksi, dan Hubungi Kami) tampil dalam bahasa Inggris di alamat
+`/en/...`, dirender di server. URL bahasa Indonesia tidak berubah satu pun.
+
+### Yang selesai
+
+**1. Rute dua bahasa tanpa mengubah URL lama**
+
+- Semua halaman pindah ke segmen `[lang]`; `proxy.ts` (konvensi Next 16
+  pengganti middleware) menyajikan pohon `/id` di balik URL tanpa prefiks,
+  meloloskan `/en`, dan memulangkan `/id/*` maupun trailing slash permalink
+  WordPress lama dengan 308.
+- Bahasa ditentukan URL, bukan localStorage — render server dan client
+  selalu sepakat, tanpa kedip ganti bahasa.
+
+**2. Terjemahan antarmuka menyeluruh**
+
+- Kamus UI tumbuh dari 55 menjadi 190+ entri; tes otomatis memaksa setiap
+  string ber-`t()` dan seluruh label menu punya padanan Inggris.
+- Copy panjang lima halaman statis (termasuk profil delapan pengurus GFI)
+  diterjemahkan penuh lewat modul bertipe `Record<Lang, ...>` — kolom
+  Inggris yang hilang gagal kompilasi, bukan halaman bolong.
+
+**3. Isi artikel: terjemahan on-device, nol biaya**
+
+- Di halaman artikel `/en`, tombol terjemah memakai Translator API bawaan
+  Chrome (model berjalan di perangkat pembaca; Chrome/Edge desktop). Tanpa
+  API berbayar, teks tidak meninggalkan peramban.
+- Mesinnya dibungkus kontrak `TranslateProvider` — bila kelak terjemahan
+  tersimpan di WordPress (LLM, sekali jalan untuk seluruh arsip), cukup
+  tukar satu modul tanpa menyentuh routing.
+- GTranslate diverifikasi tidak kompatibel dengan arsitektur headless:
+  versi gratis menyuntik skrip ke tema WordPress yang tidak pernah dilihat
+  pembaca, dan tidak menyimpan terjemahan apa pun ke database.
+
+**4. SEO dua bahasa yang jujur**
+
+- Lima halaman statis ber-hreflang timbal balik dan boleh diindeks di dua
+  bahasa; beranda, artikel, dan arsip versi `/en` di-noindex sampai
+  terjemahan kontennya sungguhan. Sitemap ikut memancarkan pasangannya.
+- `metadataBase` + canonical per bahasa terpasang di semua halaman.
+
+**5. Pengerasan terhadap terjemahan otomatis peramban**
+
+- Boundary galat per rute + global mencegah halaman mati putih saat Google
+  Translate memutasi DOM (crash `removeChild` yang terkenal di React);
+  teks yang bertetangga dengan angka dinamis dibungkus `span`.
+
+### Menunggu keputusan
+
+- **WordPress 6.5.10 dengan 99 pembaruan tertunda** — risiko keamanan
+  produksi; pembaruan perlu dijadwalkan (di luar lingkup pekerjaan ini).
+- Upgrade terjemahan artikel server-side (tersimpan di post meta, bisa
+  diindeks Google, jalan di ponsel) menunggu keputusan biaya — estimasi
+  sekali jalan untuk seluruh arsip 887 tulisan di kisaran belasan ribu
+  rupiah per artikel memakai model bahasa, atau ditulis manual redaksi.
+
 ## Periode 13–15 Agustus 2026
 
 ### Status: situs baru LIVE dan sepenuhnya membaca WordPress
