@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryName } from "./articles";
+import { categoryName, formatDate } from "./articles";
 
 describe("categoryName", () => {
   it("memakai label resmi untuk rubrik yang terdaftar", () => {
@@ -15,5 +15,16 @@ describe("categoryName", () => {
       "Asia Timur Jauh"
     );
     expect(categoryName("pendidikan")).toBe("Pendidikan");
+  });
+});
+
+describe("formatDate", () => {
+  it("default bahasa Indonesia — perilaku lama tidak berubah", () => {
+    expect(formatDate("2026-08-19")).toBe("19 Agustus 2026");
+  });
+
+  it("varian Inggris memakai en-GB agar urutan hari-bulan-tahun tetap", () => {
+    expect(formatDate("2026-08-19", "en")).toBe("19 August 2026");
+    expect(formatDate("2026-01-02", "en")).toBe("2 January 2026");
   });
 });

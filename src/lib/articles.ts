@@ -33,12 +33,15 @@ export function categoryHref(slug: string): string {
   return `/category/${slug}`;
 }
 
-export function formatDate(iso: string): string {
-  return new Date(iso + "T00:00:00").toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+/**
+ * Format tanggal per bahasa. en-GB dipilih (bukan en-US) supaya urutan
+ * hari-bulan-tahun sama dengan id-ID dan layout kartu tidak bergeser.
+ */
+export function formatDate(iso: string, lang: "id" | "en" = "id"): string {
+  return new Date(iso + "T00:00:00").toLocaleDateString(
+    lang === "en" ? "en-GB" : "id-ID",
+    { day: "numeric", month: "long", year: "numeric" }
+  );
 }
 
 /** Mengikuti permalink WordPress produksi: /{slug}/ di akar domain. */
