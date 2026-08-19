@@ -34,6 +34,14 @@ const nextConfig: NextConfig = {
         destination: "/:slug",
         permanent: true,
       },
+      // /halaman/1 = duplikat URL dasar rubrik; satu bentuk kanonis saja.
+      // Di sini (bukan di page.tsx) supaya jawabannya 308 sungguhan, bukan
+      // redirect in-band yang menuntut JavaScript.
+      {
+        source: "/category/:path*/halaman/1",
+        destination: "/category/:path*",
+        permanent: true,
+      },
     ];
   },
 };

@@ -5,6 +5,7 @@ import type { Article } from "@/lib/types";
 import {
   dedup,
   wpFetch,
+  wpFetchAllFresh,
   wpFetchByIdsFresh,
   wpFetchFresh,
   wpFetchFreshWithTotal,
@@ -217,16 +218,24 @@ export async function byCategory(fePath: string, limit = 100): Promise<Article[]
   return listCached({ categories: ids.join(","), per_page: perPage(limit) });
 }
 
-/** byCategory + total sebenarnya dari X-WP-Total (untuk "N artikel"). */
+/**
+ * byCategory + total sebenarnya dari X-WP-Total (untuk "N artikel").
+ * page > 1 menarik lembar arsip berikutnya (paginasi /halaman/{n});
+ * page 1 sengaja tidak menyertakan parameter agar kunci cache-nya sama
+ * dengan sebelum paginasi ada. Nomor di luar rentang membuat WP menjawab
+ * 400 (rest_post_invalid_page_number) — pemanggil menerjemahkannya ke 404.
+ */
 export async function byCategoryWithTotal(
   fePath: string,
-  limit = 100
+  limit = 100,
+  page = 1
 ): Promise<{ list: Article[]; total: number }> {
   const ids = await wpCategoryIds(fePath);
   if (ids.length === 0) return { list: [], total: 0 };
   return listWithTotalCached({
     categories: ids.join(","),
     per_page: perPage(limit),
+    ...(page > 1 ? { page } : {}),
   });
 }
 
@@ -301,4 +310,36 @@ export async function articlesBySlugs(slugs: string[]): Promise<Article[]> {
 /** Pencarian judul WordPress (urutan relevansi) untuk /api/search. */
 export async function searchArticles(q: string, limit = 8): Promise<Article[]> {
   return dedup(`search:${q}:${limit}`, () => cachedSearch(q, perPage(limit)));
+}
+
+/** Entri ringan untuk sitemap: slug + waktu ubah terakhir (UTC). */
+export interface ArticleSitemapEntry {
+  slug: string;
+  modifiedGmt?: string;
+}
+
+/**
+ * SELURUH slug artikel tayang untuk sitemap.xml — ±9 halaman × 100 untuk
+ * arsip pasca-2022, tapi maxPages diberi ruang sampai skala penuh 5.700
+ * tulisan bila WP_ARCHIVE_AFTER suatu saat dikosongkan. Hanya dua kolom
+ * yang diminta, jadi bobotnya jauh di bawah daftar biasa.
+ */
+const cachedSitemapSlugs = unstable_cache(
+  async (): Promise<ArticleSitemapEntry[]> => {
+    const posts = await wpFetchAllFresh<{ slug: string; modified_gmt?: string }>(
+      "/posts",
+      {
+        query: { _fields: "slug,modified_gmt", ...withArchive({}) },
+        timeoutMs: LIST_TIMEOUT_MS,
+        maxPages: 60,
+      }
+    );
+    return posts.map((p) => ({ slug: p.slug, modifiedGmt: p.modified_gmt }));
+  },
+  ["wp-sitemap-slugs"],
+  { revalidate: 3600, tags: ["wp:posts"] }
+);
+
+export async function articleSitemapEntries(): Promise<ArticleSitemapEntry[]> {
+  return dedup("sitemap-slugs", () => cachedSitemapSlugs());
 }

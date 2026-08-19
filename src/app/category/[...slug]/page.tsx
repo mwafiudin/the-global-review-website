@@ -8,10 +8,15 @@ import { categoryName } from "@/lib/articles";
 import { byCategoryWithTotal } from "@/lib/wp/articles";
 import { wpCategoryIds } from "@/lib/wp/rubrik";
 import { categoryIcon } from "@/lib/categoryIcons";
+import { parseHalaman } from "@/lib/pagination";
 import { CardRow } from "@/components/ArticleCard";
 import { CategoryBrowser } from "@/components/CategoryBrowser";
 import { PageHeader } from "@/components/PageHeader";
+import { PaginationNav } from "@/components/PaginationNav";
 import { Sidebar } from "@/components/Sidebar";
+
+/** Satu lembar arsip = batas lama daftar rubrik (100 terbaru). */
+const PER_HALAMAN = 100;
 
 /**
  * Kosong: halaman rubrik dirender on-demand + ISR (build tidak memberondong
@@ -27,12 +32,13 @@ export async function generateMetadata({
   params: Promise<{ slug: string[] }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const key = slug.join("/");
+  const { rubrik, page } = parseHalaman(slug);
+  const key = rubrik.join("/");
   // Streaming (loading.tsx): status 404 diputuskan sebelum shell terkirim.
   if (!(await rubrikAda(key))) notFound();
   const nama = categoryName(key);
   return {
-    title: `Rubrik ${nama}`,
+    title: page > 1 ? `Rubrik ${nama} — Halaman ${page}` : `Rubrik ${nama}`,
     description: `Kumpulan artikel The Global Review pada rubrik ${nama}.`,
   };
 }
@@ -53,11 +59,24 @@ export default async function CategoryPage({
   params: Promise<{ slug: string[] }>;
 }) {
   const { slug } = await params;
-  const key = slug.join("/");
+  // /halaman/1 tidak sampai ke sini — redirects() di next.config.ts sudah
+  // meng-308-kannya ke URL dasar rubrik.
+  const { rubrik, page } = parseHalaman(slug);
+  const key = rubrik.join("/");
   if (!(await rubrikAda(key))) notFound();
 
-  // list dibatasi 100 terbaru (payload ke browser); total = jumlah sebenarnya.
-  const { list, total } = await byCategoryWithTotal(key);
+  // list dibatasi 100 per lembar (payload ke browser); total = jumlah
+  // sebenarnya. Nomor halaman di luar rentang membuat WP menjawab 400 —
+  // diterjemahkan jadi 404, bukan halaman error.
+  let list, total;
+  try {
+    ({ list, total } = await byCategoryWithTotal(key, PER_HALAMAN, page));
+  } catch (e) {
+    if (page > 1) notFound();
+    throw e;
+  }
+  const totalPages = Math.max(1, Math.ceil(total / PER_HALAMAN));
+  if (page > totalPages) notFound();
   const menuEntry = mainMenu.find(
     (item) => item.href === `/category/${key}`
   );
@@ -74,12 +93,12 @@ export default async function CategoryPage({
     .map((s) => ({ slug: s, name: getAuthor(s).name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Breadcrumb: Beranda › [induk] › [rubrik ini]
+  // Breadcrumb: Beranda › [induk] › [rubrik ini] — tanpa ekor /halaman/{n}
   const breadcrumb = [
     { label: "Beranda", href: "/" },
-    ...slug.map((_, i) => {
-      const partKey = slug.slice(0, i + 1).join("/");
-      const isLast = i === slug.length - 1;
+    ...rubrik.map((_, i) => {
+      const partKey = rubrik.slice(0, i + 1).join("/");
+      const isLast = i === rubrik.length - 1;
       return {
         label: categoryName(partKey),
         href: isLast ? undefined : `/category/${partKey}`,
@@ -93,7 +112,11 @@ export default async function CategoryPage({
         title={categoryName(key)}
         icon={categoryIcon(key)}
         breadcrumb={breadcrumb}
-        meta={`${total} artikel`}
+        meta={
+          totalPages > 1
+            ? `${total} artikel · halaman ${page} dari ${totalPages}`
+            : `${total} artikel`
+        }
       />
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
@@ -132,6 +155,11 @@ export default async function CategoryPage({
                 />
               </Suspense>
             )}
+            <PaginationNav
+              rubrikKey={key}
+              current={page}
+              totalPages={totalPages}
+            />
           </section>
           <Sidebar />
         </div>
