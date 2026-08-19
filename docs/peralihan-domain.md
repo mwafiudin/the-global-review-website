@@ -117,10 +117,14 @@ IP/include eksplisit.
 **cPanel → Domains → Create A Domain**
 
 - Domain: `cms.theglobal-review.com`
-- Document Root: **samakan dengan domain utama** (biasanya
-  `/home/<user>/public_html`). Hilangkan centang "Share document root"
-  bila cPanel menawarkan folder baru — WordPress-nya tidak dipindah,
-  hanya diberi nama tambahan.
+- Document Root: **samakan dengan domain utama** (`/home/theglob/
+  public_html`). Di UI cPanel host ini bentuknya centang
+  **"Share document root … with theglobal-review.com" — BIARKAN
+  TERCENTANG** (diverifikasi Agustus 2026): tercentang = folder yang
+  sama, WordPress hanya diberi nama kedua. Menghilangkan centang justru
+  membuat folder baru yang kosong. Peringatan "this setting is
+  permanent" tidak apa-apa — entri domainnya selalu bisa dihapus dan
+  dibuat ulang tanpa menyentuh WordPress.
 
 Tunggu AutoSSL menerbitkan sertifikat (biasanya beberapa menit).
 
