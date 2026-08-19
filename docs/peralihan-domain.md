@@ -7,6 +7,42 @@ bila gagal.
 
 ---
 
+## Status eksekusi — 19 Agustus 2026
+
+Cutover sempat dijalankan sampai ambang tahap DNS, lalu **ditunda atas
+permintaan (tanggalnya menunggu keputusan marketing)**. Persiapan yang
+sudah rampung dan sengaja dibiarkan terpasang:
+
+- **MX diperbaiki**: `mail.theglobal-review.com` kini A record sendiri
+  dan MX menunjuk ke sana — email kebal terhadap perubahan apex.
+  (Sebelumnya MX menunjuk ke apex; mengubah A record akan mematikan
+  seluruh email masuk. Ranjau ini tidak tercatat di runbook awal.)
+- **`cms.theglobal-review.com` sudah ada** (shared docroot, tercakup
+  sertifikat wildcard host).
+- **`WP_API_URL` di Vercel sudah menunjuk `cms`** dan situs vercel.app
+  terverifikasi membaca artikel + gambar lewat alamat itu — REST WP
+  tetap menjawab di hostname cms meski `WP_HOME` masih apex, karena
+  canonical redirect hanya berlaku untuk permintaan template.
+- Dua baris `WP_HOME`/`WP_SITEURL` di `wp-config.php` **ada tapi
+  di-comment (`//`)** — tahap 2 tinggal menghapus komentarnya.
+- `mu-plugins/tgr-alih-sementara.php.off` nonaktif (di-rename); beranda
+  lama tidak dialihkan ke mana pun.
+
+**Checklist hari-H** (± 1 jam, jam sepi):
+
+1. Hapus `//` pada dua baris `WP_HOME`/`WP_SITEURL` di `wp-config.php`,
+   lalu wp-admin (di `cms.`) → Permalink → Simpan. *(tahap 4 di bawah
+   sudah beres — lewati bagian kode & env-nya)*
+2. Pemilik akun Vercel: Settings → Domains → Add `theglobal-review.com`
+   + `www.theglobal-review.com`; catat record yang diminta.
+3. cPanel → Zone Editor: ubah A `@` dan CNAME `www` persis sesuai nilai
+   dari Vercel. **Jangan sentuh** record `cms`, `mail`, MX, dan NS.
+4. Verifikasi: domain utama tayang situs baru, artikel + gambar hidup,
+   `cms.` tetap WordPress, kirim-terima email masih jalan.
+5. Rapikan per tahap 5: cms dihalangi indeks, sitemap ke Search Console.
+
+---
+
 ## 1. Kenapa bukan sekadar redirect
 
 Godaan pertama adalah memasang redirect di cPanel: `theglobal-review.com`
