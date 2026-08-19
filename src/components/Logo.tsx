@@ -9,14 +9,17 @@ import Link from "next/link";
 export function Logo({
   withTagline = false,
   onDark = false,
+  homeHref = "/",
 }: {
   withTagline?: boolean;
   /** Paksa wordmark emas + teks terang, untuk latar gelap (mis. footer navy). */
   onDark?: boolean;
+  /** Beranda per bahasa ("/" atau "/en") — dipasok header/footer lewat l(). */
+  homeHref?: string;
 }) {
   return (
     <Link
-      href="/"
+      href={homeHref}
       className="inline-flex shrink-0 items-center gap-3.5"
       aria-label="The Global Review, ke beranda"
     >

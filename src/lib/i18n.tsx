@@ -1,61 +1,34 @@
 "use client";
 
-import { useSyncExternalStore, type ReactNode } from "react";
-import { EN } from "@/lib/dictionary/ui";
+import { createContext, useContext, type ReactNode } from "react";
+import { tFor } from "@/lib/dictionary/ui";
+import { localizeHref, type Lang } from "@/lib/locale-routing";
 
-export type Lang = "id" | "en";
-
-// Store eksternal sederhana (SSR-safe, tanpa setState di effect).
-let currentLang: Lang = "id";
-if (typeof window !== "undefined") {
-  try {
-    const saved = localStorage.getItem("tgr-lang");
-    if (saved === "en" || saved === "id") currentLang = saved;
-  } catch {}
-}
-
-const listeners = new Set<() => void>();
-
-function subscribe(cb: () => void) {
-  listeners.add(cb);
-  return () => {
-    listeners.delete(cb);
-  };
-}
-
-function getSnapshot(): Lang {
-  return currentLang;
-}
-
-function getServerSnapshot(): Lang {
-  return "id";
-}
-
-/** Ubah bahasa aktif, simpan, dan beri tahu seluruh pelanggan. */
-export function setLang(next: Lang) {
-  currentLang = next;
-  try {
-    localStorage.setItem("tgr-lang", next);
-  } catch {}
-  if (typeof document !== "undefined") document.documentElement.lang = next;
-  listeners.forEach((cb) => cb());
-}
+export type { Lang };
 
 /**
- * Provider masih passthrough; prop lang dari layout [lang] baru dipakai saat
- * peralihan ke konteks URL (store localStorage di bawah menyusul dihapus).
+ * Bahasa aktif ditentukan URL (segmen [lang]) dan disuntik layout lewat
+ * provider ini — bukan lagi localStorage. Dengan begitu render server dan
+ * client selalu sepakat, tanpa kedip ganti bahasa pasca-hidrasi.
  */
+const LangContext = createContext<Lang>("id");
+
 export function LanguageProvider({
+  lang = "id",
   children,
 }: {
   lang?: Lang;
   children: ReactNode;
 }) {
-  return <>{children}</>;
+  return <LangContext.Provider value={lang}>{children}</LangContext.Provider>;
 }
 
+/** t: kamus berkunci string sumber Indonesia; l: prefiks href per bahasa. */
 export function useLang() {
-  const lang = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const t = (s: string) => (lang === "en" ? EN[s] ?? s : s);
-  return { lang, setLang, t };
+  const lang = useContext(LangContext);
+  return {
+    lang,
+    t: tFor(lang),
+    l: (href: string) => localizeHref(href, lang),
+  };
 }

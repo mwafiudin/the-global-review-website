@@ -78,7 +78,8 @@ export function NewsletterForm() {
       });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
-        setGalat(data.error || t("Pendaftaran gagal, coba lagi nanti."));
+        // Pesan server berbahasa Indonesia; kamus memetakannya saat EN.
+        setGalat(data.error ? t(data.error) : t("Pendaftaran gagal, coba lagi nanti."));
         return;
       }
       setSent(true);

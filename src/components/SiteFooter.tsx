@@ -79,7 +79,7 @@ const mediaLinks = [
  * bahwa The Global Review adalah kanal media milik Global Future Institute.
  */
 export function SiteFooter() {
-  const { t } = useLang();
+  const { t, l } = useLang();
   return (
     <footer className="relative overflow-hidden bg-[#011840] text-white/70 dark:bg-[#18181b]">
       {/* Peta dunia engraving: motif "pemandu" samar */}
@@ -112,7 +112,7 @@ export function SiteFooter() {
             </p>
           </div>
           <Link
-            href="/tentang-gfi"
+            href={l("/tentang-gfi")}
             className="shrink-0 self-start rounded-lg border border-white/25 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:border-[#d9b14a] hover:text-[#d9b14a] sm:ml-auto sm:self-center"
           >
             {t("Tentang GFI")}
@@ -122,7 +122,7 @@ export function SiteFooter() {
 
       <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-14 md:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr] lg:px-6">
         <div>
-          <Logo onDark />
+          <Logo onDark homeHref={l("/")} />
           <p className="mt-6 font-display text-lg font-semibold leading-snug text-white/85">
             {t(site.tagline)}
           </p>
@@ -157,7 +157,7 @@ export function SiteFooter() {
             {lembagaLinks.map((item) => (
               <li key={item.href}>
                 <Link
-                  href={item.href}
+                  href={l(item.href)}
                   className="text-sm text-white/70 transition-colors hover:text-white"
                 >
                   {t(item.label)}
@@ -175,7 +175,7 @@ export function SiteFooter() {
             {mediaLinks.map((item) => (
               <li key={item.href}>
                 <Link
-                  href={item.href}
+                  href={l(item.href)}
                   className="text-sm text-white/70 transition-colors hover:text-white"
                 >
                   {t(item.label)}

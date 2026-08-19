@@ -31,6 +31,7 @@ import {
 } from "@phosphor-icons/react";
 import { lainnyaGroups, mainMenu, site, topBarMenu } from "@/data/site";
 import { useLang } from "@/lib/i18n";
+import { alternatePath } from "@/lib/locale-routing";
 import { Logo } from "./Logo";
 import { LanguageToggle } from "./LanguageToggle";
 import { SearchTrigger } from "./Search";
@@ -74,10 +75,13 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openSub, setOpenSub] = useState<string | null>(null);
   const pathname = usePathname();
-  const { t } = useLang();
+  const { t, l } = useLang();
 
+  // Href menu selalu tanpa prefiks; pathname di /en dipulangkan dulu
+  // supaya penanda aktif tetap benar di kedua bahasa.
+  const path = alternatePath(pathname, "id");
   const isActive = (href: string) =>
-    href !== "#" && (href === "/" ? pathname === "/" : pathname.startsWith(href));
+    href !== "#" && (href === "/" ? path === "/" : path.startsWith(href));
 
   function closeMobile() {
     setMobileOpen(false);
@@ -120,7 +124,7 @@ export function SiteHeader() {
                 {topBarMenu.map((item) => (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={l(item.href)}
                     className={`text-[11px] font-semibold uppercase tracking-wide transition-colors hover:text-accent ${
                       isActive(item.href) ? "text-accent" : "text-meta"
                     }`}
@@ -137,7 +141,7 @@ export function SiteHeader() {
 
         <header className="border-b border-line bg-canvas/85 backdrop-blur-md">
           <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-6 px-4 lg:px-6">
-            <Logo withTagline />
+            <Logo withTagline homeHref={l("/")} />
 
             {/* Nav desktop */}
             <nav aria-label="Menu utama" className="hidden xl:block">
@@ -145,7 +149,7 @@ export function SiteHeader() {
                 {mainMenu.map((item) => (
                   <li key={item.label} className="group relative">
                     <Link
-                      href={item.href}
+                      href={l(item.href)}
                       className={`flex h-[72px] items-center gap-1 whitespace-nowrap px-2.5 text-[12px] font-semibold uppercase tracking-wide transition-colors xl:px-3 ${
                         isActive(item.href)
                           ? "text-accent"
@@ -166,7 +170,7 @@ export function SiteHeader() {
                         {item.children.map((child) => (
                           <li key={child.href}>
                             <Link
-                              href={child.href}
+                              href={l(child.href)}
                               className="block px-4 py-2 text-[13px] font-medium text-body transition-colors hover:text-accent"
                             >
                               {t(child.label)}
@@ -199,7 +203,7 @@ export function SiteHeader() {
                             return (
                               <li key={it.href}>
                                 <Link
-                                  href={it.href}
+                                  href={l(it.href)}
                                   className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-[13px] font-medium text-body transition-colors hover:bg-canvas hover:text-accent"
                                 >
                                   <ItemIcon
@@ -287,7 +291,7 @@ export function SiteHeader() {
                           <ul className="mb-2 ml-1 space-y-0.5 border-l border-line pl-4">
                             <li>
                               <Link
-                                href={item.href}
+                                href={l(item.href)}
                                 onClick={closeMobile}
                                 className="block py-2.5 text-[15px] font-medium text-accent"
                               >
@@ -297,7 +301,7 @@ export function SiteHeader() {
                             {item.children.map((child) => (
                               <li key={child.href}>
                                 <Link
-                                  href={child.href}
+                                  href={l(child.href)}
                                   onClick={closeMobile}
                                   className="block py-2.5 text-[15px] text-body transition-colors hover:text-accent"
                                 >
@@ -310,7 +314,7 @@ export function SiteHeader() {
                       </>
                     ) : (
                       <Link
-                        href={item.href}
+                        href={l(item.href)}
                         onClick={closeMobile}
                         className="flex items-center gap-3 py-4 text-[15px] font-semibold uppercase tracking-wide text-ink transition-colors hover:text-accent"
                       >
@@ -339,7 +343,7 @@ export function SiteHeader() {
                     return (
                       <li key={it.href}>
                         <Link
-                          href={it.href}
+                          href={l(it.href)}
                           onClick={closeMobile}
                           className="flex items-center gap-3 py-4 text-[15px] font-semibold uppercase tracking-wide text-ink transition-colors hover:text-accent"
                         >
@@ -365,7 +369,7 @@ export function SiteHeader() {
               {tentangMobile.map((item) => (
                 <li key={item.href}>
                   <Link
-                    href={item.href}
+                    href={l(item.href)}
                     onClick={closeMobile}
                     className="block py-3.5 text-[15px] text-body transition-colors hover:text-accent"
                   >
