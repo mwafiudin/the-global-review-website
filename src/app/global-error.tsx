@@ -2,6 +2,10 @@
 
 import { useEffect } from "react";
 import { EN } from "@/lib/dictionary/ui";
+// Pola resmi: global-error wajib membawa global styles-nya sendiri
+// (docs error.md). Chunk CSS terpisah ini bisa memicu overlay dev
+// "No link element found for chunk" — bug HMR Turbopack yang dikenal
+// (vercel/next.js#74749, dev-only); hard refresh memulihkannya.
 import "./globals.css";
 
 /**
