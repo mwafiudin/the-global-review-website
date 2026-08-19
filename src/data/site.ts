@@ -1,6 +1,12 @@
 export const site = {
   name: "The Global Review",
   tagline: "Pemandu Informasi Perkembangan Dunia",
+  /**
+   * Alamat kanonik situs. Dipakai metadataBase, sitemap, dan robots —
+   * pasca-cutover situs juga tersaji di *.vercel.app, dan canonical inilah
+   * yang menjaga Google menghitung semuanya sebagai domain utama.
+   */
+  url: "https://theglobal-review.com",
   description:
     "Media online yang dimiliki Global Future Institute. The Global Review menyajikan analisis dan opini politik luar negeri serta geopolitik dari Indonesia.",
   owner: "Global Future Institute (GFI)",

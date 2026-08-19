@@ -24,11 +24,18 @@ const cardo = Cardo({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(site.url),
   title: {
     default: `${site.name} | ${site.tagline}`,
     template: `%s | ${site.name}`,
   },
   description: site.description,
+  // "./" di-resolve terhadap pathname rute aktif — tiap halaman mendapat
+  // canonical dirinya sendiri di domain utama. Penting karena situs juga
+  // tersaji di *.vercel.app; tanpa ini Google melihat konten ganda.
+  alternates: {
+    canonical: "./",
+  },
   openGraph: {
     title: `${site.name} | ${site.tagline}`,
     description: site.description,
