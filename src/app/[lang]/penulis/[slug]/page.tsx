@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { authors, getAuthor } from "@/data/authors";
 import { byAuthor, byAuthorCount } from "@/lib/wp/articles";
+import { getT } from "@/lib/i18n-server";
 import { Avatar } from "@/components/Avatar";
 import { CardRow } from "@/components/ArticleCard";
 
@@ -35,6 +36,7 @@ export default async function PenulisPage({
   if (!authors.some((a) => a.slug === slug)) notFound();
 
   const author = getAuthor(slug);
+  const { t, l } = await getT();
   const [artikel, totalTulisan] = await Promise.all([
     byAuthor(slug),
     byAuthorCount(slug),
@@ -46,8 +48,8 @@ export default async function PenulisPage({
       <nav aria-label="Breadcrumb">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
           <li>
-            <Link href="/redaksi" className="transition-colors hover:text-accent">
-              Redaksi
+            <Link href={l("/redaksi")} className="transition-colors hover:text-accent">
+              {t("Redaksi")}
             </Link>
           </li>
           <li className="flex items-center gap-2">
@@ -68,7 +70,7 @@ export default async function PenulisPage({
             {author.role}
           </p>
           <p className="mt-1 text-xs font-medium uppercase tracking-wider text-meta">
-            {totalTulisan} tulisan
+            {totalTulisan} {t("tulisan")}
           </p>
         </div>
       </div>
@@ -80,7 +82,7 @@ export default async function PenulisPage({
 
       {/* Daftar tulisan */}
       <h2 className="mb-2 mt-12 border-b border-line pb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
-        Tulisan Terbaru
+        {t("Tulisan Terbaru")}
       </h2>
       {artikel.length > 0 ? (
         <div className="divide-y divide-line">
@@ -90,16 +92,16 @@ export default async function PenulisPage({
         </div>
       ) : (
         <p className="py-10 text-center text-sm text-meta">
-          Belum ada tulisan.
+          {t("Belum ada tulisan.")}
         </p>
       )}
 
       <Link
-        href="/redaksi"
+        href={l("/redaksi")}
         className="mt-10 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
       >
         <ArrowLeft size={13} weight="bold" />
-        Kembali ke Redaksi
+        {t("Kembali ke Redaksi")}
       </Link>
     </div>
   );

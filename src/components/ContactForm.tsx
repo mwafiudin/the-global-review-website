@@ -2,23 +2,24 @@
 
 import { useState } from "react";
 import { CheckCircle } from "@phosphor-icons/react";
+import { useLang } from "@/lib/i18n";
 
 const inputClass =
   "w-full rounded-lg border border-line bg-surface px-4 py-2.5 text-sm text-ink placeholder:text-meta focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25";
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
+  const { t } = useLang();
 
   if (sent) {
     return (
       <div className="rounded-xl border border-line bg-surface p-8 text-center">
         <CheckCircle size={40} weight="light" className="mx-auto text-accent" />
         <p className="mt-4 font-display text-lg font-bold text-ink">
-          Pesan Anda telah terkirim
+          {t("Pesan Anda telah terkirim")}
         </p>
         <p className="mt-2 text-sm text-meta">
-          Terima kasih. Redaksi akan merespons melalui email yang Anda
-          cantumkan.
+          {t("Terima kasih. Redaksi akan merespons melalui email yang Anda cantumkan.")}
         </p>
       </div>
     );
@@ -38,7 +39,7 @@ export function ContactForm() {
             htmlFor="nama"
             className="block text-xs font-bold uppercase tracking-wider text-ink"
           >
-            Nama <span className="text-accent">*</span>
+            {t("Nama")} <span className="text-accent">*</span>
           </label>
           <input id="nama" name="nama" type="text" required className={inputClass} />
         </div>
@@ -58,7 +59,7 @@ export function ContactForm() {
             htmlFor="telepon"
             className="block text-xs font-bold uppercase tracking-wider text-ink"
           >
-            Telepon
+            {t("Telepon")}
           </label>
           <input id="telepon" name="telepon" type="tel" className={inputClass} />
         </div>
@@ -67,7 +68,7 @@ export function ContactForm() {
             htmlFor="subjek"
             className="block text-xs font-bold uppercase tracking-wider text-ink"
           >
-            Subjek
+            {t("Subjek")}
           </label>
           <select
             id="subjek"
@@ -76,12 +77,12 @@ export function ContactForm() {
             className={inputClass}
           >
             <option value="" disabled>
-              Pilih subjek…
+              {t("Pilih subjek…")}
             </option>
-            <option>Redaksi &amp; Hak Jawab</option>
-            <option>Kerja Sama &amp; Kemitraan</option>
-            <option>Pertanyaan Umum</option>
-            <option>Lainnya</option>
+            <option>{t("Redaksi & Hak Jawab")}</option>
+            <option>{t("Kerja Sama & Kemitraan")}</option>
+            <option>{t("Pertanyaan Umum")}</option>
+            <option>{t("Lainnya")}</option>
           </select>
         </div>
       </div>
@@ -90,7 +91,7 @@ export function ContactForm() {
           htmlFor="pesan"
           className="block text-xs font-bold uppercase tracking-wider text-ink"
         >
-          Pesan <span className="text-accent">*</span>
+          {t("Pesan")} <span className="text-accent">*</span>
         </label>
         <textarea id="pesan" name="pesan" rows={6} required className={inputClass} />
       </div>
@@ -98,7 +99,7 @@ export function ContactForm() {
         type="submit"
         className="rounded-lg border border-ink bg-surface px-7 py-3 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:bg-ink hover:text-surface active:scale-[0.98]"
       >
-        Kirim Pesan
+        {t("Kirim Pesan")}
       </button>
     </form>
   );

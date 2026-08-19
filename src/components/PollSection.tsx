@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { toPollViews, wpActivePolls } from "@/lib/wp/polls";
+import { getT } from "@/lib/i18n-server";
 import { SectionHeading } from "./SectionHeading";
 import { PollCarousel } from "./PollCarousel";
 
@@ -9,10 +10,11 @@ export async function PollSection() {
   // WordPress akan terus bertambah.
   const views = await toPollViews((await wpActivePolls()).slice(0, 3));
   if (views.length === 0) return null;
+  const { t } = await getT();
 
   return (
     <section
-      aria-label="Jajak Pendapat"
+      aria-label={t("Jajak Pendapat")}
       className="relative overflow-hidden py-12 md:py-16"
     >
       {/* Watermark kompas di area heading */}

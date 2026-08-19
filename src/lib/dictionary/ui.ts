@@ -93,6 +93,148 @@ export const EN: Record<string, string> = {
     "An online publication of the Global Future Institute. The Global Review presents foreign-policy and geopolitical analysis and opinion from Indonesia.",
   "The Global Review — jurnalisme independen, analisis mendalam":
     "The Global Review — independent journalism, in-depth analysis",
+  // Beranda & seksi
+  "Isu Utama": "Top Story",
+  Sorotan: "Highlights",
+  "Lihat semua": "View all",
+  "Tulisan Lainnya": "More Articles",
+  "Belum ada artikel pada rubrik ini.": "No articles in this section yet.",
+  "Sosial & Budaya": "Society & Culture",
+  Terpopuler: "Most Read",
+  "Podcast Terbaru": "Latest Podcasts",
+  "Semua podcast": "All podcasts",
+  "Buku pilihan": "Featured book",
+  "Baca ulasannya": "Read the review",
+  "Ikuti di Facebook": "Follow on Facebook",
+  pengikut: "followers",
+  "Suka Halaman": "Like Page",
+  "Jaringan Rujukan": "Reference Network",
+  "Sumber dan mitra pantauan kami, dari lembaga resmi dalam negeri hingga media analisis lintas kawasan.":
+    "The sources and partners we monitor, from official domestic institutions to analytical media across regions.",
+  Indonesia: "Indonesia",
+  // BrandBand
+  "Mengenal dunia, mengenal negeri kita sendiri.":
+    "To know the world is to know our own country.",
+  "The Global Review adalah kanal jurnalistik":
+    "The Global Review is the journalistic channel of",
+  ", lembaga pengkajian geopolitik dan politik luar negeri yang berdiri pada 2007. Sejak 2008 kami menyebarluaskan pikiran para pengkaji masalah internasional — bukan mengejar kecepatan kabar, melainkan kejernihan membaca arah dunia.":
+    ", a geopolitics and foreign-policy think tank established in 2007. Since 2008 we have carried the thinking of scholars of international affairs — pursuing not the speed of news, but clarity in reading where the world is heading.",
+  "Analisis, opini, dan kajian kawasan kami susun untuk pembaca yang ingin memahami mengapa sebuah peristiwa terjadi, bukan sekadar mengetahui bahwa ia terjadi.":
+    "We craft our analysis, opinion, and regional studies for readers who want to understand why an event happens, not merely to know that it did.",
+  "Tentang The Global Review": "About The Global Review",
+  // Halaman artikel
+  "menit baca": "min read",
+  Penulis: "Author",
+  Sebelumnya: "Previous",
+  Selanjutnya: "Next",
+  Berikutnya: "Next",
+  "Lainnya di": "More in",
+  "Navigasi artikel": "Article navigation",
+  "Artikel terkait": "Related articles",
+  Bagikan: "Share",
+  "Salin tautan": "Copy link",
+  "Bagikan ke WhatsApp": "Share to WhatsApp",
+  "Bagikan ke X": "Share to X",
+  // Arsip rubrik & paginasi
+  artikel: "articles",
+  "Semua penulis": "All authors",
+  "Semua waktu": "All time",
+  "Bulan ini": "This month",
+  "Tahun ini": "This year",
+  Terbaru: "Newest",
+  Terlama: "Oldest",
+  "Waktu baca tercepat": "Shortest read",
+  "Filter penulis": "Filter by author",
+  "Filter waktu": "Filter by time",
+  Urutkan: "Sort",
+  "Tidak ada artikel yang cocok": "No matching articles",
+  "Coba longgarkan filter untuk rubrik": "Try loosening the filters for",
+  "Reset filter": "Reset filters",
+  "Navigasi halaman": "Page navigation",
+  "Navigasi halaman arsip": "Archive page navigation",
+  "Halaman sebelumnya": "Previous page",
+  "Halaman berikutnya": "Next page",
+  Beranda: "Home",
+  "Kembali ke atas": "Back to top",
+  // Pencarian
+  "Cari artikel, rubrik, topik…": "Search articles, sections, topics…",
+  "Tutup pencarian": "Close search",
+  "Jelajahi rubrik": "Browse sections",
+  "Tidak ada hasil untuk": "No results for",
+  "Coba kata kunci lain atau jelajahi rubrik.":
+    "Try a different keyword or browse the sections.",
+  Mencari: "Searching",
+  hasil: "results",
+  buka: "open",
+  tutup: "close",
+  // Jajak pendapat
+  "Jajak Pendapat": "Reader Poll",
+  "Jajak pendapat": "Reader poll",
+  Dipilih: "Chosen by",
+  pembaca: "readers",
+  "Ubah pilihan": "Change choice",
+  "Bagikan poll ke WhatsApp": "Share poll to WhatsApp",
+  "Bagikan poll ke X": "Share poll to X",
+  "Baca artikel sumber": "Read the source article",
+  // Formulir kontak
+  Nama: "Name",
+  Telepon: "Phone",
+  Subjek: "Subject",
+  Pesan: "Message",
+  "Pilih subjek…": "Choose a subject…",
+  "Redaksi & Hak Jawab": "Editorial & Right of Reply",
+  "Kerja Sama & Kemitraan": "Cooperation & Partnership",
+  "Pertanyaan Umum": "General Inquiry",
+  "Kirim Pesan": "Send Message",
+  "Pesan Anda telah terkirim": "Your message has been sent",
+  "Terima kasih. Redaksi akan merespons melalui email yang Anda cantumkan.":
+    "Thank you. The editorial team will respond via the email you provided.",
+  // 404 & galat
+  "Halaman tidak ditemukan": "Page not found",
+  "Halaman yang Anda cari mungkin telah dipindahkan atau tidak tersedia.":
+    "The page you are looking for may have been moved or is unavailable.",
+  "Kembali ke Beranda": "Back to Home",
+  "Terjadi kesalahan": "Something went wrong",
+  "Muat ulang": "Reload",
+  // Halaman rubrik
+  halaman: "page",
+  dari: "of",
+  Artikel: "Articles",
+  "Belum ada artikel di rubrik ini": "No articles in this section yet",
+  "Artikel untuk rubrik": "Articles for the",
+  "akan tampil di sini setelah dipublikasikan.":
+    "section will appear here once published.",
+  // Kanal: penulis, podcast, bedah buku, galeri
+  tulisan: "articles",
+  "Tulisan Terbaru": "Latest Articles",
+  "Belum ada tulisan.": "No articles yet.",
+  "Kembali ke Redaksi": "Back to the Editorial team",
+  "Rekam jejak tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media, lengkap dengan tayangannya.":
+    "The Global Future Institute team's appearances as speakers on podcasts, talk shows, and media channels, complete with the recordings.",
+  "Narasumber:": "Speaker:",
+  "Tayangan ini diproduksi dan diunggah oleh kanal":
+    "This program was produced and uploaded by",
+  ". The Global Review menautkannya sebagai bagian dari rekam jejak narasumber GFI.":
+    ". The Global Review links to it as part of the GFI speakers' track record.",
+  "Penampilan lainnya": "Other appearances",
+  "Ulasan buku terbitan Global Future Institute dan bacaan pilihan redaksi.":
+    "Reviews of Global Future Institute titles and the editors' selected reading.",
+  "Buku Utama": "Featured Book",
+  "Baca ulasan lengkap": "Read the full review",
+  "Koleksi Lainnya": "More from the Collection",
+  "Baca ulasan": "Read review",
+  Ulasan: "Review",
+  "Tonton diskusinya": "Watch the discussion",
+  bersama: "with",
+  di: "on",
+  "Selengkapnya di Podcast": "More on Podcast",
+  "Ulasan lainnya": "Other reviews",
+  "Semua bedah buku": "All book reviews",
+  "Album dokumentasi kegiatan Global Future Institute — seminar, diskusi, riset, hingga silaturahmi redaksi.":
+    "Photo albums documenting Global Future Institute activities — seminars, discussions, research, and editorial gatherings.",
+  foto: "photos",
+  "Album Lainnya": "Other Albums",
+  "Semua album": "All albums",
 };
 
 /** Penerjemah untuk satu bahasa; dipakai bersama oleh sisi server & client. */

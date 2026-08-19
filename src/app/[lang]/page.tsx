@@ -22,6 +22,7 @@ import {
   byCategory,
   featuredArticles,
 } from "@/lib/wp/articles";
+import { getT } from "@/lib/i18n-server";
 
 export default async function HomePage() {
   const [heroes, analisisPool, internasionalPool, ragamPool, terbaru] =
@@ -33,6 +34,7 @@ export default async function HomePage() {
       allArticles(24),
     ]);
   const [heroMain, ...heroSide] = heroes;
+  const { lang, t, l } = await getT();
   const heroAuthor = getAuthor(heroMain.author);
 
   const usedSlugs = new Set([
@@ -51,16 +53,16 @@ export default async function HomePage() {
     <div>
       {/* Hero: satu cerita utama + daftar headline */}
       <section
-        aria-label="Isu utama"
+        aria-label={t("Isu Utama")}
         className="mx-auto grid max-w-7xl gap-12 px-4 py-14 md:py-20 lg:grid-cols-12 lg:px-6"
       >
         <article className="lg:col-span-8">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-accent">
-            Isu Utama
+            {t("Isu Utama")}
           </p>
           <h1 className="mt-4 font-display text-3xl font-extrabold leading-[1.1] tracking-tight text-ink md:text-5xl">
             <Link
-              href={articleHref(heroMain)}
+              href={l(articleHref(heroMain))}
               className="transition-opacity hover:opacity-90"
             >
               <TitleWithHighlight
@@ -77,10 +79,10 @@ export default async function HomePage() {
             <span className="px-2" aria-hidden>
               ·
             </span>
-            {formatDate(heroMain.date)}
+            {formatDate(heroMain.date, lang)}
           </p>
           <Link
-            href={articleHref(heroMain)}
+            href={l(articleHref(heroMain))}
             className="mt-8 block aspect-[1200/630] w-full self-start overflow-hidden rounded-xl bg-canvas"
             tabIndex={-1}
             aria-hidden
@@ -99,7 +101,7 @@ export default async function HomePage() {
 
         <div className="lg:col-span-4 lg:border-l lg:border-line lg:pl-10">
           <p className="border-b border-line pb-4 text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
-            Sorotan
+            {t("Sorotan")}
           </p>
           <div className="divide-y divide-line">
             {heroSide.map((a) => (
@@ -133,7 +135,7 @@ export default async function HomePage() {
 
         {/* Internasional: sorotan lebar */}
         <section
-          aria-label="Internasional"
+          aria-label={t("Internasional")}
           className="relative mx-auto max-w-7xl px-4 py-12 md:py-16 lg:px-6"
         >
         <SectionHeading
@@ -144,7 +146,7 @@ export default async function HomePage() {
           <div className="grid gap-10 lg:grid-cols-2">
             <article className="group">
               <Link
-                href={articleHref(internasionalMain)}
+                href={l(articleHref(internasionalMain))}
                 className="block aspect-[16/10] w-full self-start overflow-hidden rounded-xl bg-canvas"
                 tabIndex={-1}
                 aria-hidden
@@ -162,7 +164,7 @@ export default async function HomePage() {
                 <CategoryTag slug={internasionalMain.category} />
                 <h3 className="mt-3 font-display text-2xl font-extrabold leading-snug tracking-tight text-ink md:text-3xl">
                   <Link
-                    href={articleHref(internasionalMain)}
+                    href={l(articleHref(internasionalMain))}
                     className="transition-colors hover:text-accent"
                   >
                     <TitleWithHighlight
@@ -175,7 +177,7 @@ export default async function HomePage() {
                   {internasionalMain.excerpt}
                 </p>
                 <p className="mt-3 text-xs text-meta">
-                  {formatDate(internasionalMain.date)}
+                  {formatDate(internasionalMain.date, lang)}
                 </p>
               </div>
             </article>
@@ -219,7 +221,7 @@ export default async function HomePage() {
 
       {/* Tulisan lainnya + sidebar */}
       <div className="mx-auto grid max-w-7xl gap-14 px-4 py-12 pb-24 md:py-16 lg:grid-cols-[1fr_320px] lg:px-6">
-        <section aria-label="Tulisan lainnya">
+        <section aria-label={t("Tulisan Lainnya")}>
           <SectionHeading title="Tulisan Lainnya" />
           <div className="divide-y divide-line">
             {tulisanLainnya.map((a) => (

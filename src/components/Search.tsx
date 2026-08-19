@@ -11,6 +11,7 @@ import Link from "next/link";
 import { ArrowRight, MagnifyingGlass, X } from "@phosphor-icons/react";
 import { mainMenu } from "@/data/site";
 import { articleHref, categoryName, formatDate } from "@/lib/articles";
+import { useLang } from "@/lib/i18n";
 import type { Article } from "@/lib/types";
 
 const popularCategories = mainMenu.filter((m) => m.href !== "#");
@@ -29,11 +30,12 @@ function useSearch() {
 /** Tombol pemicu pencarian (dipakai di header). */
 export function SearchTrigger() {
   const { setOpen } = useSearch();
+  const { t } = useLang();
   return (
     <button
       type="button"
       onClick={() => setOpen(true)}
-      aria-label="Cari artikel"
+      aria-label={t("Cari artikel")}
       className="flex h-9 w-9 items-center justify-center rounded-full border border-line text-body transition-colors hover:border-accent hover:text-accent"
     >
       <MagnifyingGlass size={16} weight="bold" />
@@ -95,20 +97,21 @@ function ResultRow({
   article: Article;
   onClick: () => void;
 }) {
+  const { lang, t, l } = useLang();
   return (
     <Link
-      href={articleHref(article)}
+      href={l(articleHref(article))}
       onClick={onClick}
       className="group flex items-center gap-3 px-4 py-3 transition-colors hover:bg-canvas"
     >
       <div className="min-w-0 flex-1">
         <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-meta">
-          {categoryName(article.category)}
+          {t(categoryName(article.category))}
         </p>
         <p className="mt-1 truncate font-display text-[15px] font-semibold text-ink">
           {article.title}
         </p>
-        <p className="mt-0.5 text-xs text-meta">{formatDate(article.date)}</p>
+        <p className="mt-0.5 text-xs text-meta">{formatDate(article.date, lang)}</p>
       </div>
       <ArrowRight
         size={15}
@@ -129,6 +132,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   /** Kueri yang hasilnya sudah tiba — pembeda "belum ada jawaban" vs "nihil". */
   const [settledFor, setSettledFor] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const { t, l } = useLang();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -192,13 +196,13 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             type="text"
-            placeholder="Cari artikel, rubrik, topik…"
+            placeholder={t("Cari artikel, rubrik, topik…")}
             className="w-full bg-transparent py-4 text-[15px] text-ink placeholder:text-meta focus:outline-none"
           />
           <button
             type="button"
             onClick={onClose}
-            aria-label="Tutup pencarian"
+            aria-label={t("Tutup pencarian")}
             className="shrink-0 text-meta transition-colors hover:text-ink"
           >
             <X size={18} />
@@ -209,22 +213,22 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
           {empty ? (
             <div className="py-3">
               <p className="px-4 pb-2.5 text-[10px] font-bold uppercase tracking-[0.16em] text-meta">
-                Jelajahi rubrik
+                {t("Jelajahi rubrik")}
               </p>
               <div className="flex flex-wrap gap-2 px-4 pb-5">
                 {popularCategories.map((c) => (
                   <Link
                     key={c.href}
-                    href={c.href}
+                    href={l(c.href)}
                     onClick={onClose}
                     className="rounded-full border border-line px-3.5 py-1.5 text-xs font-semibold text-body transition-colors hover:border-accent hover:text-accent"
                   >
-                    {c.label}
+                    {t(c.label)}
                   </Link>
                 ))}
               </div>
               <p className="px-4 pb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-meta">
-                Sorotan
+                {t("Sorotan")}
               </p>
               <ul className="divide-y divide-line/70">
                 {featured.map((a) => (
@@ -243,10 +247,10 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                   className="mx-auto text-meta"
                 />
                 <p className="mt-3 text-sm text-body">
-                  Tidak ada hasil untuk &ldquo;{q}&rdquo;.
+                  <span>{t("Tidak ada hasil untuk")}</span> &ldquo;<span>{q}</span>&rdquo;.
                 </p>
                 <p className="mt-1 text-xs text-meta">
-                  Coba kata kunci lain atau jelajahi rubrik.
+                  {t("Coba kata kunci lain atau jelajahi rubrik.")}
                 </p>
               </div>
             ) : (
@@ -257,14 +261,14 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
                   className="mx-auto animate-pulse text-meta"
                 />
                 <p className="mt-3 text-sm text-meta">
-                  Mencari &ldquo;{q}&rdquo;&hellip;
+                  <span>{t("Mencari")}</span> &ldquo;<span>{q}</span>&rdquo;&hellip;
                 </p>
               </div>
             )
           ) : (
             <>
               <p className="px-4 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.16em] text-meta">
-                {results.length} hasil
+                <span>{results.length}</span> <span>{t("hasil")}</span>
               </p>
               <ul className="divide-y divide-line/70">
                 {results.map((a) => (
@@ -282,13 +286,13 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
             <kbd className="rounded border border-line px-1.5 py-0.5 font-sans text-[10px]">
               ↵
             </kbd>
-            buka
+            {t("buka")}
           </span>
           <span className="flex items-center gap-1.5">
             <kbd className="rounded border border-line px-1.5 py-0.5 font-sans text-[10px]">
               Esc
             </kbd>
-            tutup
+            {t("tutup")}
           </span>
         </div>
       </div>

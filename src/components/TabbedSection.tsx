@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react";
 import { Article } from "@/lib/types";
 import { inCategory } from "@/lib/articles";
+import { useLang } from "@/lib/i18n";
 import { CardCompact, CardFeature } from "./ArticleCard";
 
 interface Tab {
@@ -31,6 +32,7 @@ export function TabbedSection({
   layout?: "featured-list" | "grid";
 }) {
   const [active, setActive] = useState<string | null>(null);
+  const { t, l } = useLang();
 
   const filtered =
     active === null
@@ -42,10 +44,10 @@ export function TabbedSection({
   const gridItems = filtered.slice(0, 4);
 
   return (
-    <section aria-label={title}>
+    <section aria-label={t(title)}>
       <div className="mb-10 flex flex-col gap-3 border-b border-line sm:flex-row sm:items-baseline sm:justify-between sm:gap-x-6">
         <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ink sm:pb-4 md:text-sm">
-          {title}
+          {t(title)}
         </h2>
         <div className="-mb-px flex items-baseline gap-5 overflow-x-auto pb-0 [-ms-overflow-style:none] [scrollbar-width:none] sm:gap-4 [&::-webkit-scrollbar]:hidden">
           {tabs.map((tab) => {
@@ -62,15 +64,15 @@ export function TabbedSection({
                     : "border-transparent text-meta hover:text-ink"
                 }`}
               >
-                {tab.label}
+                {t(tab.label)}
               </button>
             );
           })}
           <Link
-            href={href}
+            href={l(href)}
             className="hidden shrink-0 items-center gap-1.5 whitespace-nowrap pb-4 text-xs font-semibold text-accent transition-opacity hover:opacity-70 sm:inline-flex"
           >
-            Lihat semua
+            {t("Lihat semua")}
             <ArrowRight size={12} weight="regular" />
           </Link>
         </div>
@@ -78,7 +80,7 @@ export function TabbedSection({
 
       {filtered.length === 0 ? (
         <p className="py-10 text-center text-sm text-meta">
-          Belum ada artikel pada rubrik ini.
+          {t("Belum ada artikel pada rubrik ini.")}
         </p>
       ) : layout === "grid" ? (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

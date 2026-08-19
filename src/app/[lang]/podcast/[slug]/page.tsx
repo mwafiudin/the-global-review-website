@@ -7,6 +7,7 @@ import { VideoEmbed, youtubeThumb } from "@/components/VideoEmbed";
 import { EndMark } from "@/components/Ornaments";
 import { formatDate } from "@/lib/articles";
 import { wpPodcast, wpPodcasts } from "@/lib/wp/podcasts";
+import { getT } from "@/lib/i18n-server";
 
 // Bergantung data WordPress — dirender on-demand lalu di-cache (ISR),
 // sama seperti rute artikel; build tidak memanggil WP.
@@ -39,6 +40,7 @@ export default async function PodcastDetailPage({
   const ep = await wpPodcast(slug);
   if (!ep) notFound();
 
+  const { lang, t, l } = await getT();
   const lainnya = (await wpPodcasts())
     .filter((p) => p.slug !== ep.slug)
     .slice(0, 3);
@@ -49,8 +51,8 @@ export default async function PodcastDetailPage({
       <nav aria-label="Breadcrumb">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
           <li>
-            <Link href="/podcast" className="transition-colors hover:text-accent">
-              Podcast
+            <Link href={l("/podcast")} className="transition-colors hover:text-accent">
+              {t("Podcast")}
             </Link>
           </li>
           <li className="flex items-center gap-2">
@@ -70,16 +72,16 @@ export default async function PodcastDetailPage({
         {ep.headline}
       </h1>
       <p className="mt-4 text-sm font-medium text-meta">
-        Narasumber: {ep.narasumber} · {formatDate(ep.tanggal)}
+        {t("Narasumber:")} {ep.narasumber} · {formatDate(ep.tanggal, lang)}
       </p>
 
       {/* Video embed */}
       <div className="mt-8">
         <VideoEmbed id={ep.videoId} title={ep.headline} />
         <p className="mt-2.5 text-xs text-meta">
-          Tayangan ini diproduksi dan diunggah oleh kanal{" "}
-          <span className="font-semibold text-body">{ep.media}</span>. The Global
-          Review menautkannya sebagai bagian dari rekam jejak narasumber GFI.
+          {t("Tayangan ini diproduksi dan diunggah oleh kanal")}{" "}
+          <span className="font-semibold text-body">{ep.media}</span>
+          {t(". The Global Review menautkannya sebagai bagian dari rekam jejak narasumber GFI.")}
         </p>
       </div>
 
@@ -97,13 +99,13 @@ export default async function PodcastDetailPage({
         {lainnya.length > 0 && (
           <>
             <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
-              Penampilan lainnya
+              {t("Penampilan lainnya")}
             </h2>
             <div className="mt-6 grid gap-6 sm:grid-cols-3">
               {lainnya.map((o) => (
                 <Link
                   key={o.slug}
-                  href={`/podcast/${o.slug}`}
+                  href={l(`/podcast/${o.slug}`)}
                   className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   <div className="relative aspect-video overflow-hidden bg-black">
@@ -135,11 +137,11 @@ export default async function PodcastDetailPage({
         )}
 
         <Link
-          href="/podcast"
+          href={l("/podcast")}
           className="mt-10 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
         >
           <ArrowLeft size={13} weight="bold" />
-          Semua podcast
+          {t("Semua podcast")}
         </Link>
       </div>
     </div>

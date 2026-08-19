@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getAuthor } from "@/data/authors";
+import { getT } from "@/lib/i18n-server";
 import {
   articleHref,
   articleImage,
@@ -64,6 +65,7 @@ export default async function ArticlePage({
   const article = await getArticle(slug);
   if (!article) notFound();
 
+  const { lang, t, l } = await getT();
   const author = getAuthor(article.author);
   const parentCategory = article.category.split("/")[0];
   const [inParent, { prev, next }, articlePolls] = await Promise.all([
@@ -103,11 +105,11 @@ export default async function ArticlePage({
                 <span className="px-2" aria-hidden>
                   ·
                 </span>
-                {formatDate(article.date)}
+                {formatDate(article.date, lang)}
                 <span className="px-2" aria-hidden>
                   ·
                 </span>
-                {readingMinutes(article)} menit baca
+                {readingMinutes(article)} {t("menit baca")}
               </p>
             </div>
             <ShareButtons title={article.title} />
@@ -163,7 +165,7 @@ export default async function ArticlePage({
             )}
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-meta">
-                Penulis
+                {t("Penulis")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold text-ink">
                 {author.name}
@@ -178,17 +180,17 @@ export default async function ArticlePage({
           {/* Navigasi artikel sebelumnya / selanjutnya */}
           {(prev || next) && (
             <nav
-              aria-label="Navigasi artikel"
+              aria-label={t("Navigasi artikel")}
               className="mt-14 grid gap-4 border-t border-line pt-8 sm:grid-cols-2"
             >
               {prev ? (
                 <Link
-                  href={articleHref(prev)}
+                  href={l(articleHref(prev))}
                   className="group rounded-xl border border-line p-5 transition-all hover:-translate-y-0.5 hover:border-accent/40"
                 >
                   <span className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
                     <CaretLeft size={11} weight="bold" />
-                    Sebelumnya
+                    {t("Sebelumnya")}
                   </span>
                   <span className="mt-2 block font-display text-[15px] font-semibold leading-snug text-ink transition-colors group-hover:text-accent">
                     {prev.title}
@@ -199,11 +201,11 @@ export default async function ArticlePage({
               )}
               {next ? (
                 <Link
-                  href={articleHref(next)}
+                  href={l(articleHref(next))}
                   className="group rounded-xl border border-line p-5 text-right transition-all hover:-translate-y-0.5 hover:border-accent/40"
                 >
                   <span className="flex items-center justify-end gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
-                    Selanjutnya
+                    {t("Selanjutnya")}
                     <CaretRight size={11} weight="bold" />
                   </span>
                   <span className="mt-2 block font-display text-[15px] font-semibold leading-snug text-ink transition-colors group-hover:text-accent">
@@ -217,9 +219,9 @@ export default async function ArticlePage({
           )}
 
           {related.length > 0 && (
-            <section className="mt-14" aria-label="Artikel terkait">
+            <section className="mt-14" aria-label={t("Artikel terkait")}>
               <SectionHeading
-                title={`Lainnya di ${categoryName(parentCategory)}`}
+                title={`${t("Lainnya di")} ${t(categoryName(parentCategory))}`}
                 href={`/category/${parentCategory}`}
               />
               <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">

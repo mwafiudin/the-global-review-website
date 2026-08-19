@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
 import { wpAlbums } from "@/lib/wp/gallery";
+import { getT } from "@/lib/i18n-server";
 
 export const metadata: Metadata = {
   title: "Galeri",
@@ -15,19 +16,20 @@ export const metadata: Metadata = {
 
 export default async function GalleryPage() {
   const albums = await wpAlbums();
+  const { lang, t, l } = await getT();
   return (
     <>
       <PageHeader
         title="Galeri"
         icon={ImagesSquare}
-        lead="Album dokumentasi kegiatan Global Future Institute — seminar, diskusi, riset, hingga silaturahmi redaksi."
+        lead={t("Album dokumentasi kegiatan Global Future Institute — seminar, diskusi, riset, hingga silaturahmi redaksi.")}
       />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {albums.map((a) => (
             <Link
               key={a.slug}
-              href={`/gallery/${a.slug}`}
+              href={l(`/gallery/${a.slug}`)}
               className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
@@ -46,7 +48,7 @@ export default async function GalleryPage() {
                   {a.kategori}
                 </span>
                 <span className="absolute bottom-3 right-3 rounded-full bg-black/55 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-sm">
-                  {a.foto.length} foto
+                  {a.foto.length} {t("foto")}
                 </span>
               </div>
               <div className="flex flex-1 flex-col p-5">
@@ -57,7 +59,7 @@ export default async function GalleryPage() {
                   {a.ringkasan}
                 </p>
                 <p className="mt-3 text-xs text-meta">
-                  {formatDate(a.tanggal)} · {a.lokasi}
+                  {formatDate(a.tanggal, lang)} · {a.lokasi}
                 </p>
               </div>
             </Link>

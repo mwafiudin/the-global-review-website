@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import type { Article } from "@/lib/types";
 import { inCategory, readingMinutes } from "@/lib/articles";
+import { useLang } from "@/lib/i18n";
 import { CardRow } from "./ArticleCard";
 
 const PAGE_SIZE = 8;
@@ -44,6 +45,7 @@ export function CategoryBrowser({
   const pathname = usePathname();
   const params = useSearchParams();
   const topRef = useRef<HTMLDivElement>(null);
+  const { t } = useLang();
 
   // URL sebagai sumber kebenaran
   const subLeaf = params.get("sub");
@@ -156,7 +158,7 @@ export function CategoryBrowser({
                 : "border-line text-body hover:border-ink hover:text-ink"
             }`}
           >
-            Semua
+            {t("Semua")}
           </button>
           {subcategories.map((s) => (
             <button
@@ -170,7 +172,7 @@ export function CategoryBrowser({
                   : "border-line text-body hover:border-ink hover:text-ink"
               }`}
             >
-              {s.label}
+              {t(s.label)}
             </button>
           ))}
         </div>
@@ -180,17 +182,17 @@ export function CategoryBrowser({
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
         <p className="text-sm text-meta">
           <span className="font-semibold text-ink">{filtered.length}</span>{" "}
-          artikel
+          <span>{t("artikel")}</span>
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {authors.length > 1 && (
             <select
-              aria-label="Filter penulis"
+              aria-label={t("Filter penulis")}
               value={author ?? ""}
               onChange={(e) => setAuthor(e.target.value || null)}
               className={selectClass}
             >
-              <option value="">Semua penulis</option>
+              <option value="">{t("Semua penulis")}</option>
               {authors.map((a) => (
                 <option key={a.slug} value={a.slug}>
                   {a.name}
@@ -199,24 +201,24 @@ export function CategoryBrowser({
             </select>
           )}
           <select
-            aria-label="Filter waktu"
+            aria-label={t("Filter waktu")}
             value={range}
             onChange={(e) => setRange(e.target.value as Range)}
             className={selectClass}
           >
-            <option value="all">Semua waktu</option>
-            <option value="month">Bulan ini</option>
-            <option value="year">Tahun ini</option>
+            <option value="all">{t("Semua waktu")}</option>
+            <option value="month">{t("Bulan ini")}</option>
+            <option value="year">{t("Tahun ini")}</option>
           </select>
           <select
-            aria-label="Urutkan"
+            aria-label={t("Urutkan")}
             value={sort}
             onChange={(e) => setSort(e.target.value as Sort)}
             className={selectClass}
           >
-            <option value="newest">Terbaru</option>
-            <option value="oldest">Terlama</option>
-            <option value="reading">Waktu baca tercepat</option>
+            <option value="newest">{t("Terbaru")}</option>
+            <option value="oldest">{t("Terlama")}</option>
+            <option value="reading">{t("Waktu baca tercepat")}</option>
           </select>
         </div>
       </div>
@@ -225,10 +227,11 @@ export function CategoryBrowser({
       {filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-line px-6 py-16 text-center">
           <p className="font-display text-lg font-bold text-ink">
-            Tidak ada artikel yang cocok
+            {t("Tidak ada artikel yang cocok")}
           </p>
           <p className="mt-2 text-sm text-meta">
-            Coba longgarkan filter untuk rubrik {categoryLabel}.
+            <span>{t("Coba longgarkan filter untuk rubrik")}</span>{" "}
+            <span>{t(categoryLabel)}</span>.
           </p>
           {hasFilter && (
             <button
@@ -236,7 +239,7 @@ export function CategoryBrowser({
               onClick={reset}
               className="mt-5 inline-block rounded-lg border border-ink bg-surface px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:bg-ink hover:text-surface"
             >
-              Reset filter
+              {t("Reset filter")}
             </button>
           )}
         </div>
@@ -251,14 +254,14 @@ export function CategoryBrowser({
       {/* Pagination bernomor */}
       {totalPages > 1 && (
         <nav
-          aria-label="Navigasi halaman"
+          aria-label={t("Navigasi halaman")}
           className="mt-10 flex items-center justify-center gap-1.5"
         >
           <button
             type="button"
             onClick={() => goTo(current - 1)}
             disabled={current === 1}
-            aria-label="Halaman sebelumnya"
+            aria-label={t("Halaman sebelumnya")}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-body transition-colors hover:border-ink hover:text-ink disabled:pointer-events-none disabled:opacity-40"
           >
             <CaretLeft size={14} weight="bold" />
@@ -288,7 +291,7 @@ export function CategoryBrowser({
             type="button"
             onClick={() => goTo(current + 1)}
             disabled={current === totalPages}
-            aria-label="Halaman berikutnya"
+            aria-label={t("Halaman berikutnya")}
             className="flex h-9 w-9 items-center justify-center rounded-lg border border-line text-body transition-colors hover:border-ink hover:text-ink disabled:pointer-events-none disabled:opacity-40"
           >
             <CaretRight size={14} weight="bold" />

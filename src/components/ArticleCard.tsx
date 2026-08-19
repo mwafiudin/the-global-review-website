@@ -1,6 +1,13 @@
+"use client";
+
+// Client sejak fitur dua bahasa: modul ini memang sudah terbundel client
+// (diimpor CategoryBrowser & TabbedSection), dan useLang menyelesaikan
+// label kategori + tanggal + "menit baca" untuk semua varian kartu
+// sekaligus. HTML hasil SSR tidak berubah.
 import Image from "next/image";
 import Link from "next/link";
 import { Article } from "@/lib/types";
+import { useLang } from "@/lib/i18n";
 import {
   articleHref,
   articleImage,
@@ -18,16 +25,17 @@ export function CategoryTag({
   slug: string;
   onImage?: boolean;
 }) {
+  const { t, l } = useLang();
   return (
     <Link
-      href={categoryHref(slug)}
+      href={l(categoryHref(slug))}
       className={
         onImage
           ? "inline-block text-[10px] font-bold uppercase tracking-[0.14em] text-white/80 transition-colors hover:text-white"
           : "inline-block text-[10px] font-bold uppercase tracking-[0.14em] text-meta transition-colors hover:text-accent"
       }
     >
-      {categoryName(slug)}
+      {t(categoryName(slug))}
     </Link>
   );
 }
@@ -70,10 +78,11 @@ export function CardFeature({
   article: Article;
   withExcerpt?: boolean;
 }) {
+  const { lang, t, l } = useLang();
   return (
     <article className="group transition-transform duration-200 hover:-translate-y-0.5">
       <Link
-        href={articleHref(article)}
+        href={l(articleHref(article))}
         className="block aspect-[16/10] w-full self-start overflow-hidden rounded-xl bg-canvas"
         tabIndex={-1}
         aria-hidden
@@ -90,7 +99,7 @@ export function CardFeature({
       <div className="pt-5">
         <CategoryTag slug={article.category} />
         <h3 className="mt-2.5 font-display text-lg font-bold leading-snug tracking-tight text-ink">
-          <Link href={articleHref(article)}>
+          <Link href={l(articleHref(article))}>
             <TitleWithHighlight
               title={article.title}
               highlight={article.highlight}
@@ -103,7 +112,7 @@ export function CardFeature({
             {article.excerpt}
           </p>
         )}
-        <p className="mt-3 text-xs text-meta">{formatDate(article.date)} · {readingMinutes(article)} menit baca</p>
+        <p className="mt-3 text-xs text-meta">{formatDate(article.date, lang)} · {readingMinutes(article)} {t("menit baca")}</p>
       </div>
     </article>
   );
@@ -111,10 +120,11 @@ export function CardFeature({
 
 /** Kartu ringkas: thumbnail di kiri, judul tegas untuk daftar samping. */
 export function CardCompact({ article }: { article: Article }) {
+  const { lang, l } = useLang();
   return (
     <article className="group flex items-start gap-4">
       <Link
-        href={articleHref(article)}
+        href={l(articleHref(article))}
         className="block aspect-[4/3] w-[116px] shrink-0 self-start overflow-hidden rounded-lg bg-surface"
         tabIndex={-1}
         aria-hidden
@@ -131,7 +141,7 @@ export function CardCompact({ article }: { article: Article }) {
       <div className="min-w-0">
         <CategoryTag slug={article.category} />
         <h3 className="mt-1.5 line-clamp-2 font-display text-[17px] font-bold leading-snug tracking-tight text-ink">
-          <Link href={articleHref(article)}>
+          <Link href={l(articleHref(article))}>
             <TitleWithHighlight
               title={article.title}
               highlight={article.highlight}
@@ -139,7 +149,7 @@ export function CardCompact({ article }: { article: Article }) {
             />
           </Link>
         </h3>
-        <p className="mt-2 text-xs text-meta">{formatDate(article.date)}</p>
+        <p className="mt-2 text-xs text-meta">{formatDate(article.date, lang)}</p>
       </div>
     </article>
   );
@@ -147,11 +157,12 @@ export function CardCompact({ article }: { article: Article }) {
 
 /** Item teks murni untuk daftar samping hero. */
 export function CardHeadline({ article }: { article: Article }) {
+  const { lang, l } = useLang();
   return (
     <article className="group">
       <CategoryTag slug={article.category} />
       <h3 className="mt-1.5 font-display text-[15px] font-semibold leading-snug text-ink">
-        <Link href={articleHref(article)}>
+        <Link href={l(articleHref(article))}>
           <TitleWithHighlight
             title={article.title}
             highlight={article.highlight}
@@ -159,17 +170,18 @@ export function CardHeadline({ article }: { article: Article }) {
           />
         </Link>
       </h3>
-      <p className="mt-1.5 text-xs text-meta">{formatDate(article.date)}</p>
+      <p className="mt-1.5 text-xs text-meta">{formatDate(article.date, lang)}</p>
     </article>
   );
 }
 
 /** Kartu baris: horizontal dengan excerpt, untuk feed tulisan. */
 export function CardRow({ article }: { article: Article }) {
+  const { lang, t, l } = useLang();
   return (
     <article className="group grid gap-5 py-8 first:pt-0 sm:grid-cols-[220px_1fr] sm:gap-7">
       <Link
-        href={articleHref(article)}
+        href={l(articleHref(article))}
         className="block aspect-[3/2] w-full self-start overflow-hidden rounded-xl bg-canvas"
         tabIndex={-1}
         aria-hidden
@@ -186,7 +198,7 @@ export function CardRow({ article }: { article: Article }) {
       <div>
         <CategoryTag slug={article.category} />
         <h3 className="mt-2 font-display text-xl font-bold leading-snug tracking-tight text-ink">
-          <Link href={articleHref(article)}>
+          <Link href={l(articleHref(article))}>
             <TitleWithHighlight
               title={article.title}
               highlight={article.highlight}
@@ -197,7 +209,7 @@ export function CardRow({ article }: { article: Article }) {
         <p className="mt-2.5 line-clamp-2 text-[15px] leading-relaxed text-body">
           {article.excerpt}
         </p>
-        <p className="mt-3 text-xs text-meta">{formatDate(article.date)} · {readingMinutes(article)} menit baca</p>
+        <p className="mt-3 text-xs text-meta">{formatDate(article.date, lang)} · {readingMinutes(article)} {t("menit baca")}</p>
       </div>
     </article>
   );

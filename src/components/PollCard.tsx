@@ -11,6 +11,7 @@ import {
 } from "@phosphor-icons/react";
 import type { Poll, PollOption } from "@/data/polls";
 import { pollTotal } from "@/lib/polls";
+import { useLang, type Lang } from "@/lib/i18n";
 
 // Store kecil untuk suara di localStorage (SSR-safe, tanpa hydration mismatch).
 const listeners = new Set<() => void>();
@@ -45,8 +46,8 @@ function useVote(pollId: string) {
   );
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso + "T00:00:00").toLocaleDateString("id-ID", {
+function fmtDate(iso: string, lang: Lang = "id") {
+  return new Date(iso + "T00:00:00").toLocaleDateString(lang === "en" ? "en-GB" : "id-ID", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -218,6 +219,7 @@ export function PollCard({
   compact?: boolean;
 }) {
   const voted = useVote(poll.id);
+  const { lang, t } = useLang();
   const [striking, setStriking] = useState<string | null>(null);
   /** Rekap terbaru dari server, dipakai begitu suara pembaca tercatat. */
   const [hasil, setHasil] = useState<Record<string, number> | null>(null);
@@ -280,20 +282,20 @@ export function PollCard({
   return (
     <div className={`ballot-wrap ${compact ? "" : "ballot-tilt"}`}>
       <section
-        aria-label="Jajak pendapat"
+        aria-label={t("Jajak pendapat")}
         className={`ballot relative flex flex-col rounded-[3px] ${
           compact ? "p-5 pb-8" : "p-6 pb-9 md:p-7 md:pb-10"
         } ${closed ? "ballot--closed" : ""} ${striking ? "ballot--thud" : ""}`}
       >
         <PostalMark
           closed={closed}
-          date={poll.closesAt ? fmtDate(poll.closesAt) : undefined}
+          date={poll.closesAt ? fmtDate(poll.closesAt, lang) : undefined}
           compact={compact}
         />
 
         <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-brand">
           <ChartBar size={14} weight="bold" />
-          {sourceCategory}
+          {t(sourceCategory)}
         </p>
 
         <h3
@@ -374,11 +376,11 @@ export function PollCard({
         <div className="mt-5 border-t border-dashed border-ink/20 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-meta">
-              Dipilih{" "}
+              <span>{t("Dipilih")}</span>{" "}
               <span className="font-semibold text-ink">
                 <CountUp value={total} />
               </span>{" "}
-              pembaca
+              <span>{t("pembaca")}</span>
             </p>
             <div className="flex items-center gap-2">
               {voted && !closed && (
@@ -388,13 +390,13 @@ export function PollCard({
                   className="inline-flex items-center gap-1 text-xs font-semibold text-accent transition-opacity hover:opacity-70"
                 >
                   <ArrowClockwise size={13} weight="bold" />
-                  Ubah pilihan
+                  {t("Ubah pilihan")}
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => share("wa")}
-                aria-label="Bagikan poll ke WhatsApp"
+                aria-label={t("Bagikan poll ke WhatsApp")}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/20 text-body transition-colors hover:border-accent hover:text-accent"
               >
                 <WhatsappLogo size={15} />
@@ -402,7 +404,7 @@ export function PollCard({
               <button
                 type="button"
                 onClick={() => share("x")}
-                aria-label="Bagikan poll ke X"
+                aria-label={t("Bagikan poll ke X")}
                 className="flex h-8 w-8 items-center justify-center rounded-full border border-ink/20 text-body transition-colors hover:border-accent hover:text-accent"
               >
                 <XLogo size={15} />
@@ -416,7 +418,7 @@ export function PollCard({
                 href={sourceHref}
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-accent transition-opacity hover:opacity-70"
               >
-                Baca artikel sumber
+                {t("Baca artikel sumber")}
                 <ArrowRight size={12} weight="bold" />
               </Link>
             </div>

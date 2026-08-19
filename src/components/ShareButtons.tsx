@@ -7,10 +7,12 @@ import {
   WhatsappLogo,
   XLogo,
 } from "@phosphor-icons/react";
+import { useLang } from "@/lib/i18n";
 
 /** Tombol bagikan artikel: salin tautan, WhatsApp, X. URL dihitung saat klik (SSR-safe). */
 export function ShareButtons({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
+  const { t } = useLang();
 
   async function copy() {
     try {
@@ -32,9 +34,9 @@ export function ShareButtons({ title }: { title: string }) {
   return (
     <div className="flex items-center gap-2">
       <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
-        Bagikan
+        {t("Bagikan")}
       </span>
-      <button type="button" onClick={copy} aria-label="Salin tautan" className={btn}>
+      <button type="button" onClick={copy} aria-label={t("Salin tautan")} className={btn}>
         {copied ? (
           <Check size={16} weight="bold" className="text-accent" />
         ) : (
@@ -43,7 +45,7 @@ export function ShareButtons({ title }: { title: string }) {
       </button>
       <button
         type="button"
-        aria-label="Bagikan ke WhatsApp"
+        aria-label={t("Bagikan ke WhatsApp")}
         className={btn}
         onClick={() =>
           open(
@@ -55,7 +57,7 @@ export function ShareButtons({ title }: { title: string }) {
       </button>
       <button
         type="button"
-        aria-label="Bagikan ke X"
+        aria-label={t("Bagikan ke X")}
         className={btn}
         onClick={() =>
           open(

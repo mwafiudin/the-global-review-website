@@ -6,6 +6,7 @@ import { ArrowLeft, CaretRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
 import { wpAlbum, wpAlbums } from "@/lib/wp/gallery";
+import { getT } from "@/lib/i18n-server";
 
 // Bergantung data WordPress — dirender on-demand lalu di-cache (ISR),
 // sama seperti rute artikel; build tidak memanggil WP.
@@ -33,6 +34,7 @@ export default async function AlbumPage({
   const album = await wpAlbum(slug);
   if (!album) notFound();
 
+  const { lang, t, l } = await getT();
   const lainnya = (await wpAlbums())
     .filter((a) => a.slug !== album.slug)
     .slice(0, 3);
@@ -43,8 +45,8 @@ export default async function AlbumPage({
       <nav aria-label="Breadcrumb">
         <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
           <li>
-            <Link href="/gallery" className="transition-colors hover:text-accent">
-              Galeri
+            <Link href={l("/gallery")} className="transition-colors hover:text-accent">
+              {t("Galeri")}
             </Link>
           </li>
           <li className="flex items-center gap-2">
@@ -66,12 +68,12 @@ export default async function AlbumPage({
           {album.ringkasan}
         </p>
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-meta">
-          <span>{formatDate(album.tanggal)}</span>
+          <span>{formatDate(album.tanggal, lang)}</span>
           <span className="flex items-center gap-1.5">
             <MapPin size={14} weight="regular" />
             {album.lokasi}
           </span>
-          <span>{album.foto.length} foto</span>
+          <span>{album.foto.length} {t("foto")}</span>
         </div>
       </div>
 
@@ -101,13 +103,13 @@ export default async function AlbumPage({
         {lainnya.length > 0 && (
           <>
             <h2 className="text-[11px] font-bold uppercase tracking-[0.16em] text-ink">
-              Album Lainnya
+              {t("Album Lainnya")}
             </h2>
             <div className="mt-6 grid gap-6 sm:grid-cols-3">
               {lainnya.map((o) => (
                 <Link
                   key={o.slug}
-                  href={`/gallery/${o.slug}`}
+                  href={l(`/gallery/${o.slug}`)}
                   className="group flex flex-col overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                 >
                   <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
@@ -134,11 +136,11 @@ export default async function AlbumPage({
         )}
 
         <Link
-          href="/gallery"
+          href={l("/gallery")}
           className="mt-10 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent transition-opacity hover:opacity-70"
         >
           <ArrowLeft size={13} weight="bold" />
-          Semua album
+          {t("Semua album")}
         </Link>
       </div>
     </div>

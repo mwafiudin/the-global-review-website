@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { categoryNames, mainMenu } from "@/data/site";
+import { getT } from "@/lib/i18n-server";
 import { getAuthor } from "@/data/authors";
 import { categoryName } from "@/lib/articles";
 import { byCategoryWithTotal } from "@/lib/wp/articles";
@@ -77,6 +78,7 @@ export default async function CategoryPage({
   }
   const totalPages = Math.max(1, Math.ceil(total / PER_HALAMAN));
   if (page > totalPages) notFound();
+  const { t, l } = await getT();
   const menuEntry = mainMenu.find(
     (item) => item.href === `/category/${key}`
   );
@@ -95,13 +97,13 @@ export default async function CategoryPage({
 
   // Breadcrumb: Beranda › [induk] › [rubrik ini] — tanpa ekor /halaman/{n}
   const breadcrumb = [
-    { label: "Beranda", href: "/" },
+    { label: t("Beranda"), href: l("/") },
     ...rubrik.map((_, i) => {
       const partKey = rubrik.slice(0, i + 1).join("/");
       const isLast = i === rubrik.length - 1;
       return {
-        label: categoryName(partKey),
-        href: isLast ? undefined : `/category/${partKey}`,
+        label: t(categoryName(partKey)),
+        href: isLast ? undefined : l(`/category/${partKey}`),
       };
     }),
   ];
@@ -109,32 +111,32 @@ export default async function CategoryPage({
   return (
     <>
       <PageHeader
-        title={categoryName(key)}
+        title={t(categoryName(key))}
         icon={categoryIcon(key)}
         breadcrumb={breadcrumb}
         meta={
           totalPages > 1
-            ? `${total} artikel · halaman ${page} dari ${totalPages}`
-            : `${total} artikel`
+            ? `${total} ${t("artikel")} · ${t("halaman")} ${page} ${t("dari")} ${totalPages}`
+            : `${total} ${t("artikel")}`
         }
       />
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
-          <section aria-label={`Artikel ${categoryName(key)}`}>
+          <section aria-label={`${t("Artikel")} ${t(categoryName(key))}`}>
             {list.length === 0 ? (
               <div className="rounded-xl border border-dashed border-line px-6 py-16 text-center">
                 <p className="font-display text-lg font-bold text-ink">
-                  Belum ada artikel di rubrik ini
+                  {t("Belum ada artikel di rubrik ini")}
                 </p>
                 <p className="mt-2 text-sm text-meta">
-                  Artikel untuk rubrik {categoryName(key)} akan tampil di sini
-                  setelah dipublikasikan.
+                  <span>{t("Artikel untuk rubrik")}</span> <span>{t(categoryName(key))}</span>{" "}
+                  <span>{t("akan tampil di sini setelah dipublikasikan.")}</span>
                 </p>
                 <Link
-                  href="/"
+                  href={l("/")}
                   className="mt-5 inline-block rounded-lg border border-ink bg-surface px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:bg-ink hover:text-surface"
                 >
-                  Kembali ke Beranda
+                  {t("Kembali ke Beranda")}
                 </Link>
               </div>
             ) : (

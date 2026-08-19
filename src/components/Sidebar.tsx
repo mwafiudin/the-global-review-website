@@ -15,6 +15,7 @@ import {
 } from "@/data/site";
 import { articleHref } from "@/lib/articles";
 import { featuredArticles } from "@/lib/wp/articles";
+import { getT } from "@/lib/i18n-server";
 import { wpPodcasts } from "@/lib/wp/podcasts";
 import { youtubeThumb } from "./VideoEmbed";
 import type { PollView } from "@/lib/polls";
@@ -73,6 +74,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
     wpPodcasts(),
   ]);
   const podcastTerbaru = semuaPodcast.slice(0, 3);
+  const { t, l } = await getT();
 
   return (
     <aside className="flex flex-col gap-14" aria-label="Sidebar">
@@ -95,7 +97,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
 
       {/* Terpopuler */}
       <section>
-        <WidgetTitle>Terpopuler</WidgetTitle>
+        <WidgetTitle>{t("Terpopuler")}</WidgetTitle>
         <ol className="space-y-5">
           {populer.map((a, i) => (
             <li key={a.slug} className="flex gap-4">
@@ -103,7 +105,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
                 {String(i + 1).padStart(2, "0")}
               </span>
               <Link
-                href={articleHref(a)}
+                href={l(articleHref(a))}
                 className="font-display text-sm font-semibold leading-snug text-ink transition-colors hover:text-accent"
               >
                 {a.title}
@@ -115,12 +117,12 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
 
       {/* Podcast terbaru */}
       <section>
-        <WidgetTitle>Podcast Terbaru</WidgetTitle>
+        <WidgetTitle>{t("Podcast Terbaru")}</WidgetTitle>
         <ul className="space-y-4">
           {podcastTerbaru.map((ep) => (
             <li key={ep.slug}>
               <Link
-                href={`/podcast/${ep.slug}`}
+                href={l(`/podcast/${ep.slug}`)}
                 className="group flex gap-3.5"
               >
                 <div className="relative aspect-video w-24 shrink-0 overflow-hidden rounded-lg bg-black">
@@ -150,19 +152,19 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
           ))}
         </ul>
         <Link
-          href="/podcast"
+          href={l("/podcast")}
           className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-accent transition-opacity hover:opacity-70"
         >
-          Semua podcast
+          {t("Semua podcast")}
           <ArrowRight size={12} weight="regular" />
         </Link>
       </section>
 
       {/* Promo buku */}
       <section>
-        <WidgetTitle>Bedah Buku</WidgetTitle>
+        <WidgetTitle>{t("Bedah Buku")}</WidgetTitle>
         <Link
-          href="/bedah-buku"
+          href={l("/bedah-buku")}
           className="group block overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
         >
           <Image
@@ -175,7 +177,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
           />
           <div className="p-6">
             <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-meta">
-              Buku pilihan
+              {t("Buku pilihan")}
             </p>
             <p className="mt-2.5 font-display text-lg font-bold leading-snug tracking-tight text-ink">
               Perang Asimetris &amp; Skema Penjajahan Gaya Baru
@@ -184,7 +186,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
               Hendrajit, Global Future Institute (2019)
             </p>
             <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
-              Baca ulasannya
+              {t("Baca ulasannya")}
               <ArrowRight
                 size={12}
                 weight="regular"
@@ -197,7 +199,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
 
       {/* Halaman Facebook: kartu on-brand, bukan plugin resmi (lihat site.ts) */}
       <section>
-        <WidgetTitle>Ikuti di Facebook</WidgetTitle>
+        <WidgetTitle>{t("Ikuti di Facebook")}</WidgetTitle>
         <a
           href={site.social.facebook}
           target="_blank"
@@ -216,14 +218,14 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
                 <span className="font-semibold text-body">
                   {site.facebookPage.followers.toLocaleString("id-ID")}
                 </span>{" "}
-                pengikut
+                <span>{t("pengikut")}</span>
               </p>
             </div>
           </div>
           <div className="border-t border-line px-5 py-3.5">
             <span className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-accent">
               <ThumbsUp size={14} weight="fill" />
-              Suka Halaman
+              {t("Suka Halaman")}
               <ArrowUpRight
                 size={12}
                 weight="bold"
@@ -236,14 +238,13 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
 
       {/* Jaringan rujukan: mitra & sumber, ditata sebagai chip */}
       <section>
-        <WidgetTitle>Jaringan Rujukan</WidgetTitle>
+        <WidgetTitle>{t("Jaringan Rujukan")}</WidgetTitle>
         <p className="-mt-1 mb-5 text-[13px] leading-relaxed text-body">
-          Sumber dan mitra pantauan kami, dari lembaga resmi dalam negeri
-          hingga media analisis lintas kawasan.
+          {t("Sumber dan mitra pantauan kami, dari lembaga resmi dalam negeri hingga media analisis lintas kawasan.")}
         </p>
-        <ReferenceGroup label="Indonesia" links={partnerLinksIndonesia} />
+        <ReferenceGroup label={t("Indonesia")} links={partnerLinksIndonesia} />
         <ReferenceGroup
-          label="Internasional"
+          label={t("Internasional")}
           links={partnerLinksInternational}
           className="mt-5"
         />

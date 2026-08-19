@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/PageHeader";
 import { youtubeThumb } from "@/components/VideoEmbed";
 import { formatDate } from "@/lib/articles";
 import { wpPodcasts } from "@/lib/wp/podcasts";
+import { getT } from "@/lib/i18n-server";
 
 export const metadata: Metadata = {
   title: "Podcast",
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 
 export default async function PodcastPage() {
   const episodes = await wpPodcasts();
+  const { lang, t, l } = await getT();
   const utama = episodes.find((e) => e.featured) ?? episodes[0];
   const lainnya = episodes.filter((e) => e.slug !== utama.slug);
 
@@ -23,12 +25,12 @@ export default async function PodcastPage() {
       <PageHeader
         title="Podcast"
         icon={Microphone}
-        lead="Rekam jejak tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media, lengkap dengan tayangannya."
+        lead={t("Rekam jejak tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media, lengkap dengan tayangannya.")}
       />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
         {/* Episode utama */}
         <Link
-          href={`/podcast/${utama.slug}`}
+          href={l(`/podcast/${utama.slug}`)}
           className="group grid gap-6 overflow-hidden rounded-2xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md md:grid-cols-2"
         >
           <div className="relative aspect-video overflow-hidden bg-black md:aspect-auto">
@@ -61,7 +63,7 @@ export default async function PodcastPage() {
               </p>
             )}
             <p className="mt-4 text-sm text-meta">
-              Narasumber: {utama.narasumber} · {formatDate(utama.tanggal)}
+              {t("Narasumber:")} {utama.narasumber} · {formatDate(utama.tanggal, lang)}
             </p>
           </div>
         </Link>
@@ -72,7 +74,7 @@ export default async function PodcastPage() {
             {lainnya.map((ep) => (
               <Link
                 key={ep.slug}
-                href={`/podcast/${ep.slug}`}
+                href={l(`/podcast/${ep.slug}`)}
                 className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div className="relative aspect-video overflow-hidden bg-black">
@@ -99,7 +101,7 @@ export default async function PodcastPage() {
                     {ep.headline}
                   </h3>
                   <p className="mt-auto pt-4 text-xs text-meta">
-                    {formatDate(ep.tanggal)}
+                    {formatDate(ep.tanggal, lang)}
                   </p>
                 </div>
               </Link>
