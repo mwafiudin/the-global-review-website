@@ -5,6 +5,8 @@ import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { authors, getAuthor } from "@/data/authors";
 import { byAuthor, byAuthorCount } from "@/lib/wp/articles";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 import { Avatar } from "@/components/Avatar";
 import { CardRow } from "@/components/ArticleCard";
 
@@ -16,12 +18,15 @@ export function generateStaticParams(): { slug: string }[] {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ lang: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { lang, slug } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
   const author = authors.find((a) => a.slug === slug);
   if (!author) notFound();
   return {
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, `/penulis/${slug}`),
     title: `${author.name} — Penulis`,
     description: author.bio ?? `Kumpulan tulisan ${author.name} di The Global Review.`,
   };

@@ -5,6 +5,8 @@ import type { Metadata } from "next";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getAuthor } from "@/data/authors";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 import {
   articleHref,
   articleImage,
@@ -38,9 +40,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ lang: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { lang, slug } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
   const article = await getArticle(slug);
   // notFound di sini, bukan hanya di body page. Sejak layout [lang] dinamis,
   // shell + fallback loading.tsx terkirim lebih dulu sehingga statusnya 200;
@@ -49,6 +52,9 @@ export async function generateMetadata({
   // Hard 404 tetap berlaku untuk path multi-segmen (catch-all tanpa loading).
   if (!article) notFound();
   return {
+    // Konten /en masih bahasa Indonesia (duplikat) — jangan diindeks.
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, `/${slug}`),
     title: article.title,
     // Excerpt kosong = excerpt otomatis WP (duplikat awal body) yang
     // sengaja tidak ditampilkan sebagai lead; meta tetap butuh deskripsi.

@@ -7,12 +7,26 @@ import { Sidebar } from "@/components/Sidebar";
 import { bookByline } from "@/data/books";
 import { wpBooks } from "@/lib/wp/books";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Bedah Buku",
-  description:
-    "Ulasan buku-buku terbitan Global Future Institute dan bacaan pilihan redaksi.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: bahasa === "en" ? "Book Reviews" : "Bedah Buku",
+    description:
+      bahasa === "en"
+        ? "Reviews of Global Future Institute titles and the editors' selected reading."
+        : "Ulasan buku-buku terbitan Global Future Institute dan bacaan pilihan redaksi.",
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, "/bedah-buku"),
+  };
+}
 
 export default async function BedahBukuPage() {
   const [utama, ...lainnya] = await wpBooks();

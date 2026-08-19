@@ -4,6 +4,7 @@ import { CompassDivider, CompassPoint } from "@/components/Ornaments";
 import { tentangGfiCopy } from "@/data/pages/tentang-gfi";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { dwibahasa } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -12,7 +13,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const copy = tentangGfiCopy[isLocale(lang) ? lang : DEFAULT_LANG];
-  return { title: copy.metaTitle, description: copy.metaDescription };
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    // Tersedia penuh di dua bahasa: pasangan hreflang timbal balik.
+    alternates: dwibahasa(bahasa, "/tentang-gfi"),
+  };
 }
 
 function SubHeading({ children }: { children: React.ReactNode }) {

@@ -21,6 +21,7 @@ import { redaksiCopy } from "@/data/pages/redaksi";
 import { site } from "@/data/site";
 import { getT } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { dwibahasa } from "@/lib/seo";
 import { byAuthorCount } from "@/lib/wp/articles";
 
 export async function generateMetadata({
@@ -30,7 +31,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const copy = redaksiCopy[isLocale(lang) ? lang : DEFAULT_LANG];
-  return { title: copy.metaTitle, description: copy.metaDescription };
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    // Tersedia penuh di dua bahasa: pasangan hreflang timbal balik.
+    alternates: dwibahasa(bahasa, "/redaksi"),
+  };
 }
 
 /** Ikon pedoman, urutannya sejajar dengan redaksiCopy[lang].pedoman. */

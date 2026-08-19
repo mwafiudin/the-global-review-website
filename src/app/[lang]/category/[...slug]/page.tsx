@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { categoryNames, mainMenu } from "@/data/site";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 import { getAuthor } from "@/data/authors";
 import { categoryName } from "@/lib/articles";
 import { byCategoryWithTotal } from "@/lib/wp/articles";
@@ -30,15 +32,18 @@ export function generateStaticParams(): { slug: string[] }[] {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string[] }>;
+  params: Promise<{ lang: string; slug: string[] }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { lang, slug } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
   const { rubrik, page } = parseHalaman(slug);
   const key = rubrik.join("/");
   // Streaming (loading.tsx): status 404 diputuskan sebelum shell terkirim.
   if (!(await rubrikAda(key))) notFound();
   const nama = categoryName(key);
   return {
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, page > 1 ? `/category/${key}/halaman/${page}` : `/category/${key}`),
     title: page > 1 ? `Rubrik ${nama} — Halaman ${page}` : `Rubrik ${nama}`,
     description: `Kumpulan artikel The Global Review pada rubrik ${nama}.`,
   };

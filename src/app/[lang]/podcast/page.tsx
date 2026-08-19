@@ -7,12 +7,26 @@ import { youtubeThumb } from "@/components/VideoEmbed";
 import { formatDate } from "@/lib/articles";
 import { wpPodcasts } from "@/lib/wp/podcasts";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Podcast",
-  description:
-    "Rekam jejak penampilan tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: "Podcast",
+    description:
+      bahasa === "en"
+        ? "The Global Future Institute team's track record as speakers on podcasts, talk shows, and media channels."
+        : "Rekam jejak penampilan tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media.",
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, "/podcast"),
+  };
+}
 
 export default async function PodcastPage() {
   const episodes = await wpPodcasts();

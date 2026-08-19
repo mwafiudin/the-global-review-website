@@ -24,12 +24,44 @@ const HALAMAN_STATIS = [
   "gallery",
 ];
 
+/**
+ * Halaman yang tersedia penuh dalam bahasa Inggris di /en/{path} dan boleh
+ * diindeks — dipasangkan lewat alternates.languages. Beranda, artikel, dan
+ * kanal lain TIDAK masuk: versi /en mereka masih noindex (konten Indonesia).
+ */
+const HALAMAN_DWIBAHASA = new Set([
+  "tentang-tgr",
+  "tentang-gfi",
+  "pengurus-gfi",
+  "redaksi",
+  "hubungi-kami",
+]);
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const statis: MetadataRoute.Sitemap = HALAMAN_STATIS.map((path) => ({
-    url: path ? `${site.url}/${path}` : site.url,
-    changeFrequency: path === "" ? "daily" : "monthly",
-    priority: path === "" ? 1 : 0.5,
-  }));
+  const statis: MetadataRoute.Sitemap = HALAMAN_STATIS.flatMap((path) => {
+    const url = path ? `${site.url}/${path}` : site.url;
+    if (!HALAMAN_DWIBAHASA.has(path)) {
+      return [
+        {
+          url,
+          changeFrequency: path === "" ? ("daily" as const) : ("monthly" as const),
+          priority: path === "" ? 1 : 0.5,
+        },
+      ];
+    }
+    const alternates = {
+      languages: { id: url, en: `${site.url}/en/${path}` },
+    };
+    return [
+      { url, changeFrequency: "monthly" as const, priority: 0.5, alternates },
+      {
+        url: `${site.url}/en/${path}`,
+        changeFrequency: "monthly" as const,
+        priority: 0.4,
+        alternates,
+      },
+    ];
+  });
 
   const rubrik: MetadataRoute.Sitemap = Object.keys(categoryNames).map(
     (slug) => ({

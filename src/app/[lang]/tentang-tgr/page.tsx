@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/Sidebar";
 import { tentangTgrCopy } from "@/data/pages/tentang-tgr";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { dwibahasa } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -14,7 +15,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const copy = tentangTgrCopy[isLocale(lang) ? lang : DEFAULT_LANG];
-  return { title: copy.metaTitle, description: copy.metaDescription };
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    // Tersedia penuh di dua bahasa: pasangan hreflang timbal balik.
+    alternates: dwibahasa(bahasa, "/tentang-tgr"),
+  };
 }
 
 export default async function TentangTgrPage() {

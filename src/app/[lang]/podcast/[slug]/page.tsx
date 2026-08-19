@@ -8,6 +8,8 @@ import { EndMark } from "@/components/Ornaments";
 import { formatDate } from "@/lib/articles";
 import { wpPodcast, wpPodcasts } from "@/lib/wp/podcasts";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 
 // Bergantung data WordPress — dirender on-demand lalu di-cache (ISR),
 // sama seperti rute artikel; build tidak memanggil WP.
@@ -18,12 +20,15 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ lang: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { lang, slug } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
   const ep = await wpPodcast(slug);
   if (!ep) notFound();
   return {
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, `/podcast/${slug}`),
     title: ep.headline,
     description:
       ep.ringkasan[0] ||

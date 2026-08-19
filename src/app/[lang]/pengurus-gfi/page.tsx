@@ -5,6 +5,7 @@ import { CompassDivider } from "@/components/Ornaments";
 import { pengurus, pengurusGfiCopy } from "@/data/pages/pengurus-gfi";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { dwibahasa } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -13,7 +14,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const copy = pengurusGfiCopy[isLocale(lang) ? lang : DEFAULT_LANG];
-  return { title: copy.metaTitle, description: copy.metaDescription };
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    // Tersedia penuh di dua bahasa: pasangan hreflang timbal balik.
+    alternates: dwibahasa(bahasa, "/pengurus-gfi"),
+  };
 }
 
 const [ketua, ...anggota] = pengurus;

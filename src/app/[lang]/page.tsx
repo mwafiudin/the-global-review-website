@@ -23,6 +23,20 @@ import {
   featuredArticles,
 } from "@/lib/wp/articles";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  // Teaser beranda /en masih berbahasa Indonesia — noindex dulu; dibuka
+  // begitu terjemahan artikel sungguhan tersedia.
+  return { robots: robotsEn(bahasa), alternates: kanonik(bahasa, "/") };
+}
 
 export default async function HomePage() {
   const [heroes, analisisPool, internasionalPool, ragamPool, terbaru] =

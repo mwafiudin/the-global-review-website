@@ -7,6 +7,8 @@ import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
 import { wpAlbum, wpAlbums } from "@/lib/wp/gallery";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 
 // Bergantung data WordPress — dirender on-demand lalu di-cache (ISR),
 // sama seperti rute artikel; build tidak memanggil WP.
@@ -17,12 +19,15 @@ export function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ lang: string; slug: string }>;
 }): Promise<Metadata> {
-  const { slug } = await params;
+  const { lang, slug } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
   const album = await wpAlbum(slug);
   if (!album) notFound();
-  return { title: `${album.judul} — Galeri`, description: album.ringkasan };
+  return { robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, `/gallery/${slug}`),
+    title: `${album.judul} — Galeri`, description: album.ringkasan };
 }
 
 export default async function AlbumPage({

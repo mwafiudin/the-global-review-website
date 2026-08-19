@@ -16,6 +16,7 @@ import { hubungiKamiCopy } from "@/data/pages/hubungi-kami";
 import { site } from "@/data/site";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { dwibahasa } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -24,7 +25,13 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { lang } = await params;
   const copy = hubungiKamiCopy[isLocale(lang) ? lang : DEFAULT_LANG];
-  return { title: copy.metaTitle, description: copy.metaDescription };
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    // Tersedia penuh di dua bahasa: pasangan hreflang timbal balik.
+    alternates: dwibahasa(bahasa, "/hubungi-kami"),
+  };
 }
 
 /** Ikon kanal, urutannya sejajar dengan hubungiKamiCopy[lang].kanal. */

@@ -7,12 +7,26 @@ import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
 import { wpAlbums } from "@/lib/wp/gallery";
 import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
+import { kanonik, robotsEn } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "Galeri",
-  description:
-    "Album dokumentasi kegiatan Global Future Institute: seminar, diskusi, riset, dan silaturahmi.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const bahasa = isLocale(lang) ? lang : DEFAULT_LANG;
+  return {
+    title: bahasa === "en" ? "Gallery" : "Galeri",
+    description:
+      bahasa === "en"
+        ? "Photo albums documenting Global Future Institute activities: seminars, discussions, research, and gatherings."
+        : "Album dokumentasi kegiatan Global Future Institute: seminar, diskusi, riset, dan silaturahmi.",
+    robots: robotsEn(bahasa),
+    alternates: kanonik(bahasa, "/gallery"),
+  };
+}
 
 export default async function GalleryPage() {
   const albums = await wpAlbums();
