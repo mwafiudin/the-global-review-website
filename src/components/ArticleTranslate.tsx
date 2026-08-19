@@ -138,7 +138,10 @@ export function ArticleTranslate() {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
+      <span
+        aria-live="polite"
+        className="text-[11px] font-bold uppercase tracking-[0.14em] text-meta"
+      >
         {label}
       </span>
       <button
@@ -148,7 +151,7 @@ export function ArticleTranslate() {
         aria-label={label}
         aria-pressed={status === "selesai"}
         className={`flex h-9 w-9 items-center justify-center rounded-full border border-line text-body transition-colors hover:border-accent hover:text-accent ${
-          sibuk ? "animate-pulse" : ""
+          sibuk ? "animate-pulse motion-reduce:animate-none" : ""
         } ${status === "selesai" ? "border-accent text-accent" : ""}`}
       >
         <Translate size={16} />
