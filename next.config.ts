@@ -11,8 +11,14 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "i.ytimg.com",
       },
-      // Featured image artikel dari WordPress. Saat WordPress pindah ke
-      // subdomain (cms.*) pada fase cutover, tambahkan host barunya di sini.
+      // Featured image artikel dari WordPress. cms.* adalah alamat WordPress
+      // sejak cutover domain; host lama dibiarkan sampai peralihan terbukti
+      // stabil (runbook docs/peralihan-domain.md tahap 5d).
+      {
+        protocol: "https",
+        hostname: "cms.theglobal-review.com",
+        pathname: "/wp-content/uploads/**",
+      },
       {
         protocol: "https",
         hostname: "theglobal-review.com",
@@ -24,6 +30,19 @@ const nextConfig: NextConfig = {
         pathname: "/wp-content/uploads/**",
       },
     ],
+  },
+  async rewrites() {
+    return [
+      // Gambar yang disisipkan di badan artikel memakai URL absolut domain
+      // lama (±1 dari 5 artikel). Setelah domain utama dilayani Vercel, path
+      // uploads diteruskan ke WordPress di cms.* apa adanya — tanpa bedah
+      // basis data, dan tautan gambar yang telanjur beredar tetap hidup.
+      {
+        source: "/wp-content/uploads/:path*",
+        destination:
+          "https://cms.theglobal-review.com/wp-content/uploads/:path*",
+      },
+    ];
   },
   async redirects() {
     return [

@@ -315,7 +315,8 @@ justru yang dipakai situs baru untuk hidup.
 | Mengembalikan | hapus berkasnya dari `mu-plugins/` — tidak ada jejak lain |
 
 Berkas ini memang berumur pendek: hapus pada tahap 2 runbook peralihan
-domain, saat WordPress pindah ke `cms.theglobal-review.com`.
+domain, saat WordPress pindah ke `cms.theglobal-review.com` — bila
+dibiarkan, ia ikut mengalihkan beranda cms ke `*.vercel.app`.
 
 ---
 

@@ -54,14 +54,61 @@ Jangan mulai sebelum kelimanya beres.
    akun pribadi orang lain berarti domain utama bergantung pada akun yang
    tidak dipegang klien. Pindahkan project-nya lebih dulu
    (Vercel → Project → Settings → Transfer).
-2. **Paket Vercel sesuai penggunaan.** Paket Hobby dilarang untuk
-   penggunaan komersial menurut ketentuan Vercel; situs media milik
-   lembaga masuk kategori itu. Naikkan ke Pro sebelum domain dipasang.
-3. **Akses pengelola DNS** — di registrar atau di cPanel (Zone Editor),
-   tergantung nameserver domainnya menunjuk ke mana.
+2. **Paket Vercel.** Secara teknis custom domain jalan di paket Hobby,
+   tapi Hobby dilarang untuk penggunaan komersial menurut ketentuan
+   Vercel, dan kuotanya (bandwidth ±100 GB/bulan + batas transformasi
+   gambar `next/image`) bisa jebol oleh satu kunjungan bot perayap ke
+   ribuan artikel. **Keputusan Agustus 2026: jalan dulu di Hobby** dengan
+   syarat: catat baseline di Project → Usage sebelum hari-H, pantau
+   harian di minggu pertama, upgrade Pro begitu mendekati batas atau
+   Vercel menegur. Bila kuota transformasi gambar yang jebol lebih dulu,
+   tuas daruratnya di kode: sajikan ukuran gambar buatan WordPress
+   (`unoptimized` pada `next/image`) — perubahan kecil, bisa dipasang
+   cepat.
+3. **Akses pengelola DNS.** Diperiksa Agustus 2026: nameserver menunjuk
+   `ns1/ns2.webiihost.net`, jadi seluruh record dikelola di **cPanel →
+   Zone Editor** — bukan di panel registrar.
 4. **Backup penuh** basis data + `wp-content` lewat cPanel Backup Wizard.
 5. **Google Search Console** aktif untuk domain ini, supaya dampaknya
    terpantau harian, bukan ditebak.
+
+---
+
+## 2b. Tahap 0 — selamatkan email (WAJIB sebelum DNS disentuh)
+
+Temuan pemeriksaan DNS otoritatif (Agustus 2026) yang tidak tercakup
+runbook versi awal — dua record email menunjuk ke **apex domain**:
+
+| Record | Nilai sekarang | Nasib bila apex → Vercel |
+|---|---|---|
+| `@` MX 0 | `theglobal-review.com` | email masuk dikirim ke Vercel yang tidak punya mail server — **hilang, bukan bounce** |
+| `mail` CNAME | `theglobal-review.com` | IMAP/SMTP klien email redaksi putus |
+
+Email `@theglobal-review.com` aktif dipakai redaksi, jadi keduanya wajib
+dilepas dari apex **sebelum** tahap 4. Di cPanel → Zone Editor:
+
+1. Ubah `mail.theglobal-review.com` dari CNAME menjadi **A →
+   `172.236.131.177`** (IP server hosting).
+2. Ubah MX `theglobal-review.com` dari tujuan `theglobal-review.com`
+   menjadi **`mail.theglobal-review.com`** (priority tetap 0).
+
+Setelah itu email hidup di jalurnya sendiri dan kebal terhadap perubahan
+apa pun pada record apex. Boleh dikerjakan jauh-jauh hari.
+
+**Pastikan:** `Resolve-DnsName theglobal-review.com -Type MX` menjawab
+`mail.theglobal-review.com`; kirim + terima satu email uji dari luar.
+Klien email redaksi tidak perlu diubah.
+
+**Yang sudah aman tanpa disentuh:** `ftp`/`webmail`/`cpanel`/
+`autodiscover` (A langsung ke IP) dan SPF (menyebut IP eksplisit).
+TTL zona 1440 detik — rollback terpropagasi ±24 menit, tidak perlu
+menurunkan TTL lagi.
+
+**Catatan keamanan email (bukan blocker):** domain ini belum punya
+record DMARC, dan SPF-nya memakai `+a +mx` yang maknanya bergeser
+pasca-cutover (`a` = IP Vercel). Layak dirapikan setelah peralihan:
+tambah DMARC `p=none` dulu untuk memantau, dan ganti `+a +mx` dengan
+IP/include eksplisit.
 
 ---
 
@@ -104,6 +151,14 @@ phpMyAdmin, dan situsnya sudah tidak bisa diakses saat itu.
 
 Lalu **Pengaturan → Permalink → Simpan Perubahan** (flush rewrite).
 
+Masih di sesi File Manager yang sama, **hapus/rename
+`wp-content/mu-plugins/tgr-alih-sementara.php`** — tugas alihan
+sementara selesai di sini, dan bila dibiarkan ia ikut mengalihkan
+beranda cms ke `*.vercel.app`. Sekalian (opsional, boleh belakangan):
+ubah `TGR_REVALIDATE_URL` di wp-config menjadi
+`https://theglobal-review.com/api/revalidate` — URL vercel.app lama
+tetap berfungsi, ini hanya merapikan.
+
 **Pastikan:**
 
 - `https://cms.theglobal-review.com/wp-admin/` bisa dipakai masuk
@@ -121,35 +176,13 @@ alasan tahap 2–4 tidak boleh diselang.
 
 ## 5. Tahap 3 — Situs baru menunjuk ke alamat baru
 
-Dua perubahan, keduanya sudah bisa disiapkan sebelum hari-H.
+Dua perubahan; yang pertama **sudah ada di kode** (Agustus 2026).
 
-**a. Kode** — `next.config.ts`:
-
-```ts
-// remotePatterns: tambahkan host baru; host lama dibiarkan sampai
-// peralihan terbukti stabil.
-{
-  protocol: "https",
-  hostname: "cms.theglobal-review.com",
-  pathname: "/wp-content/uploads/**",
-},
-```
-
-```ts
-// Gambar yang disisipkan di dalam badan artikel memakai URL absolut
-// domain lama (sekitar 1 dari 5 artikel). Setelah domainnya dilayani
-// Vercel, URL itu akan 404. Diteruskan ke WordPress apa adanya —
-// tidak perlu bedah basis data, dan tautan gambar yang beredar di
-// luar pun tetap hidup.
-async rewrites() {
-  return [
-    {
-      source: "/wp-content/uploads/:path*",
-      destination: "https://cms.theglobal-review.com/wp-content/uploads/:path*",
-    },
-  ];
-},
-```
+**a. Kode** — `next.config.ts` sudah memuat host `cms.*` di
+`remotePatterns` (featured image) dan rewrite `/wp-content/uploads/*` →
+cms (gambar in-body ber-URL absolut domain lama, sekitar 1 dari 5
+artikel — diteruskan ke WordPress apa adanya, tanpa bedah basis data).
+Pastikan deploy terakhir sudah menyertakannya.
 
 **b. Variabel lingkungan** — Vercel → Settings → Environment Variables:
 
@@ -194,8 +227,9 @@ Editor:
 beberapa URL artikel lama langsung di domain utama.
 
 **Mundur:** kembalikan record A/CNAME ke IP hosting
-(`172.236.131.177`). Propagasi butuh waktu, jadi turunkan TTL ke 300
-detik sehari sebelumnya agar pemulihan cepat.
+(`172.236.131.177`). TTL zona saat ini 1440 detik, jadi pemulihan
+terpropagasi ±24 menit; tidak perlu menurunkan TTL lebih dulu. Email
+tidak ikut terpengaruh karena sudah diamankan di Tahap 0.
 
 ---
 
@@ -207,17 +241,24 @@ melihat dua salinan tiap artikel dan keduanya saling melemahkan.
 wp-admin → **Pengaturan → Membaca → centang "Halangi mesin pencari
 mengindeks situs ini"**.
 
-**b. Sitemap.** WordPress lama menyediakan `/wp-sitemap.xml`; situs baru
-belum punya padanannya, dan setelah peralihan alamat itu tidak lagi ada
-di domain utama. Perlu dibuat sebelum tahap ini — lihat "Yang masih
-kurang" di bawah.
+**b. Sitemap.** Situs baru menyediakan `/sitemap.xml` (dibangun dari
+REST API, segar tiap jam) dan `/robots.txt` yang menunjuk ke sana —
+keduanya otomatis ikut pindah bersama domain.
 
-**c. Search Console.** Kirim sitemap baru, lalu pantau laporan Cakupan
-dan Pengalaman Halaman selama 2–4 minggu. Turun sesaat itu normal;
-yang dipantau adalah pemulihannya.
+**c. Search Console.** Kirim `https://theglobal-review.com/sitemap.xml`,
+lalu pantau laporan Cakupan dan Pengalaman Halaman selama 2–4 minggu.
+Turun sesaat itu normal; yang dipantau adalah pemulihannya.
 
-**d. Setelah stabil (± 1 bulan):** hapus host lama dari `remotePatterns`
+**d. Kuota Vercel.** Pantau Project → Usage harian di minggu pertama
+(lihat prasyarat #2: ambang upgrade dan tuas darurat gambar).
+
+**e. Setelah stabil (± 1 bulan):** hapus host lama dari `remotePatterns`
 di `next.config.ts`.
+
+**f. Canonical.** Alamat `*.vercel.app` tetap hidup menyajikan konten
+yang sama. Setiap halaman sudah memasang `<link rel="canonical">` ke
+`theglobal-review.com` (metadataBase di `src/app/layout.tsx`), jadi
+mesin pencari menghitung semuanya sebagai domain utama.
 
 ---
 
@@ -233,11 +274,10 @@ di `next.config.ts`.
 
 ## 9. Yang masih kurang sebelum peralihan
 
-| Hal | Kenapa penting saat peralihan |
-|---|---|
-| `sitemap.xml` di situs baru | Tanpa ini Google menemukan ulang 878 artikel dengan meraba-raba, tepat saat domainnya berpindah rumah |
-| `robots.txt` di situs baru | Menyatakan lokasi sitemap dan memastikan tidak ada yang terhalang tanpa sengaja |
-| Paginasi arsip rubrik | Halaman rubrik kini menampilkan 100 terbaru; artikel di luar itu tidak punya jalur tautan internal untuk ditelusuri mesin pencari |
+**Seluruhnya selesai (Agustus 2026):**
 
-Ketiganya pekerjaan frontend biasa dan bisa dikerjakan kapan saja
-sebelum hari-H.
+| Hal | Status |
+|---|---|
+| `sitemap.xml` di situs baru | ✔ `src/app/sitemap.ts` — 887 artikel + rubrik + halaman statis + penulis, segar tiap jam, jumlahnya diverifikasi sama dengan `X-WP-Total` |
+| `robots.txt` di situs baru | ✔ `src/app/robots.ts` — menunjuk sitemap, memblokir `/api/` |
+| Paginasi arsip rubrik | ✔ `/category/{rubrik}/halaman/{n}` — tautan `<a>` biasa sehingga mesin pencari punya jalur merambat ke seluruh arsip; `/halaman/1` di-308-kan ke URL dasar rubrik |
