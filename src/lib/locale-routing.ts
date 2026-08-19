@@ -27,6 +27,12 @@ function hasPrefix(pathname: string, lang: Lang): boolean {
 }
 
 export function planLocaleRouting(pathname: string): RouteDecision {
+  // Permalink WordPress lama memakai garis miring penutup (/slug/). Pulangkan
+  // dulu ke bentuk tanpa penutup agar rewrite tidak mendahului normalisasi
+  // trailing-slash Next dan berujung 404.
+  if (pathname !== "/" && pathname.endsWith("/")) {
+    return { type: "redirect", pathname: pathname.replace(/\/+$/, "") || "/" };
+  }
   if (hasPrefix(pathname, "id")) {
     return { type: "redirect", pathname: pathname.slice(3) || "/" };
   }

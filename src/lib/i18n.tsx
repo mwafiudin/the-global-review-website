@@ -41,8 +41,16 @@ export function setLang(next: Lang) {
   listeners.forEach((cb) => cb());
 }
 
-/** Provider dipertahankan sebagai passthrough agar penataan layout tetap. */
-export function LanguageProvider({ children }: { children: ReactNode }) {
+/**
+ * Provider masih passthrough; prop lang dari layout [lang] baru dipakai saat
+ * peralihan ke konteks URL (store localStorage di bawah menyusul dihapus).
+ */
+export function LanguageProvider({
+  children,
+}: {
+  lang?: Lang;
+  children: ReactNode;
+}) {
   return <>{children}</>;
 }
 

@@ -41,8 +41,11 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const article = await getArticle(slug);
-  // notFound di sini, bukan hanya di body page: route ini streaming
-  // (loading.tsx), jadi status 404 harus diputuskan sebelum shell terkirim.
+  // notFound di sini, bukan hanya di body page. Sejak layout [lang] dinamis,
+  // shell + fallback loading.tsx terkirim lebih dulu sehingga statusnya 200;
+  // Next menyisipkan <meta name="robots" content="noindex"> pada 404 yang
+  // di-stream (didokumentasikan di loading.md) — slug mati tidak terindeks.
+  // Hard 404 tetap berlaku untuk path multi-segmen (catch-all tanpa loading).
   if (!article) notFound();
   return {
     title: article.title,

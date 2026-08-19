@@ -88,4 +88,14 @@ export const EN: Record<string, string> = {
   "Pendaftaran buletin belum dikonfigurasi":
     "Newsletter signup is not configured yet",
   "Pendaftaran gagal, coba lagi nanti": "Subscription failed, please try again later",
+  // Metadata situs (layout)
+  "Media online yang dimiliki Global Future Institute. The Global Review menyajikan analisis dan opini politik luar negeri serta geopolitik dari Indonesia.":
+    "An online publication of the Global Future Institute. The Global Review presents foreign-policy and geopolitical analysis and opinion from Indonesia.",
+  "The Global Review — jurnalisme independen, analisis mendalam":
+    "The Global Review — independent journalism, in-depth analysis",
 };
+
+/** Penerjemah untuk satu bahasa; dipakai bersama oleh sisi server & client. */
+export function tFor(lang: "id" | "en") {
+  return (s: string): string => (lang === "en" ? EN[s] ?? s : s);
+}

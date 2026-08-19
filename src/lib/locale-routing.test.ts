@@ -19,6 +19,19 @@ describe("planLocaleRouting", () => {
     expect(planLocaleRouting("/en/tentang-tgr")).toEqual({ type: "next" });
   });
 
+  it("memulangkan trailing slash permalink WordPress lama", () => {
+    expect(planLocaleRouting("/anatomi-krisis/")).toEqual({
+      type: "redirect",
+      pathname: "/anatomi-krisis",
+    });
+    expect(planLocaleRouting("/en/tentang-tgr/")).toEqual({
+      type: "redirect",
+      pathname: "/en/tentang-tgr",
+    });
+    // Akar situs bukan trailing slash.
+    expect(planLocaleRouting("/")).toEqual({ type: "rewrite", pathname: "/id" });
+  });
+
   it("mengarahkan /id/* di address bar kembali ke tanpa prefiks", () => {
     expect(planLocaleRouting("/id")).toEqual({ type: "redirect", pathname: "/" });
     expect(planLocaleRouting("/id/category/analisis")).toEqual({
