@@ -53,7 +53,14 @@ export function ArticleTranslate() {
   useEffect(() => {
     if (lang !== "en") return;
     let hidup = true;
-    chromeTranslatorProvider.availability("id", "en").then((a) => {
+    // Batas waktu: pada sebagian lingkungan (embedded Chromium, komponen AI
+    // belum terpasang) availability() menggantung tanpa pernah menjawab.
+    Promise.race([
+      chromeTranslatorProvider.availability("id", "en"),
+      new Promise<"unavailable">((r) =>
+        setTimeout(() => r("unavailable"), 5000)
+      ),
+    ]).then((a) => {
       if (hidup && a !== "unavailable") setStatus("siap");
     });
     return () => {
