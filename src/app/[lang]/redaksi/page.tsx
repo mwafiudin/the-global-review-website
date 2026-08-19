@@ -17,55 +17,24 @@ import { PageHeader } from "@/components/PageHeader";
 import { Sidebar } from "@/components/Sidebar";
 import { Avatar } from "@/components/Avatar";
 import { authors } from "@/data/authors";
+import { redaksiCopy } from "@/data/pages/redaksi";
 import { site } from "@/data/site";
+import { getT } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { byAuthorCount } from "@/lib/wp/articles";
 
-export const metadata: Metadata = {
-  title: "Redaksi",
-  description:
-    "Ruang redaksi The Global Review: susunan redaksi, kontributor, pedoman jurnalistik, dan kontak newsroom.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const copy = redaksiCopy[isLocale(lang) ? lang : DEFAULT_LANG];
+  return { title: copy.metaTitle, description: copy.metaDescription };
+}
 
-/** Masthead: peran keredaksian (berbeda dari struktur kelembagaan GFI). */
-const masthead = [
-  { peran: "Pemimpin Redaksi", nama: "Hendrajit" },
-  { peran: "Pemimpin Perusahaan", nama: "Rusman" },
-  { peran: "Dewan Redaksi", nama: "Rachmat Adlani" },
-  { peran: "Redaktur", nama: "Yudi Kobo" },
-  { peran: "Redaktur Tamu", nama: "Harri Samputra Agus" },
-];
-
-/** Label rubrik/beat jurnalistik per penulis (bukan jabatan GFI). */
-const beat: Record<string, string> = {
-  hendrajit: "Pengkaji Geopolitik",
-  "m-arief-pranoto": "Kontributor Geopolitik",
-  rusman: "Media & Teknologi",
-  "yudi-kobo": "Redaktur",
-  redaksi: "Tim Redaksi",
-};
-
-const pedoman = [
-  {
-    icon: Scales,
-    judul: "Independen",
-    teks: "Bebas dari kepentingan politik dan pemodal; tunduk pada kepentingan publik.",
-  },
-  {
-    icon: MagnifyingGlass,
-    judul: "Verifikasi Berlapis",
-    teks: "Setiap klaim dan data diperiksa dari lebih dari satu sumber sebelum tayang.",
-  },
-  {
-    icon: ArrowsClockwise,
-    judul: "Hak Jawab & Ralat",
-    teks: "Terbuka pada koreksi; kesalahan diralat secara terbuka dan tepat waktu.",
-  },
-  {
-    icon: LockSimple,
-    judul: "Perlindungan Narasumber",
-    teks: "Identitas narasumber yang rentan dijaga demi keselamatan dan kepercayaan.",
-  },
-];
+/** Ikon pedoman, urutannya sejajar dengan redaksiCopy[lang].pedoman. */
+const pedomanIcons = [Scales, MagnifyingGlass, ArrowsClockwise, LockSimple];
 
 function Heading({ children }: { children: React.ReactNode }) {
   return (
@@ -76,6 +45,8 @@ function Heading({ children }: { children: React.ReactNode }) {
 }
 
 export default async function RedaksiPage() {
+  const { lang, l } = await getT();
+  const copy = redaksiCopy[lang];
   const kontributor = (
     await Promise.all(
       authors.map(async (a) => ({ ...a, jumlah: await byAuthorCount(a.slug) }))
@@ -84,17 +55,13 @@ export default async function RedaksiPage() {
 
   return (
     <>
-      <PageHeader
-        title="Redaksi"
-        icon={PenNib}
-        lead="Ruang kerja jurnalistik di balik The Global Review — bertanggung jawab atas peliputan, kurasi, penyuntingan, dan penerbitan setiap analisis di kanal ini."
-      />
+      <PageHeader title={copy.title} icon={PenNib} lead={copy.lead} />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
         <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
           <div className="space-y-16">
             {/* Tautan silang: perjelas beda dengan Pengurus GFI */}
             <Link
-              href="/pengurus-gfi"
+              href={l("/pengurus-gfi")}
               className="group flex items-center gap-4 rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-accent/40"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-canvas text-accent ring-1 ring-inset ring-line">
@@ -102,12 +69,10 @@ export default async function RedaksiPage() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] leading-snug text-body">
-                  Halaman ini memuat struktur{" "}
-                  <span className="font-semibold text-ink">keredaksian media</span>.
-                  Untuk susunan dewan eksekutif lembaga penerbit, lihat{" "}
-                  <span className="font-semibold text-ink">
-                    Pengurus Global Future Institute
-                  </span>
+                  {copy.silangA}{" "}
+                  <span className="font-semibold text-ink">{copy.silangTebal1}</span>
+                  {copy.silangB}{" "}
+                  <span className="font-semibold text-ink">{copy.silangTebal2}</span>
                   .
                 </p>
               </div>
@@ -120,9 +85,9 @@ export default async function RedaksiPage() {
 
             {/* Susunan redaksi — gaya colophon */}
             <section>
-              <Heading>Susunan Redaksi</Heading>
+              <Heading>{copy.susunanHeading}</Heading>
               <dl className="overflow-hidden rounded-2xl border border-line bg-surface">
-                {masthead.map((m, i) => (
+                {copy.masthead.map((m, i) => (
                   <div
                     key={m.peran}
                     className={`flex flex-col gap-1 px-6 py-5 sm:flex-row sm:items-baseline sm:justify-between ${
@@ -142,12 +107,12 @@ export default async function RedaksiPage() {
 
             {/* Kontributor — data nyata, tautan ke arsip tulisan */}
             <section>
-              <Heading>Kontributor</Heading>
+              <Heading>{copy.kontributorHeading}</Heading>
               <div className="grid gap-3 sm:grid-cols-2">
                 {kontributor.map((k) => (
                   <Link
                     key={k.slug}
-                    href={`/penulis/${k.slug}`}
+                    href={l(`/penulis/${k.slug}`)}
                     className="group flex items-center gap-4 rounded-xl border border-line bg-surface p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                   >
                     <Avatar name={k.name} src={k.avatar} className="h-12 w-12" />
@@ -156,7 +121,7 @@ export default async function RedaksiPage() {
                         {k.name}
                       </p>
                       <p className="mt-0.5 truncate text-sm text-meta">
-                        {beat[k.slug] ?? "Kontributor"}
+                        {copy.beat[k.slug] ?? copy.beatFallback}
                       </p>
                     </div>
                     <div className="shrink-0 text-right">
@@ -164,7 +129,7 @@ export default async function RedaksiPage() {
                         {k.jumlah}
                       </span>
                       <span className="block text-[10px] uppercase tracking-wider text-meta">
-                        tulisan
+                        {copy.tulisanLabel}
                       </span>
                     </div>
                   </Link>
@@ -174,10 +139,10 @@ export default async function RedaksiPage() {
 
             {/* Pedoman redaksi */}
             <section>
-              <Heading>Pedoman Redaksi</Heading>
+              <Heading>{copy.pedomanHeading}</Heading>
               <div className="grid gap-4 sm:grid-cols-2">
-                {pedoman.map((p) => {
-                  const Icon = p.icon;
+                {copy.pedoman.map((p, i) => {
+                  const Icon = pedomanIcons[i];
                   return (
                     <div
                       key={p.judul}
@@ -208,25 +173,23 @@ export default async function RedaksiPage() {
               />
               <div className="relative">
                 <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-brand">
-                  Hubungi Redaksi
+                  {copy.ctaKicker}
                 </p>
                 <h2 className="mt-3 max-w-md font-display text-2xl font-extrabold tracking-tight text-ink">
-                  Punya gagasan atau ingin menulis di The Global Review?
+                  {copy.ctaHeading}
                 </h2>
                 <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-body">
-                  Kami menerima kiriman opini, analisis, dan tanggapan dari para
-                  pengkaji masalah internasional dan geopolitik. Sampaikan hak
-                  jawab, koreksi, atau usulan liputan melalui surel redaksi.
+                  {copy.ctaTeks}
                 </p>
                 <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-3">
                   <a
                     href={`mailto:${site.email}?subject=${encodeURIComponent(
-                      "Kiriman Tulisan — The Global Review"
+                      copy.subjekKiriman
                     )}`}
                     className="group inline-flex items-center gap-2 rounded-lg bg-ink px-6 py-3 text-xs font-bold uppercase tracking-wider text-surface transition-colors hover:bg-accent active:scale-[0.98]"
                   >
                     <PaperPlaneTilt size={15} weight="fill" />
-                    Kirim Tulisan
+                    {copy.ctaKirim}
                     <ArrowRight
                       size={13}
                       weight="bold"

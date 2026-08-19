@@ -12,62 +12,45 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/PageHeader";
 import { ContactForm } from "@/components/ContactForm";
+import { hubungiKamiCopy } from "@/data/pages/hubungi-kami";
 import { site } from "@/data/site";
+import { getLang } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 
-export const metadata: Metadata = {
-  title: "Hubungi Kami",
-  description:
-    "Hubungi redaksi The Global Review — kiriman tulisan, hak jawab, kerja sama, dan pertanyaan umum.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const copy = hubungiKamiCopy[isLocale(lang) ? lang : DEFAULT_LANG];
+  return { title: copy.metaTitle, description: copy.metaDescription };
+}
+
+/** Ikon kanal, urutannya sejajar dengan hubungiKamiCopy[lang].kanal. */
+const kanalIcons = [Newspaper, Handshake, ChatCircleText];
 
 const mail = (subjek: string) =>
   `mailto:${site.email}?subject=${encodeURIComponent(subjek)}`;
-
-const kanal = [
-  {
-    icon: Newspaper,
-    judul: "Redaksi & Hak Jawab",
-    teks: "Kiriman opini dan analisis, koreksi, atau hak jawab atas pemberitaan.",
-    aksi: "Surel redaksi",
-    href: mail("Redaksi & Hak Jawab — The Global Review"),
-  },
-  {
-    icon: Handshake,
-    judul: "Kerja Sama & Kemitraan",
-    teks: "Kolaborasi riset, penyelenggaraan acara, dan kemitraan media.",
-    aksi: "Ajukan kerja sama",
-    href: mail("Kerja Sama & Kemitraan — The Global Review"),
-  },
-  {
-    icon: ChatCircleText,
-    judul: "Pertanyaan Umum",
-    teks: "Pertanyaan lain seputar The Global Review dan Global Future Institute.",
-    aksi: "Isi formulir",
-    href: "#form",
-  },
-];
 
 const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(
   "Jl. Iskandarsyah Raya No. 7, Kebayoran Baru, Jakarta Selatan"
 )}&z=15&output=embed`;
 
-export default function HubungiKamiPage() {
+export default async function HubungiKamiPage() {
+  const copy = hubungiKamiCopy[await getLang()];
   return (
     <>
-      <PageHeader
-        title="Hubungi Kami"
-        icon={ChatCircleText}
-        lead="Pilih kanal yang sesuai agar pesan Anda langsung sampai ke tim yang tepat."
-      />
+      <PageHeader title={copy.title} icon={ChatCircleText} lead={copy.lead} />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
         {/* Kanal per tujuan */}
         <div className="grid gap-4 sm:grid-cols-3">
-          {kanal.map((k) => {
-            const Icon = k.icon;
+          {copy.kanal.map((k, i) => {
+            const Icon = kanalIcons[i];
             return (
               <a
                 key={k.judul}
-                href={k.href}
+                href={k.subjek ? mail(k.subjek) : "#form"}
                 className="group flex flex-col rounded-2xl border border-line bg-surface p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span className="flex h-11 w-11 items-center justify-center rounded-full bg-canvas text-accent ring-1 ring-inset ring-line">
@@ -99,7 +82,7 @@ export default function HubungiKamiPage() {
         >
           <div>
             <h2 className="mb-6 border-b border-line pb-4 text-xs font-bold uppercase tracking-[0.16em] text-ink md:text-sm">
-              Kirim Pesan
+              {copy.kirimHeading}
             </h2>
             <ContactForm />
           </div>
@@ -109,7 +92,7 @@ export default function HubungiKamiPage() {
             <div className="overflow-hidden rounded-2xl border border-line bg-surface">
               <iframe
                 src={mapSrc}
-                title="Lokasi kantor Global Future Institute"
+                title={copy.petaTitle}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 className="aspect-[4/3] w-full grayscale-[0.3]"
@@ -121,7 +104,7 @@ export default function HubungiKamiPage() {
               <MapPin size={20} weight="regular" className="shrink-0 text-brand" />
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-ink">
-                  Alamat
+                  {copy.alamatLabel}
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-body">
                   DARIA Building, Suite 402
@@ -142,7 +125,7 @@ export default function HubungiKamiPage() {
               />
               <div className="min-w-0">
                 <p className="text-[11px] font-bold uppercase tracking-wider text-ink">
-                  Surel
+                  {copy.surelLabel}
                 </p>
                 <a
                   href={`mailto:${site.email}`}
@@ -158,10 +141,10 @@ export default function HubungiKamiPage() {
               <Clock size={20} weight="regular" className="shrink-0 text-brand" />
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-ink">
-                  Jam Operasional
+                  {copy.jamLabel}
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-body">
-                  Senin&ndash;Jumat &middot; 09.00&ndash;17.00 WIB
+                  {copy.jamTeks}
                 </p>
               </div>
             </div>
@@ -169,7 +152,7 @@ export default function HubungiKamiPage() {
             {/* Sosial */}
             <div className="flex items-center justify-between rounded-2xl border border-line bg-surface p-5">
               <p className="text-[11px] font-bold uppercase tracking-wider text-ink">
-                Ikuti Kami
+                {copy.ikutiLabel}
               </p>
               <div className="flex items-center gap-1">
                 {[

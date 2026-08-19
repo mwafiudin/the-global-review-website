@@ -3,28 +3,25 @@ import Image from "next/image";
 import { PageHeader } from "@/components/PageHeader";
 import { EndMark } from "@/components/Ornaments";
 import { Sidebar } from "@/components/Sidebar";
+import { tentangTgrCopy } from "@/data/pages/tentang-tgr";
+import { getLang } from "@/lib/i18n-server";
+import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 
-export const metadata: Metadata = {
-  title: "Tentang The Global Review",
-  description:
-    "The Global Review merupakan media online yang dimiliki Global Future Institute.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  const copy = tentangTgrCopy[isLocale(lang) ? lang : DEFAULT_LANG];
+  return { title: copy.metaTitle, description: copy.metaDescription };
+}
 
-const paragraphs = [
-  "The Global Review merupakan media online yang dimiliki Global Future Institute. Kehadiran The Global Review dengan alamat www.theglobal-review.com mendukung dalam menyebarkan ide-ide terhadap isu-isu yang menjadi kajian dari Global Future Institute.",
-  "Website The Global Review merupakan sarana menginformasikan kegiatan-kegiatan GFI seperti seminar, hasil riset dan studi, maupun kegiatan-kegiatan lainnya.",
-  "Dasar pemikirannya adalah, bahwa semua rangkaian kegiatan tersebut, pada akhirnya harus bermuara pada dihasilkannya produk-produk penerbitan buku, jurnal, monograf, maupun sarana publikasi lainnya.",
-  "Untuk menjembatani itu semua, maka website GFI www.theglobal-review.com untuk sementara akan kami jadikan sebagai basis data maupun informasi, yang mana seluruh lapisan masyarakat baik di Indonesia maupun mancanegara, bisa mengakses secara langsung informasi maupun kajian-kajian yang dibuat oleh GFI.",
-  "Sehingga seluruh hasil seri pertemuan, riset dan studi, maupun liputan-liputan yang bersifat analisis berita mengenai perkembangan dan dinamika global dan regional, bisa kami sosialisasikan secepat mungkin kepada masyarakat luas melalui situs kami. Dan terdokumentasikan secara sistematis baik melalui situs theglobal-review.com baik melalui rubrik-rubrik yang ada didalamnya maupun yang terdapat dalam rubrik arsip.",
-];
-
-export default function TentangTgrPage() {
+export default async function TentangTgrPage() {
+  const copy = tentangTgrCopy[await getLang()];
   return (
     <>
-      <PageHeader
-        title="Tentang The Global Review"
-        lead="Pemandu informasi perkembangan dunia sejak 2008."
-      />
+      <PageHeader title={copy.title} lead={copy.lead} />
       <div className="mx-auto max-w-7xl px-4 py-10">
         <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
           <div>
@@ -38,7 +35,7 @@ export default function TentangTgrPage() {
               className="mb-8 aspect-[4/3] w-full rounded-xl object-cover"
             />
             <div className="space-y-5">
-              {paragraphs.map((p, i) => (
+              {copy.paragraphs.map((p, i) => (
                 <p
                   key={i}
                   className={`max-w-[70ch] text-base leading-relaxed ${i === 0 ? "drop-cap" : ""}`}
