@@ -6,7 +6,8 @@ Berkas untuk dijalankan/dipasang di WordPress produksi TGR
 ```
 wordpress/
 ├── mu-plugins/
-│   ├── tgr-headless.php     # CPT Podcast, Album, Jajak Pendapat + field Bedah Buku
+│   ├── tgr-headless.php     # CPT (Podcast, Album, Poll, Pesan Masuk, Pengurus &
+│   │                        #   Redaksi) + field Bedah Buku + isi halaman statis
 │   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
 │   └── tgr-alih-sementara.php  # SEMENTARA: beranda lama → situs baru (302)
 ├── rest/                    # perkakas yang benar-benar dipakai (lihat catatan SSH)
@@ -16,7 +17,11 @@ wordpress/
 │   ├── periksa-rubrik.mjs   # laporkan selisih kategori WP ↔ peta di kode
 │   ├── impor-podcast.mjs    # pindahkan daftar podcast dari kode ke wp-admin
 │   ├── sorotan.mjs          # isi tgr_sorotan dari kosakata korpus judul
-│   └── impor-buku.mjs       # pindahkan 4 ulasan Bedah Buku dari kode ke wp-admin
+│   ├── impor-buku.mjs       # pindahkan 4 ulasan Bedah Buku dari kode ke wp-admin
+│   ├── impor-orang.mjs      # pindahkan profil pengurus & masthead redaksi (+foto)
+│   ├── isi-halaman.mjs      # isi meta 4 halaman statis + tandai buku pilihan
+│   ├── periksa-kesehatan.mjs # potret kesehatan hanya-baca + mode --banding
+│   └── kesehatan-*.json     # hasil potret kesehatan (jejak audit, ikut di repo)
 └── cli/                     # versi WP-CLI, tidak terpakai (host tanpa SSH)
     ├── 01-backup.sh         # cadangkan basis data + wp-content
     ├── 02-inventaris.sh     # tarik CSV konten untuk bahan pemetaan rubrik
@@ -26,6 +31,7 @@ wordpress/
 
 Semua skrip di `rest/` **mode tinjauan secara bawaan**; tambahkan `APPLY=1`
 untuk benar-benar menulis, dan semuanya aman dijalankan ulang.
+(`periksa-kesehatan.mjs` tidak pernah menulis ke WordPress — tanpa `APPLY`.)
 
 ---
 
@@ -164,11 +170,16 @@ Setelah `tgr-headless.php` terpasang, REST API bertambah:
 | `/wp-json/wp/v2/podcasts` | Penampilan di kanal media lain |
 | `/wp-json/wp/v2/albums` | Album dokumentasi kegiatan |
 | `/wp-json/wp/v2/polls` | Jajak pendapat (terverifikasi terbaca anonim — cukup untuk frontend) |
+| `/wp-json/wp/v2/orang` | Profil pengurus GFI & masthead redaksi (sejak v3.0) |
 
-Frontend membaca ketiganya sejak Fase 2a (`src/lib/wp/podcasts|gallery|polls.ts`)
-dengan aturan: **koleksi kosong → tampilkan data contoh**. Artinya begitu
-redaksi menerbitkan podcast/album/poll pertamanya, seksi terkait berpindah
-ke konten WordPress dengan sendirinya, tanpa deploy.
+Frontend membaca semuanya sejak Fase 2a
+(`src/lib/wp/podcasts|gallery|polls|orang.ts`). Podcast masih punya
+cadangan di kode (`src/data/podcasts.ts` — cermin konten nyata, jaring
+pengaman bila WP tumbang), tetapi **data contoh album dan jajak pendapat
+sudah dihapus**: koleksi kosong kini berarti halaman Galeri menampilkan
+keadaan kosong yang jujur ("Belum ada album.") dan seksi jajak pendapat
+di beranda disembunyikan — sampai redaksi menerbitkan yang sebenarnya,
+tanpa deploy.
 
 **Pembaruan v2.0 — layar editor** (timpa `tgr-headless.php` lama di
 `mu-plugins/` lewat File Manager, cek beranda sesudahnya; tidak perlu flush
@@ -232,6 +243,76 @@ Catatan keamanan yang disengaja:
 - Menambah pelanggan lewat wp-admin sengaja dimatikan (`create_posts` =
   `do_not_allow`) — daftar ini hanya boleh tumbuh dari pendaftaran nyata.
 
+### Pesan masuk (v3.0)
+
+**Pembaruan v3.0 memakai cara pasang yang sama dengan v2.0**: timpa
+`tgr-headless.php` lama di `mu-plugins/` lewat File Manager, cek beranda
+sesudahnya — kali ini `tgr-revalidate.php` (v1.1) juga perlu ditimpa
+bersamaan. Tidak perlu flush permalink untuk `tgr_pesan` (tidak punya URL
+publik), tapi CPT `tgr_orang` butuh **Settings → Permalinks → Save
+Changes** sekali seperti biasa.
+
+v3.0 menambah menu **Pesan Masuk**: kiriman formulir Hubungi Kami tersimpan
+sebagai tipe konten `tgr_pesan` — nama pengirim jadi judul, rinciannya
+(email, telepon, subjek, halaman asal) terbaca di layar detail yang
+hanya-baca, dengan kolom daftar Nama/Email/Subjek/Notifikasi/Diterima dan
+tombol **Unduh CSV**. Tiap pesan juga diteruskan sebagai email notifikasi
+dengan **Reply-To diarahkan ke pengirim** — membalas dari aplikasi email
+langsung sampai ke penanya. Penerimanya email admin situs, atau konstanta
+`TGR_KONTAK_EMAIL` bila didefinisikan di wp-config.php (lihat langkah
+pemasangan di bawah).
+
+Catatan keamanan yang disengaja (pola yang sama dengan Pelanggan Buletin):
+
+- Tipe konten ini **tidak diekspos ke REST** (`show_in_rest` false) — isi
+  pesan, alamat email, dan nomor telepon adalah data pribadi, sedangkan
+  endpoint `wp/v2` situs ini terbuka dibaca siapa pun.
+- Endpoint penerimanya (`tgr/v1/contact`) mensyaratkan header
+  `X-TGR-Secret`. Browser tidak pernah memegang secret itu; frontend
+  meneruskan kiriman dari sisi server.
+- Alamat IP pengirim disimpan sebagai sidik (hash), bukan apa adanya.
+  Rem laju berlaku di kedua sisi: 5/menit per IP di frontend, 5/jam per
+  IP di WordPress.
+- Menambah pesan lewat wp-admin sengaja dimatikan (`create_posts` =
+  `do_not_allow`) — daftar hanya tumbuh dari kiriman nyata.
+- **Pesan disimpan dulu, email menyusul**: kegagalan `wp_mail` tidak
+  pernah menghilangkan pesan — statusnya tercatat di kolom Notifikasi.
+- Ekspor CSV mengawali sel yang berawalan `=` `+` `-` `@` dengan tanda
+  kutip — penangkal injeksi formula saat berkas dibuka di Excel.
+
+### Pengurus & Redaksi dan isi halaman statis (v3.0)
+
+Tipe konten `tgr_orang` (REST `orang`, terbuka dibaca — memang konten
+publik) mengisi dua halaman sekaligus: `/pengurus-gfi` (kelompok
+*pengurus*) dan `/redaksi` (kelompok *redaksi*). Nama = judul pos, foto =
+Gambar Unggulan, jabatan/bio (plus versi Inggris) lewat kotak isian,
+urutan tampil lewat **Atribut → Urutan** (bisa juga dari Quick Edit).
+Entri pengurus butuh foto + jabatan + bio agar tampil; entri redaksi
+cukup jabatan. Webhook `tgr-revalidate.php` naik ke **v1.1** dan ikut
+meneruskan tipe ini; `tgr_pesan` dan `tgr_subscriber` sengaja **tidak**
+diteruskan — keduanya tidak pernah tampil di halaman mana pun.
+
+Empat Laman lama kini memberi isi halaman statis situs baru lewat metabox
+**"Isi Halaman — Situs Baru"** (hanya muncul di keempat Laman itu).
+Petanya **dikunci ke ID, bukan slug**, karena slug di produksi tertukar:
+
+| ID | Halaman situs baru | Catatan slug WP |
+|---|---|---|
+| 574 | `/tentang-tgr` | slug `tentang-gfi` — padahal judulnya "Tentang The Global Review"! |
+| 576 | `/tentang-gfi` | slug `tentang-gfi-2` |
+| 572 | `/hubungi-kami` | |
+| 611 | `/pengurus-gfi` | |
+
+26 kunci meta (`tgr_lead(_en)`, `tgr_paragraf(_en)`, `tgr_visi(_en)`,
+`tgr_misi_butir(_en)`, `tgr_alamat`, `tgr_jam(_en)`, `tgr_peta_q`, dst.);
+field berbentuk daftar diisi satu item per baris. Kolom `_en` kosong
+jatuh ke teks Indonesia, dan field kosong jatuh ke teks bawaan di kode —
+halaman tidak pernah tampil bolong.
+
+Kotak **Identitas Buku** juga bertambah centang **"Buku pilihan sidebar"**
+(meta `tgr_buku_unggulan`, satu-aktif seperti penampilan utama podcast) —
+menentukan kartu promosi buku di sidebar situs.
+
 Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 
 | Meta | Kegunaan |
@@ -269,6 +350,12 @@ Sekali sesi ±30 menit:
    define( 'TGR_REVALIDATE_SECRET', '<hasil openssl rand -hex 32>' );
    define( 'TGR_REVALIDATE_URL', 'https://the-global-review-website.vercel.app/api/revalidate' );
    ```
+
+   Opsional, untuk formulir kontak (sejak v3.0): tambahkan juga
+   `define( 'TGR_KONTAK_EMAIL', 'redaksi@contoh.com' );` bila notifikasi
+   pesan masuk ingin dikirim ke alamat selain email admin situs
+   (Settings → General → Administration Email Address). Tanpa konstanta
+   ini, email admin itulah yang dipakai — formulir tetap berfungsi.
 
 6. Unggah `tgr-revalidate.php` ke `mu-plugins/` (cek beranda lagi).
 7. wp-admin → **Settings → Permalinks → Save Changes** (tanpa mengubah

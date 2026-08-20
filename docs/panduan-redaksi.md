@@ -95,7 +95,7 @@ memberi tahu, karena **tidak ada pesan error apa pun** yang muncul.
 |---|---|
 | **Membuat kategori/rubrik baru** | Tulisannya tetap tampil, tapi rubriknya belum punya tempat di menu situs |
 | **Menambah penulis baru** | Tulisannya tampil, tapi namanya muncul sebagai "Redaksi" |
-| **Membuat Halaman baru** (bukan Pos) | Tidak muncul di situs baru — halaman statis dikelola terpisah |
+| **Membuat Halaman baru** (bukan Pos) | Tidak muncul di situs baru — hanya empat Laman tertentu yang dibaca situs (lihat *Menyunting isi halaman statis* di bawah) |
 
 Dan satu larangan sungguhan: **jangan mengubah "slug" kategori** yang sudah
 ada. Mengganti *nama tampilannya* aman; mengganti slug-nya memutus
@@ -106,7 +106,7 @@ peringatan.
 
 ## Menu baru di wp-admin
 
-Selain Pos seperti biasa, kini ada empat menu tambahan:
+Selain Pos seperti biasa, kini ada enam menu tambahan:
 
 ### Podcast
 
@@ -126,6 +126,11 @@ tidak akan tampil di situs.**
 
 Keterangan tiap foto diambil dari kolom *Caption* foto itu di Media
 Library — isilah di sana bila ingin ada teks di bawah foto.
+
+Contoh album yang dulu mengisi halaman Galeri sudah dihapus. Selama belum
+ada satu album pun yang terbit, halaman itu menampilkan keterangan
+**"Belum ada album."** — itu bukan galat. Album pertama yang Anda
+terbitkan langsung menggantikannya.
 
 ### Jajak Pendapat
 
@@ -147,6 +152,11 @@ per alamat internet selama 24 jam). Ini penahan wajar, bukan pengaman
 mutlak — sebagaimana jajak pendapat mana pun yang tidak meminta pembaca
 masuk akun.
 
+Contoh jajak pendapat (dengan angka suara karangan) sudah dihapus. Bila
+belum ada jajak pendapat sama sekali, seksinya di beranda **disembunyikan**
+— beranda tetap rapi, tanpa ruang kosong. Seksi itu muncul kembali begitu
+Anda menerbitkan jajak pendapat pertama.
+
 ### Bedah Buku
 
 Bukan menu tersendiri — **ulasan buku ditulis seperti tulisan biasa**, cukup
@@ -159,6 +169,11 @@ Semuanya opsional — yang kosong disembunyikan, tidak menyisakan ruang
 kosong. Sampul sebaiknya foto sampul buku (potret), bukan gambar artikel
 biasa; kalau dikosongkan, Gambar Unggulan tulisan yang dipakai.
 
+Di kotak yang sama ada centang **"Buku pilihan sidebar"**: buku yang
+dicentang tampil sebagai kartu promosi di kolom samping situs. Satu buku
+saja pada satu waktu — mencentang yang baru otomatis melepas yang lama,
+sama seperti "Penampilan utama" di Podcast.
+
 ### Pelanggan Buletin
 
 Daftar pembaca yang mendaftar lewat formulir di situs. Hanya untuk
@@ -168,6 +183,76 @@ seluruh daftarnya kapan saja.
 Daftar ini berisi **data pribadi pembaca**: jangan dibagikan ke luar
 redaksi, dan gunakan hanya untuk mengirim buletin sebagaimana yang
 dijanjikan saat mereka mendaftar.
+
+### Pesan Masuk
+
+Kiriman formulir **Hubungi Kami** di situs. Tiap pesan tampil dengan nama
+pengirim sebagai judulnya; buka untuk melihat email, telepon, subjek, dan
+isi pesannya. Semuanya **hanya untuk dibaca** — tidak bisa disunting, dan
+tidak bisa ditambah manual. Tombol **Unduh CSV** mengekspor seluruh
+daftarnya kapan saja.
+
+Setiap pesan baru juga dikirim sebagai **email pemberitahuan**. Membalas
+email itu langsung sampai ke si penanya — alamat balasannya sudah
+diarahkan ke pengirim pesan, bukan ke situs. Kolom **Notifikasi** di
+daftar menandai (✓) pesan yang emailnya terkirim; yang tidak bertanda
+tetap tersimpan utuh di menu ini, jadi tidak ada pesan yang hilang hanya
+karena emailnya gagal.
+
+Pemberitahuan dikirim ke alamat email admin situs. Ingin dialihkan ke
+alamat lain (misalnya email khusus redaksi)? Minta pengelola situs — ada
+pengaturan untuk itu.
+
+Seperti Pelanggan Buletin, daftar ini berisi **data pribadi**: jangan
+dibagikan ke luar redaksi.
+
+### Pengurus & Redaksi
+
+Menu ini mengisi dua halaman situs sekaligus: **Pengurus GFI** dan
+**Redaksi** (susunan redaksi). Satu orang = satu entri:
+
+- **Nama** ditulis sebagai judul.
+- **Kelompok** dipilih di kotak sisi kanan — *Pengurus* atau *Redaksi* —
+  menentukan orangnya tampil di halaman mana. Orang yang ada di keduanya
+  dibuat dua entri.
+- **Foto** dipasang lewat **Gambar Unggulan**, seperti pada tulisan biasa.
+- **Jabatan** dan **bio** diisi di kotak isian di bawah editor. Kolom
+  versi Inggrisnya boleh dikosongkan — halaman bahasa Inggris memakai
+  teks Indonesia sebagai gantinya.
+- **Urutan tampil** diatur di kotak **Atribut → Urutan**: angka kecil
+  tampil lebih dulu. Bisa juga diubah cepat lewat **Sunting Cepat** di
+  daftarnya, tanpa membuka entri satu per satu.
+
+Syarat tampil berbeda per kelompok: entri **Pengurus** butuh foto,
+jabatan, **dan** bio supaya muncul di halamannya; entri **Redaksi** cukup
+jabatan (foto tidak dipakai di susunan redaksi).
+
+---
+
+## Menyunting isi halaman statis
+
+Empat Laman lama kini menjadi sumber teks halaman statis situs baru:
+**Tentang The Global Review**, **Tentang Global Future Institute**,
+**Pengurus GFI** (teks pengantarnya), dan **Hubungi Kami** (alamat, jam
+kerja, lokasi peta).
+
+Buka **Laman** di wp-admin lalu buka salah satu dari keempatnya. Di bawah
+editor ada kotak **"Isi Halaman — Situs Baru"** — di situlah teks yang
+dipakai situs, kolom per kolom. (Kotak ini hanya muncul di keempat Laman
+itu.)
+
+- Kolom yang berupa daftar (butir isu, butir misi, dan sejenisnya) diisi
+  **satu item per baris** — tekan Enter untuk butir baru, tanpa tanda
+  hubung atau penomoran.
+- Kolom **versi Inggris** boleh kosong: halaman bahasa Inggris memakai
+  teks Indonesia sebagai gantinya.
+- Kolom yang dikosongkan sama sekali memakai teks bawaan situs — halaman
+  tidak pernah tampil bolong.
+
+**Penting:** isi editor besar di atas kotak itu (teks Laman yang lama)
+**tidak dipakai situs baru** sama sekali. Menyunting di editor besar
+tidak mengubah apa pun di situs — yang dibaca hanya kolom-kolom di kotak
+"Isi Halaman — Situs Baru".
 
 ---
 

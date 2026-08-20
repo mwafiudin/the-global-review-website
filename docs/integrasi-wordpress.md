@@ -7,6 +7,66 @@ Disusun setelah pemeriksaan langsung terhadap situs produksi, Agustus 2026.
 
 ---
 
+## Status implementasi — 20 Agustus 2026
+
+**Formulir kontak kini sungguhan.** Sebelumnya tombol Kirim di
+`/hubungi-kami` hanya berpura-pura berhasil. Kini `/api/contact`
+(honeypot, validasi panjang & whitelist subjek, rem 5 permintaan/menit
+per IP) meneruskan ke endpoint bersecret `tgr/v1/contact`: pesan
+tersimpan sebagai CPT `tgr_pesan` (menu **Pesan Masuk**; tidak diekspos
+REST karena berisi PII; ekspor CSV dengan penangkal injeksi formula),
+baru kemudian email notifikasi dikirim dengan Reply-To = pengirim —
+simpan dulu, email menyusul, jadi kegagalan email tidak pernah
+menghilangkan pesan. Penerima notifikasi: konstanta `TGR_KONTAK_EMAIL`
+di wp-config.php, atau email admin bila tidak didefinisikan.
+
+**Profil & isi halaman statis pindah ke WordPress.** CPT `tgr_orang`
+(REST `orang`) mengisi `/pengurus-gfi` dan `/redaksi`; empat Laman lama
+memberi isi `/tentang-tgr`, `/tentang-gfi`, `/hubungi-kami`, dan teks
+pengantar `/pengurus-gfi` lewat metabox 26 field (satu item per baris
+untuk field daftar; `_en` kosong jatuh ke teks Indonesia; field kosong
+jatuh ke teks di kode). Centang **Buku pilihan sidebar** di Identitas
+Buku menentukan kartu buku di sidebar. Lapisan datanya
+`src/lib/wp/orang.ts` dan `src/lib/wp/halaman.ts` (tag `wp:orang` /
+`wp:halaman`, revalidate 300, fallback `src/data/pages`);
+`tgr-revalidate.php` v1.1 ikut meneruskan `tgr_orang`, dan
+`/api/revalidate` kini menggugurkan tag `wp:halaman` saat Laman disimpan
+(sebelumnya salah sasaran ke `wp:posts`).
+
+⚠️ **Peta halaman statis dikunci ke ID, bukan slug** — slug produksi
+tertukar (lihat §1): 574 = `/tentang-tgr` (slug WP `tentang-gfi`, judul
+"Tentang The Global Review"), 576 = `/tentang-gfi` (slug
+`tentang-gfi-2`), 572 = `/hubungi-kami`, 611 = `/pengurus-gfi`. Bila
+suatu saat slug-nya "dibereskan" di wp-admin, tidak ada yang putus — tapi
+jangan mengubah peta `HALAMAN_ID` di `src/lib/wp/halaman.ts` tanpa
+mencocokkan ID-nya lagi.
+
+**Data contoh galeri & jajak pendapat dihapus.** Enam album picsum dan
+tiga poll dengan angka suara karangan tidak lagi dikapalkan: koleksi
+kosong kini berarti `/gallery` menampilkan "Belum ada album." dan seksi
+jajak pendapat beranda disembunyikan (komponennya merender null).
+`src/data/podcasts.ts` dan `books.ts` sengaja dipertahankan sebagai
+cadangan pemadaman — isinya cermin konten nyata di WordPress, bukan
+karangan.
+
+**Perkakas baru di `wordpress/rest/`:** `impor-orang.mjs` (8 pengurus +
+5 masthead, sekalian unggah foto sekali per berkas; slug diprefiks
+kelompok karena dua nama ada di keduanya) dan `isi-halaman.mjs` (isi 26
+field halaman + tandai buku pilihan; diff per field) — keduanya
+idempoten, dry-run bawaan, dan menolak jalan bila mu-plugin v3.0 belum
+terunggah. Plus `periksa-kesehatan.mjs`: potret kesehatan hanya-baca
+(jumlah koleksi, sampel artikel, autentikasi, probe endpoint tgr/v1
+tanpa secret yang harus 401/403, versi core) tersimpan sebagai
+`kesehatan-<stamp>.json` di repo, dengan mode `--banding` dua potret —
+disiapkan untuk mengawal update core/plugin.
+
+**Menunggu tindakan pemilik akses:** unggah ulang `tgr-headless.php`
+**v3.0.0** dan `tgr-revalidate.php` **v1.1.0** ke `wp-content/mu-plugins/`
+lewat cPanel File Manager, lalu jalankan kedua skrip seed dengan
+`APPLY=1`.
+
+---
+
 ## Status implementasi — 14 Agustus 2026
 
 **Fase 1 LIVE di produksi dan teruji ujung-ke-ujung** (sunting di wp-admin
@@ -25,8 +85,11 @@ fungsi; judul saja <1 dtk) plus indikator "Mencari…" di panel.
 mengirimkan tipe-tipe itu sejak awal. **Koleksi kosong atau WP gagal →
 fallback ke data contoh `src/data/*.ts`**, sehingga seksi berpindah ke
 WordPress dengan sendirinya begitu redaksi menerbitkan konten pertamanya
-— tanpa deploy, tanpa perubahan visual. Bedah Buku tetap katalog kurasi
-di kode (meta `tgr_buku_*` belum punya slot UI). Suara poll pengunjung
+— tanpa deploy, tanpa perubahan visual. *(Pembaruan 20 Agustus: data
+contoh galeri & poll sudah dihapus — koleksi kosong kini tampil sebagai
+keadaan kosong yang jujur; lihat status di atas.)* Bedah Buku tetap
+katalog kurasi di kode (meta `tgr_buku_*` belum punya slot UI). Suara
+poll pengunjung
 masih di sisi klien — penyimpanan suara ke WP = Fase 2b (butuh endpoint
 tulis di mu-plugin + Application Password).
 
@@ -97,7 +160,9 @@ penulis yang tanpa streaming tetap 404 murni).
 **Menunggu tindakan pemilik akses** (rincian di `wordpress/README.md`):
 unggah ulang `tgr-headless.php` **v1.1** (menambah field `tgr_kategori`
 album + `tgr_unggulan` podcast — timpa file lama di
-`wp-content/mu-plugins/`, cek beranda sesudahnya), lalu butir keamanan
+`wp-content/mu-plugins/`, cek beranda sesudahnya) *(pembaruan 20
+Agustus: sudah terpasang; versi yang kini menunggu unggahan adalah
+v3.0.0 — lihat status di atas)*, lalu butir keamanan
 (backup + update WP core, limit-login) dan keputusan visibilitas repo.
 Redaksi: mulai mengisi Podcast/Album/Poll di wp-admin (menu sudah ada;
 field lewat panel Custom Fields), pemetaan 8 rubrik TINJAU + pemecahan

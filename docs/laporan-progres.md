@@ -10,6 +10,88 @@ dan SUBSCRIBER. Butir 3.4 REAL-TIME dan 3.5 (analitik) dikerjakan pihak lain.
 
 ---
 
+## Periode 20 Agustus 2026
+
+### Status: formulir kontak berfungsi; profil & halaman statis disunting dari wp-admin
+
+Tombol Kirim di halaman Hubungi Kami kini sungguhan — pesan pembaca
+tersimpan di wp-admin dan diteruskan ke email redaksi. Profil pengurus,
+masthead redaksi, dan teks empat halaman statis juga pindah ke wp-admin,
+sehingga praktis tidak ada lagi konten situs yang hanya bisa diubah
+lewat kode.
+
+### Yang selesai
+
+**1. Formulir kontak berfungsi (sebelumnya pura-pura)**
+
+- Tombol Kirim di Hubungi Kami dulu hanya menampilkan "berhasil" tanpa
+  mengirim apa pun. Kini pesan tersimpan di wp-admin (menu baru **Pesan
+  Masuk**, lengkap dengan unduh CSV) dan diteruskan sebagai email
+  notifikasi yang bisa langsung dibalas ke penanya.
+- Pesan disimpan dulu, email menyusul — email yang gagal terkirim tidak
+  pernah menghilangkan pesan, dan statusnya terlihat di kolom daftar.
+- Pengaman berlapis: jebakan bot, validasi isian, pembatas laju di dua
+  sisi; daftar pesan sengaja tidak dibuka ke API publik (data pribadi),
+  alamat IP disimpan sebagai sidik, dan ekspor CSV diberi penangkal
+  injeksi formula.
+
+**2. Pengurus & Redaksi dikelola dari wp-admin**
+
+- Menu baru **Pengurus & Redaksi**: satu entri per orang mengisi halaman
+  Pengurus GFI dan masthead Redaksi sekaligus. Foto lewat Gambar
+  Unggulan, urutan tampil lewat satu angka, kolom bahasa Inggris
+  opsional (kosong → memakai teks Indonesia).
+
+**3. Halaman statis tersunting dari wp-admin**
+
+- Empat Laman lama (Tentang TGR, Tentang GFI, Pengurus GFI, Hubungi
+  Kami) mendapat kotak **"Isi Halaman — Situs Baru"** berisi 26 kolom
+  teks. Kolom yang kosong memakai teks bawaan — halaman tidak pernah
+  tampil bolong.
+- Petanya dikunci ke ID halaman, bukan slug, karena slug di produksi
+  tertukar (halaman ber-slug `tentang-gfi` justru berjudul "Tentang The
+  Global Review").
+- Kotak Identitas Buku bertambah centang **Buku pilihan sidebar** untuk
+  memilih buku yang dipromosikan di kolom samping situs.
+
+**4. Data contoh galeri & jajak pendapat dihapus**
+
+- Rencana sebelumnya ("hapus per seksi begitu redaksi mengisi yang
+  sebenarnya") diganti yang lebih jujur: dihapus sekarang. Enam album
+  berfoto stok dan tiga jajak pendapat dengan angka suara karangan tidak
+  pantas tampil di situs berita sungguhan.
+- Galeri kosong kini menampilkan keterangan "Belum ada album."; seksi
+  jajak pendapat di beranda disembunyikan sampai ada isinya. Data contoh
+  podcast dan bedah buku dipertahankan sebagai cadangan pemadaman —
+  isinya cermin konten nyata di WordPress, bukan karangan.
+
+**5. Perkakas: dua skrip pemindah + pemeriksa kesehatan**
+
+- Dua skrip pemindah baru: profil pengurus/redaksi (termasuk unggah
+  fotonya) dan isi 26 kolom halaman statis — keduanya mode tinjauan
+  dulu, aman diulang, dan menolak berjalan bila mu-plugin barunya belum
+  terpasang.
+- Skrip **periksa kesehatan**: potret kondisi WordPress (jumlah konten,
+  autentikasi, endpoint, versi inti) tersimpan sebagai berkas jejak
+  audit, plus mode pembanding dua potret — disiapkan untuk mengawal
+  pembaruan inti WordPress sebelum/sesudah.
+
+**6. Pembaruan dependensi otomatis digabungkan**
+
+- Seluruh usulan pembaruan dependensi (Dependabot) ditinjau dan
+  digabungkan; gerbang tes/typecheck/lint/build tetap hijau.
+
+### Menunggu tindakan pemilik akses
+
+- **Unggah ulang dua mu-plugin** lewat cPanel File Manager:
+  `tgr-headless.php` v3.0.0 dan `tgr-revalidate.php` v1.1.0 — seluruh
+  butir di atas baru aktif di produksi setelah ini.
+- Setelah itu, **jalankan dua skrip pemindah dengan `APPLY=1`** agar
+  profil dan teks halaman berpindah dari kode ke wp-admin.
+- **Pembaruan inti WordPress 6.5.10 → 7.0.4**: runbook-nya sudah
+  disiapkan (backup, potret kesehatan sebelum/sesudah, jalur pemulihan)
+  — tinggal menunggu jendela pemeliharaan disepakati.
+
 ## Periode 19 Agustus 2026
 
 ### Status: situs berbahasa dua — English tersedia di /en
