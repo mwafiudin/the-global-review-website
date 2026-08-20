@@ -132,7 +132,7 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   /** Kueri yang hasilnya sudah tiba — pembeda "belum ada jawaban" vs "nihil". */
   const [settledFor, setSettledFor] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { t, l } = useLang();
+  const { lang, t, l } = useLang();
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -181,7 +181,10 @@ function SearchPanel({ onClose }: { onClose: () => void }) {
   const settled = settledFor === q.trim().toLowerCase();
 
   return (
+    // translate="no" di /en: pagar dari widget terjemah Google — node teks
+    // yang dirender ulang React tak boleh dibungkus <font> miliknya.
     <div
+      translate={lang === "en" ? "no" : undefined}
       className="fixed inset-0 z-[60] flex justify-center bg-ink/20 px-4 pt-[12vh] search-fade"
       onClick={onClose}
     >

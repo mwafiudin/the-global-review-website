@@ -38,7 +38,11 @@ export function LanguageToggle({ withIcon = false }: { withIcon?: boolean }) {
   }
 
   return (
-    <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide">
+    // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
+    <div
+      translate={lang === "en" ? "no" : undefined}
+      className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide"
+    >
       {withIcon && (
         <Translate
           size={14}

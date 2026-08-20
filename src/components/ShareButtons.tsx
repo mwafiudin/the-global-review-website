@@ -12,7 +12,7 @@ import { useLang } from "@/lib/i18n";
 /** Tombol bagikan artikel: salin tautan, WhatsApp, X. URL dihitung saat klik (SSR-safe). */
 export function ShareButtons({ title }: { title: string }) {
   const [copied, setCopied] = useState(false);
-  const { t } = useLang();
+  const { lang, t } = useLang();
 
   async function copy() {
     try {
@@ -32,7 +32,11 @@ export function ShareButtons({ title }: { title: string }) {
     "flex h-9 w-9 items-center justify-center rounded-full border border-line text-body transition-colors hover:border-accent hover:text-accent";
 
   return (
-    <div className="flex items-center gap-2">
+    // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
+    <div
+      translate={lang === "en" ? "no" : undefined}
+      className="flex items-center gap-2"
+    >
       <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-meta">
         {t("Bagikan")}
       </span>

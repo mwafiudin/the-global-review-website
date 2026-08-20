@@ -45,7 +45,7 @@ export function CategoryBrowser({
   const pathname = usePathname();
   const params = useSearchParams();
   const topRef = useRef<HTMLDivElement>(null);
-  const { t } = useLang();
+  const { lang, t } = useLang();
 
   // URL sebagai sumber kebenaran
   const subLeaf = params.get("sub");
@@ -144,7 +144,8 @@ export function CategoryBrowser({
     "rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink focus:border-accent focus:outline-none";
 
   return (
-    <div ref={topRef}>
+    // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
+    <div ref={topRef} translate={lang === "en" ? "no" : undefined}>
       {/* Filter sub-rubrik in-place */}
       {subcategories.length > 0 && (
         <div className="mb-6 flex flex-wrap gap-2">

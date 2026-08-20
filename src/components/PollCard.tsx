@@ -280,7 +280,11 @@ export function PollCard({
   }
 
   return (
-    <div className={`ballot-wrap ${compact ? "" : "ballot-tilt"}`}>
+    // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
+    <div
+      translate={lang === "en" ? "no" : undefined}
+      className={`ballot-wrap ${compact ? "" : "ballot-tilt"}`}
+    >
       <section
         aria-label={t("Jajak pendapat")}
         className={`ballot relative flex flex-col rounded-[3px] ${

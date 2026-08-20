@@ -57,7 +57,7 @@ export function NewsletterForm() {
   const [email, setEmail] = useState("");
   const [mengirim, setMengirim] = useState(false);
   const [galat, setGalat] = useState("");
-  const { t } = useLang();
+  const { lang, t } = useLang();
 
   async function daftar(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -91,8 +91,10 @@ export function NewsletterForm() {
   }
 
   return (
+    // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
     <section
       aria-label="Buletin"
+      translate={lang === "en" ? "no" : undefined}
       className="relative overflow-hidden bg-[#011840] dark:bg-[#18181b]"
     >
       {/* Foto identitas sebagai latar: nadanya sudah navy-gelap sehingga

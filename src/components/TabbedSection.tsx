@@ -32,7 +32,7 @@ export function TabbedSection({
   layout?: "featured-list" | "grid";
 }) {
   const [active, setActive] = useState<string | null>(null);
-  const { t, l } = useLang();
+  const { lang, t, l } = useLang();
 
   const filtered =
     active === null
@@ -44,7 +44,8 @@ export function TabbedSection({
   const gridItems = filtered.slice(0, 4);
 
   return (
-    <section aria-label={t(title)}>
+    // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
+    <section aria-label={t(title)} translate={lang === "en" ? "no" : undefined}>
       <div className="mb-10 flex flex-col gap-3 border-b border-line sm:flex-row sm:items-baseline sm:justify-between sm:gap-x-6">
         <h2 className="text-xs font-bold uppercase tracking-[0.16em] text-ink sm:pb-4 md:text-sm">
           {t(title)}

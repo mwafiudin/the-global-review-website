@@ -11,7 +11,7 @@ export function ContactForm() {
   const [sent, setSent] = useState(false);
   const [mengirim, setMengirim] = useState(false);
   const [galat, setGalat] = useState("");
-  const { t } = useLang();
+  const { lang, t } = useLang();
 
   async function kirim(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -50,7 +50,11 @@ export function ContactForm() {
 
   if (sent) {
     return (
-      <div className="rounded-xl border border-line bg-surface p-8 text-center">
+      // translate="no" di /en: pagar dari widget terjemah Google (lihat Search).
+      <div
+        translate={lang === "en" ? "no" : undefined}
+        className="rounded-xl border border-line bg-surface p-8 text-center"
+      >
         <CheckCircle size={40} weight="light" className="mx-auto text-accent" />
         <p className="mt-4 font-display text-lg font-bold text-ink">
           {t("Pesan Anda telah terkirim")}
@@ -63,7 +67,11 @@ export function ContactForm() {
   }
 
   return (
-    <form onSubmit={kirim} className="space-y-5">
+    <form
+      onSubmit={kirim}
+      translate={lang === "en" ? "no" : undefined}
+      className="space-y-5"
+    >
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <label
