@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { polls as contohPolls, type Poll, type PollOption } from "@/data/polls";
+import type { Poll, PollOption } from "@/data/polls";
 import { articleHref, categoryName } from "@/lib/articles";
 import type { Article } from "@/lib/types";
 import { isPollClosed, type PollView } from "@/lib/polls";
@@ -19,7 +19,9 @@ import { articlesBySlugs } from "./articles";
  * (dengan suara dasar), tanggal tutup, dan artikel sumber seluruhnya
  * dikelola redaksi di wp-admin. Relasi ke artikel disimpan sebagai ID pos
  * (meta tgr_artikel_id) dan di-resolve ke slug di sini. Koleksi
- * kosong/gagal → data contoh src/data/polls.ts.
+ * kosong/gagal → [] dan seksi poll tidak tampil (PollSection sudah
+ * mengembalikan null saat kosong) — tidak ada lagi data contoh berisi
+ * angka suara fiktif.
  *
  * Penghitungan suara pengunjung tetap di sisi klien (Fase 2b: endpoint
  * tulis di mu-plugin agar suara tersimpan di WordPress).
@@ -103,16 +105,15 @@ const cachedPolls = unstable_cache(
   { revalidate: 300, tags: ["wp:polls"] }
 );
 
-/** Semua poll, terbaru dulu; koleksi kosong/gagal → data contoh. */
+/** Semua poll, terbaru dulu; koleksi kosong/gagal → []. */
 export async function wpActivePolls(): Promise<Poll[]> {
   return dedup("polls", async () => {
     try {
-      const items = await cachedPolls();
-      if (items.length > 0) return items;
+      return await cachedPolls();
     } catch (err) {
-      console.error("[wp] jajak pendapat gagal dibaca, memakai data contoh:", err);
+      console.error("[wp] jajak pendapat gagal dibaca:", err);
+      return [];
     }
-    return [...contohPolls].sort((a, b) => b.date.localeCompare(a.date));
   });
 }
 

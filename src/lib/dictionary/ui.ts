@@ -217,6 +217,7 @@ export const EN: Record<string, string> = {
   tulisan: "articles",
   "Tulisan Terbaru": "Latest Articles",
   "Belum ada tulisan.": "No articles yet.",
+  "Belum ada album.": "No albums yet.",
   "Kembali ke Redaksi": "Back to the Editorial team",
   "Rekam jejak tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media, lengkap dengan tayangannya.":
     "The Global Future Institute team's appearances as speakers on podcasts, talk shows, and media channels, complete with the recordings.",

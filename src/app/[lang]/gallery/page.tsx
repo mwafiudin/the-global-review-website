@@ -3,7 +3,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ImagesSquare } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/PageHeader";
-import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
 import { wpAlbums } from "@/lib/wp/gallery";
 import { getT } from "@/lib/i18n-server";
@@ -39,6 +38,11 @@ export default async function GalleryPage() {
         lead={t("Album dokumentasi kegiatan Global Future Institute — seminar, diskusi, riset, hingga silaturahmi redaksi.")}
       />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
+        {albums.length === 0 ? (
+          <p className="py-10 text-center text-sm text-meta">
+            {t("Belum ada album.")}
+          </p>
+        ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {albums.map((a) => (
             <Link
@@ -48,7 +52,7 @@ export default async function GalleryPage() {
             >
               <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
                 <Image
-                  src={a.foto[0].src ?? photoSrc(a.foto[0].seed, 720, 480)}
+                  src={a.foto[0].src}
                   alt={a.judul}
                   fill
                   sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
@@ -79,6 +83,7 @@ export default async function GalleryPage() {
             </Link>
           ))}
         </div>
+        )}
       </div>
     </>
   );

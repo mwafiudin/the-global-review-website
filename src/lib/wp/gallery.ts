@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { albums as contohAlbums, type Album, type Photo } from "@/data/gallery";
+import type { Album, Photo } from "@/data/gallery";
 import {
   dedup,
   wpFetchAllFresh,
@@ -14,7 +14,8 @@ import { cleanExcerpt, cleanText, isoDate } from "./map";
  * Album galeri dari CPT tgr_album (rest_base: albums). Isi album adalah
  * daftar ID lampiran (meta tgr_foto); caption tiap foto diambil dari field
  * caption lampiran itu sendiri di Media Library. Koleksi kosong/gagal →
- * data contoh src/data/gallery.ts, sama seperti podcast.
+ * [] dan halaman galeri menampilkan keadaan kosong — tidak ada lagi data
+ * contoh berfoto picsum.
  */
 
 interface WpAlbum {
@@ -101,16 +102,15 @@ const cachedAlbums = unstable_cache(
   { revalidate: 300, tags: ["wp:albums"] }
 );
 
-/** Semua album, terbaru dulu; koleksi kosong/gagal → data contoh. */
+/** Semua album, terbaru dulu; koleksi kosong/gagal → []. */
 export async function wpAlbums(): Promise<Album[]> {
   return dedup("albums", async () => {
     try {
-      const items = await cachedAlbums();
-      if (items.length > 0) return items;
+      return await cachedAlbums();
     } catch (err) {
-      console.error("[wp] album gagal dibaca, memakai data contoh:", err);
+      console.error("[wp] album gagal dibaca:", err);
+      return [];
     }
-    return contohAlbums;
   });
 }
 

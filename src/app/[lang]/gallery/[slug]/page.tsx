@@ -3,7 +3,6 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight, MapPin } from "@phosphor-icons/react/dist/ssr";
-import { photoSrc } from "@/data/gallery";
 import { formatDate } from "@/lib/articles";
 import { wpAlbum, wpAlbums } from "@/lib/wp/gallery";
 import { getT } from "@/lib/i18n-server";
@@ -88,7 +87,7 @@ export default async function AlbumPage({
           <figure key={f.seed} className="group">
             <div className="overflow-hidden rounded-xl bg-canvas">
               <Image
-                src={f.src ?? photoSrc(f.seed, 800, 560)}
+                src={f.src}
                 alt={f.caption}
                 width={800}
                 height={560}
@@ -119,7 +118,7 @@ export default async function AlbumPage({
                 >
                   <div className="relative aspect-[3/2] overflow-hidden bg-canvas">
                     <Image
-                      src={o.foto[0].src ?? photoSrc(o.foto[0].seed, 600, 400)}
+                      src={o.foto[0].src}
                       alt={o.judul}
                       fill
                       sizes="(min-width: 640px) 33vw, 100vw"
