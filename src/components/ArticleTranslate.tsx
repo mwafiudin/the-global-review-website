@@ -1,150 +1,178 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Translate } from "@phosphor-icons/react";
 import { useLang } from "@/lib/i18n";
-import { chromeTranslatorProvider } from "@/lib/translate/chrome";
-import type { TranslateSession } from "@/lib/translate/provider";
+import {
+  ELEMENT_DIV_ID,
+  ELEMENT_SCRIPT_ID,
+  ELEMENT_SCRIPT_SRC,
+  ELEMENT_STYLE,
+  ELEMENT_STYLE_ID,
+  bahasaGoogtrans,
+  penghapusGoogtrans,
+} from "@/lib/translate/element";
 
 /**
- * Terjemah isi artikel on-device (Chrome Translator API, desktop). Hanya
- * tampil di halaman artikel /en saat API-nya tersedia; di luar itu render
- * null — pembaca tetap mendapat artikel bahasa Indonesia.
+ * Terjemah isi artikel via widget Google Translate (element.js) — mekanisme
+ * yang sama dengan plugin GTranslate gratis, berjalan di semua browser tanpa
+ * unduh model. Hanya tampil di halaman artikel /en.
  *
- * Cara kerja: kumpulkan text node di bawah elemen [data-tgr-translate]
- * (judul, kutipan, badan), simpan aslinya, lalu tulis hasil terjemahan ke
- * nodeValue satu per satu. Markup inline (tautan, penanda sorotan .mk)
- * tidak tersentuh, dan React tidak melawan karena konten artikel statis —
- * tidak pernah di-render ulang. Provider-nya kontrak lepas: bila kelak
- * terjemahan tersimpan di WordPress, komponen ini tinggal tidak dirender.
+ * Cara kerja: klik → suntik skrip element.js + div tersembunyi + CSS
+ * penetral, lalu pilih "en" pada combo tersembunyi milik Google; Google yang
+ * menulis-ulang teks halaman di browser pembaca. Selesai terdeteksi dari
+ * kelas translated-* yang dipasang Google pada <html>. Komponen interaktif
+ * dilindungi atribut translate="no" (lihat komentar di masing-masing
+ * komponen) supaya React tidak me-reconcile node yang sudah dibungkus
+ * Google. "Tampilkan asli" menghapus cookie googtrans lalu memuat ulang —
+ * jalur pulih yang paling andal untuk widget ini.
  */
 
 type Status =
-  | "cek" // availability sedang diperiksa
   | "siap" // tombol tampil, belum diterjemahkan
-  | "unduh" // model diunduh (progres 0..1)
-  | "jalan" // menerjemahkan node demi node
-  | "selesai" // hasil terjemahan sedang tampil
-  | "asli" // pembaca kembali ke teks asli
+  | "jalan" // skrip dimuat / Google sedang menerjemahkan
+  | "selesai" // terjemahan sedang tampil
   | "galat";
 
-function kumpulkanTextNode(): Text[] {
-  const hasil: Text[] = [];
-  const akar = document.querySelectorAll("[data-tgr-translate]");
-  for (const el of akar) {
-    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
-      const teks = n as Text;
-      if (teks.nodeValue && teks.nodeValue.trim().length > 0) hasil.push(teks);
-    }
-  }
-  return hasil;
+const TENGGAT_MS = 15000;
+
+function htmlSudahDiterjemahkan(): boolean {
+  const kelas = document.documentElement.classList;
+  return kelas.contains("translated-ltr") || kelas.contains("translated-rtl");
 }
 
 export function ArticleTranslate() {
   const { lang, t } = useLang();
-  const [status, setStatus] = useState<Status>("cek");
-  const [progres, setProgres] = useState(0);
-  const asli = useRef(new Map<Text, string>());
-  const hasil = useRef(new Map<Text, string>());
-  const sesi = useRef<TranslateSession | null>(null);
-  const ctrl = useRef<AbortController | null>(null);
+  const [status, setStatus] = useState<Status>("siap");
+  const pengamat = useRef<MutationObserver | null>(null);
+  const tenggat = useRef<number | null>(null);
+  const pollCombo = useRef<number | null>(null);
+
+  const hentikanPemantauan = useCallback(() => {
+    pengamat.current?.disconnect();
+    pengamat.current = null;
+    if (tenggat.current !== null) window.clearTimeout(tenggat.current);
+    if (pollCombo.current !== null) window.clearInterval(pollCombo.current);
+    tenggat.current = null;
+    pollCombo.current = null;
+  }, []);
+
+  const jalankan = useCallback(() => {
+    setStatus("jalan");
+
+    // Infrastruktur widget — idempoten, aman dipanggil ulang saat retry.
+    if (!document.getElementById(ELEMENT_STYLE_ID)) {
+      const gaya = document.createElement("style");
+      gaya.id = ELEMENT_STYLE_ID;
+      gaya.textContent = ELEMENT_STYLE;
+      document.head.appendChild(gaya);
+    }
+    if (!document.getElementById(ELEMENT_DIV_ID)) {
+      const wadah = document.createElement("div");
+      wadah.id = ELEMENT_DIV_ID;
+      document.body.appendChild(wadah);
+    }
+    window.tgrGoogleElementInit = () => {
+      const Elemen = window.google?.translate?.TranslateElement;
+      if (Elemen)
+        new Elemen(
+          { pageLanguage: "id", includedLanguages: "en", autoDisplay: false },
+          ELEMENT_DIV_ID
+        );
+    };
+    const skripLama = document.getElementById(ELEMENT_SCRIPT_ID);
+    if (!skripLama) {
+      const skrip = document.createElement("script");
+      skrip.id = ELEMENT_SCRIPT_ID;
+      skrip.src = ELEMENT_SCRIPT_SRC;
+      skrip.onerror = () => {
+        hentikanPemantauan();
+        setStatus("galat");
+      };
+      document.body.appendChild(skrip);
+    } else if (!document.querySelector("select.goog-te-combo")) {
+      // Retry setelah galat: skrip sudah ada tapi widget belum terbentuk.
+      window.tgrGoogleElementInit();
+    }
+
+    if (htmlSudahDiterjemahkan()) {
+      setStatus("selesai");
+      return;
+    }
+
+    // Dorong combo tersembunyi Google ke "en" begitu tersedia — persis cara
+    // GTranslate memicunya (change dua kali; sekali kadang tak menggigit).
+    pollCombo.current = window.setInterval(() => {
+      const combo = document.querySelector<HTMLSelectElement>(
+        "select.goog-te-combo"
+      );
+      if (!combo) return;
+      if (pollCombo.current !== null) window.clearInterval(pollCombo.current);
+      pollCombo.current = null;
+      if (combo.value !== "en") {
+        combo.value = "en";
+        combo.dispatchEvent(new Event("change"));
+        combo.dispatchEvent(new Event("change"));
+      }
+    }, 300);
+
+    pengamat.current = new MutationObserver(() => {
+      if (!htmlSudahDiterjemahkan()) return;
+      hentikanPemantauan();
+      setStatus("selesai");
+    });
+    pengamat.current.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    tenggat.current = window.setTimeout(() => {
+      hentikanPemantauan();
+      setStatus(htmlSudahDiterjemahkan() ? "selesai" : "galat");
+    }, TENGGAT_MS);
+  }, [hentikanPemantauan]);
 
   useEffect(() => {
     if (lang !== "en") return;
-    let hidup = true;
-    // Batas waktu: pada sebagian lingkungan (embedded Chromium, komponen AI
-    // belum terpasang) availability() menggantung tanpa pernah menjawab.
-    Promise.race([
-      chromeTranslatorProvider.availability("id", "en"),
-      new Promise<"unavailable">((r) =>
-        setTimeout(() => r("unavailable"), 5000)
-      ),
-    ]).then((a) => {
-      if (hidup && a !== "unavailable") setStatus("siap");
-    });
-    return () => {
-      hidup = false;
-      ctrl.current?.abort();
-      sesi.current?.destroy();
-      sesi.current = null;
-    };
-  }, [lang]);
-
-  if (lang !== "en" || status === "cek") return null;
-
-  function pasang(peta: Map<Text, string>) {
-    for (const [node, teks] of peta) node.nodeValue = teks;
-  }
-
-  async function terjemahkan() {
-    // create() menuntut user activation — karena itu semua di handler klik.
-    const controller = new AbortController();
-    ctrl.current = controller;
-    setStatus("unduh");
-    setProgres(0);
-    try {
-      const session =
-        sesi.current ??
-        (await chromeTranslatorProvider.createSession({
-          source: "id",
-          target: "en",
-          signal: controller.signal,
-          onDownloadProgress: setProgres,
-        }));
-      sesi.current = session;
-      setStatus("jalan");
-
-      if (asli.current.size === 0) {
-        for (const node of kumpulkanTextNode()) {
-          asli.current.set(node, node.nodeValue ?? "");
-        }
-      }
-      for (const [node, sumber] of asli.current) {
-        if (controller.signal.aborted) return;
-        let terjemahan = hasil.current.get(node);
-        if (terjemahan === undefined) {
-          terjemahan = await session.translate(sumber);
-          hasil.current.set(node, terjemahan);
-        }
-        node.nodeValue = terjemahan;
-      }
-      setStatus("selesai");
-    } catch {
-      if (!controller.signal.aborted) {
-        pasang(asli.current);
-        setStatus("galat");
-      }
+    // Kelanjutan antarhalaman: cookie googtrans aktif berarti pembaca sudah
+    // memilih terjemahan — widget dimuat ulang tanpa menunggu klik. Ditunda
+    // satu tick supaya render commit dulu (aturan set-state-in-effect).
+    let tunda: number | null = null;
+    if (bahasaGoogtrans(document.cookie) === "en") {
+      tunda = window.setTimeout(jalankan, 0);
     }
-  }
+    return () => {
+      if (tunda !== null) window.clearTimeout(tunda);
+      hentikanPemantauan();
+    };
+  }, [lang, jalankan, hentikanPemantauan]);
+
+  if (lang !== "en") return null;
 
   function klik() {
     if (status === "selesai") {
-      pasang(asli.current);
-      setStatus("asli");
-    } else if (status === "asli") {
-      pasang(hasil.current);
-      setStatus("selesai");
+      for (const resep of penghapusGoogtrans(window.location.hostname)) {
+        document.cookie = resep;
+      }
+      window.location.reload();
     } else if (status === "siap" || status === "galat") {
-      void terjemahkan();
+      jalankan();
     }
   }
 
   const label =
-    status === "unduh"
-      ? `${t("Mengunduh model")} ${Math.round(progres * 100)}%`
-      : status === "jalan"
-        ? t("Menerjemahkan…")
-        : status === "selesai"
-          ? t("Tampilkan asli")
-          : status === "galat"
-            ? t("Terjemahan gagal — coba lagi")
-            : t("Terjemahkan artikel");
+    status === "jalan"
+      ? t("Menerjemahkan…")
+      : status === "selesai"
+        ? t("Tampilkan asli")
+        : status === "galat"
+          ? t("Terjemahan gagal — coba lagi")
+          : t("Terjemahkan artikel");
 
-  const sibuk = status === "unduh" || status === "jalan";
+  const sibuk = status === "jalan";
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" translate="no">
       <span
         aria-live="polite"
         className="text-[11px] font-bold uppercase tracking-[0.14em] text-meta"

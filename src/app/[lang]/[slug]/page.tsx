@@ -90,10 +90,7 @@ export default async function ArticlePage({
       <div className="grid gap-14 lg:grid-cols-[1fr_320px]">
         <article>
           <CategoryTag slug={article.category} />
-          <h1
-            data-tgr-translate
-            className="mt-4 max-w-[24ch] font-display text-3xl font-extrabold leading-[1.15] tracking-tight text-ink md:text-[42px]"
-          >
+          <h1 className="mt-4 max-w-[24ch] font-display text-3xl font-extrabold leading-[1.15] tracking-tight text-ink md:text-[42px]">
             <TitleWithHighlight
               title={article.title}
               highlight={article.highlight}
@@ -141,21 +138,17 @@ export default async function ArticlePage({
           </figure>
 
           {article.excerpt && (
-            <p
-              data-tgr-translate
-              className="mt-10 max-w-[62ch] text-xl font-medium leading-relaxed text-ink"
-            >
+            <p className="mt-10 max-w-[62ch] text-xl font-medium leading-relaxed text-ink">
               {article.excerpt}
             </p>
           )}
           {article.bodyHtml ? (
             <div
-              data-tgr-translate
               className="wp-body mt-7 space-y-6"
               dangerouslySetInnerHTML={{ __html: article.bodyHtml }}
             />
           ) : (
-            <div data-tgr-translate className="mt-7 space-y-6">
+            <div className="mt-7 space-y-6">
               {article.body.map((paragraph, i) => (
                 <p
                   key={i}
