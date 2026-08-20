@@ -81,6 +81,27 @@ lewat kode.
 - Seluruh usulan pembaruan dependensi (Dependabot) ditinjau dan
   digabungkan; gerbang tes/typecheck/lint/build tetap hijau.
 
+**7. Tombol terjemah artikel kini bekerja di semua browser**
+
+- Mesin tombol terjemah di `/en/{slug}` diganti: dari Chrome Translator
+  API on-device (desktop Chrome saja, sering gagal karena unduhan model
+  bergantung perangkat pembaca) ke widget Google Translate `element.js`
+  — mekanisme yang sama dengan plugin GTranslate versi gratis, dipakai
+  langsung tanpa plugin dan tanpa menyentuh WordPress sama sekali.
+- Terjemahan berlanjut antarhalaman (cookie `googtrans`); "Show
+  original" mengembalikan teks asli. Tampilan tombol tidak berubah.
+- Komponen interaktif (pencarian, filter rubrik, tab, poll, formulir)
+  dipagari atribut `translate="no"` di pohon `/en` supaya penulisan
+  ulang DOM oleh Google tidak bentrok dengan React — diuji tekan tanpa
+  satu pun error.
+- Diverifikasi ujung-ke-ujung di dev: isi artikel jadi Inggris, banner
+  Google tak muncul, mode gelap selamat, halaman Indonesia tak
+  tersentuh. Catatan sadar-risiko: layanan `element.js` berstatus
+  deprecated di Google — jalur penggantinya sudah dibekukan sebagai
+  cetak biru di `docs/terjemahan-tersimpan-rencana.md` (terjemahan
+  tersimpan di WordPress, gratis via kuota Azure; aktivasi menunggu
+  keputusan).
+
 ### Menunggu tindakan pemilik akses
 
 - **Unggah ulang dua mu-plugin** lewat cPanel File Manager:
