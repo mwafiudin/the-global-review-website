@@ -52,8 +52,17 @@ export function localizeHref(href: string, lang: Lang): string {
   return href === "/" ? "/en" : `/en${href}`;
 }
 
-/** Padanan pathname saat ini pada bahasa target — dipakai LanguageToggle. */
+/**
+ * Padanan pathname saat ini pada bahasa target — dipakai LanguageToggle
+ * dan penanda menu aktif. usePathname bisa memunculkan bentuk internal
+ * /id/* (hasil rewrite proxy, bertahan sampai setelah hidrasi), jadi kedua
+ * prefiks bahasa dilepas dulu sebelum diprefiks ulang; tanpa itu /id/x
+ * berubah jadi /en/id/x, bukan /en/x.
+ */
 export function alternatePath(pathname: string, target: Lang): string {
-  const bare = hasPrefix(pathname, "en") ? pathname.slice(3) || "/" : pathname;
+  const tanpaEn = hasPrefix(pathname, "en")
+    ? pathname.slice(3) || "/"
+    : pathname;
+  const bare = hasPrefix(tanpaEn, "id") ? tanpaEn.slice(3) || "/" : tanpaEn;
   return target === "en" ? localizeHref(bare, "en") : bare;
 }

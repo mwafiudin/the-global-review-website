@@ -91,4 +91,25 @@ describe("alternatePath", () => {
     expect(alternatePath("/en/redaksi", "en")).toBe("/en/redaksi");
     expect(alternatePath("/redaksi", "id")).toBe("/redaksi");
   });
+
+  it("melepas bentuk internal /id dari rewrite proxy", () => {
+    // usePathname di halaman tanpa prefiks memunculkan /id/* — dulu bug ini
+    // membuat tombol EN mengarah ke /en/id/hubungi-kami.
+    expect(alternatePath("/id/hubungi-kami", "en")).toBe("/en/hubungi-kami");
+    expect(alternatePath("/id/hubungi-kami", "id")).toBe("/hubungi-kami");
+    expect(alternatePath("/id", "en")).toBe("/en");
+    expect(alternatePath("/id", "id")).toBe("/");
+    expect(alternatePath("/id/category/analisis/halaman/3", "id")).toBe(
+      "/category/analisis/halaman/3"
+    );
+  });
+
+  it("slug yang kebetulan berawalan id- tidak ikut terpangkas", () => {
+    expect(alternatePath("/identitas-nasional", "en")).toBe(
+      "/en/identitas-nasional"
+    );
+    expect(alternatePath("/identitas-nasional", "id")).toBe(
+      "/identitas-nasional"
+    );
+  });
 });

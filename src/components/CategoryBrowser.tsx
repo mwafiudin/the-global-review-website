@@ -6,6 +6,7 @@ import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import type { Article } from "@/lib/types";
 import { inCategory, readingMinutes } from "@/lib/articles";
 import { useLang } from "@/lib/i18n";
+import { alternatePath } from "@/lib/locale-routing";
 import { CardRow } from "./ArticleCard";
 
 const PAGE_SIZE = 8;
@@ -69,6 +70,11 @@ export function CategoryBrowser({
         : "newest";
   const page = Math.max(1, Number(params.get("page")) || 1);
 
+  // usePathname bisa memunculkan bentuk internal /id/* (rewrite proxy);
+  // normalkan ke URL kanonis bahasa aktif supaya replace/push tidak
+  // memantul lewat redirect 308.
+  const jalur = alternatePath(pathname, lang);
+
   function commit(
     mutate: (p: URLSearchParams) => void,
     opts: { resetPage?: boolean; scroll?: boolean; push?: boolean } = {}
@@ -78,7 +84,7 @@ export function CategoryBrowser({
     mutate(p);
     if (resetPage) p.delete("page");
     const qs = p.toString();
-    const url = qs ? `${pathname}?${qs}` : pathname;
+    const url = qs ? `${jalur}?${qs}` : jalur;
     // Filter → replace (riwayat tak penuh); navigasi halaman → push (Back berfungsi)
     if (push) router.push(url, { scroll: false });
     else router.replace(url, { scroll: false });
@@ -108,7 +114,7 @@ export function CategoryBrowser({
       scroll: true,
       push: true,
     });
-  const reset = () => router.replace(pathname, { scroll: false });
+  const reset = () => router.replace(jalur, { scroll: false });
 
   const filtered = useMemo(() => {
     let out = articles;
