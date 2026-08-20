@@ -81,26 +81,34 @@ lewat kode.
 - Seluruh usulan pembaruan dependensi (Dependabot) ditinjau dan
   digabungkan; gerbang tes/typecheck/lint/build tetap hijau.
 
-**7. Tombol terjemah artikel kini bekerja di semua browser**
+**7. Selat: seluruh situs /en kini berbahasa Inggris otomatis**
 
-- Mesin tombol terjemah di `/en/{slug}` diganti: dari Chrome Translator
-  API on-device (desktop Chrome saja, sering gagal karena unduhan model
-  bergantung perangkat pembaca) ke widget Google Translate `element.js`
-  — mekanisme yang sama dengan plugin GTranslate versi gratis, dipakai
-  langsung tanpa plugin dan tanpa menyentuh WordPress sama sekali.
-- Terjemahan berlanjut antarhalaman (cookie `googtrans`); "Show
-  original" mengembalikan teks asli. Tampilan tombol tidak berubah.
+- Memilih EN pada saklar bahasa di menu kini menerjemahkan SEMUA konten
+  — termasuk isi artikel — secara otomatis, di semua browser, tanpa
+  tombol tambahan apa pun. Kembali ke ID = naskah asli dari server.
+  Teknologinya dinamai **Selat** (`src/components/Selat.tsx`):
+  jembatan yang menghubungkan dua daratan bahasa.
+- Mesinnya widget Google Translate `element.js` — mekanisme yang sama
+  dengan plugin GTranslate versi gratis (hasil bedah kode resminya),
+  dipakai langsung di frontend tanpa plugin dan tanpa menyentuh
+  WordPress. Ini menggantikan tombol per-artikel ber-Chrome-Translator
+  yang desktop-saja dan sering gagal mengunduh model.
 - Komponen interaktif (pencarian, filter rubrik, tab, poll, formulir)
   dipagari atribut `translate="no"` di pohon `/en` supaya penulisan
   ulang DOM oleh Google tidak bentrok dengan React — diuji tekan tanpa
-  satu pun error.
-- Diverifikasi ujung-ke-ujung di dev: isi artikel jadi Inggris, banner
-  Google tak muncul, mode gelap selamat, halaman Indonesia tak
-  tersentuh. Catatan sadar-risiko: layanan `element.js` berstatus
-  deprecated di Google — jalur penggantinya sudah dibekukan sebagai
-  cetak biru di `docs/terjemahan-tersimpan-rencana.md` (terjemahan
-  tersimpan di WordPress, gratis via kuota Azure; aktivasi menunggu
-  keputusan).
+  satu pun error. Konsekuensi sadar: teks di dalam pagar (teaser pada
+  grid interaktif) tetap Indonesia demi stabilitas.
+- Selat mengawal hasilnya ±2 menit per muat halaman: sapuan Google yang
+  datang terlalu dini (kalah balapan dengan hidrasi) atau macet karena
+  cookie sisa akan didorong ulang otomatis — dua mode gagal yang
+  ditemukan dan dijinakkan saat verifikasi.
+- Diverifikasi ujung-ke-ujung di dev: beranda dan artikel `/en` tersaji
+  Inggris tanpa satu klik, banner Google tak muncul, mode gelap
+  selamat, halaman Indonesia tak tersentuh. Catatan sadar-risiko:
+  layanan `element.js` berstatus deprecated di Google — jalur
+  penggantinya dibekukan sebagai cetak biru di
+  `docs/terjemahan-tersimpan-rencana.md` (terjemahan tersimpan di
+  WordPress, gratis via kuota Azure; aktivasi menunggu keputusan).
 
 ### Menunggu tindakan pemilik akses
 

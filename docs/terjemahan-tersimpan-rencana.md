@@ -1,8 +1,8 @@
 # Terjemahan Tersimpan — cetak biru (BELUM diimplementasikan)
 
-Status: **dibekukan atas keputusan pemilik (20 Agu 2026)** — tombol terjemah
-`/en/{slug}` saat ini memakai widget Google `element.js` di browser pembaca
-(lihat `src/components/ArticleTranslate.tsx`). Dokumen ini adalah cetak biru
+Status: **dibekukan atas keputusan pemilik (20 Agu 2026)** — pohon `/en` saat
+ini diterjemahkan otomatis oleh **Selat** (widget Google `element.js` di
+browser pembaca; lihat `src/components/Selat.tsx`). Dokumen ini adalah cetak biru
 lengkap jalur penggantinya: artikel diterjemahkan **sekali**, hasilnya
 **tersimpan di WordPress**, dan disajikan dari server selamanya. Diaktifkan
 kapan pun pemilik memutuskan — tidak ada kode yang perlu dirombak, hanya
@@ -10,7 +10,7 @@ ditambah.
 
 ## Kenapa jalur ini disiapkan
 
-| | Widget element.js (sekarang) | Terjemahan tersimpan (cetak biru ini) |
+| | Selat / widget element.js (sekarang) | Terjemahan tersimpan (cetak biru ini) |
 |---|---|---|
 | Biaya | Rp0 | Rp0 (kuota gratis Azure) — atau ±Rp150rb sekali bila pakai LLM |
 | Umur | Layanan deprecated Google, bisa mati kapan saja | Milik sendiri, permanen |
@@ -110,8 +110,8 @@ WP hanyalah duplikat awal body), dan `apply_filters('the_content', …)`:
   prev/next: teaser di daftar `/en` ikut Inggris begitu tersimpan.
 - `[lang]/[slug]/page.tsx`: bila `lang==="en"` dan `article.en?.bodyHtml` ada
   → render judul/lead/body EN, metadata dari EN, `highlight` di-nol-kan
-  (frasa sorotan berbahasa Indonesia), **tombol widget tidak dirender**;
-  robots di-flip dari `noindex` ke index + hreflang timbal balik
+  (frasa sorotan berbahasa Indonesia); robots di-flip dari `noindex` ke
+  index + hreflang timbal balik
   (`dwibahasa()` di `src/lib/seo.ts` sudah ada); sitemap menambah entri
   `/en/{slug}` hanya untuk artikel ber-terjemahan.
 - Cache tidak berubah: terjemahan menempel di objek post yang sama, cache
@@ -131,9 +131,9 @@ WP hanyalah duplikat awal body), dan `apply_filters('the_content', …)`:
    situs aman; pola teruji `wordpress/README.md`), lalu isi konstanta.
 4. Uji satu artikel lewat tombol manual → cek `/en/{slug}` tersaji Inggris
    dari server → biarkan drip mencicil arsip.
-5. Setelah tersimpan, tombol widget `element.js` otomatis tak dirender pada
-   artikel tersebut; komponen bisa dipensiunkan sepenuhnya begitu arsip
-   selesai.
+5. Setelah tersimpan, konten `/en` sudah Inggris dari server sehingga Selat
+   praktis tak menemukan apa pun untuk disapu; begitu arsip selesai,
+   komponen `Selat` dipensiunkan (satu baris di `[lang]/layout.tsx`).
 
 Ditinjau ulang saat aktivasi: label transparansi kecil pada artikel EN
 ("Machine-translated from the Indonesian original" + tautan versi asli) —
