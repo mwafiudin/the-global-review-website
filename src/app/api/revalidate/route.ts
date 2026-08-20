@@ -39,7 +39,19 @@ const CPT_TAGS = new Map([
   ["tgr_podcast", "wp:podcasts"],
   ["tgr_album", "wp:albums"],
   ["tgr_poll", "wp:polls"],
+  ["tgr_orang", "wp:orang"],
 ]);
+
+/**
+ * Tag yang gugur untuk satu kiriman webhook. Laman (page) punya tag bundel
+ * sendiri: isi halaman statis di-cache sebagai satu entri wp-halaman, dan
+ * sebelumnya simpan Laman keliru menggugurkan wp:posts.
+ */
+export function tagsUntuk(type: string, slug: string): string[] {
+  if (type === "page") return ["wp:halaman"];
+  const tagCpt = CPT_TAGS.get(type);
+  return tagCpt ? [tagCpt] : [`wp:post:${slug}`, "wp:posts"];
+}
 
 export async function POST(request: NextRequest) {
   if (!process.env.REVALIDATE_SECRET) {
@@ -70,8 +82,7 @@ export async function POST(request: NextRequest) {
   // objek: lookup objek ikut membaca kunci warisan Object.prototype, jadi
   // type "constructor"/"toString" akan lolos sebagai tag palsu.
   const type = typeof payload.type === "string" ? payload.type : "post";
-  const tagCpt = CPT_TAGS.get(type);
-  const tags = tagCpt ? [tagCpt] : [`wp:post:${slug}`, "wp:posts"];
+  const tags = tagsUntuk(type, slug);
   for (const tag of tags) revalidateTag(tag, { expire: 0 });
 
   return Response.json({ revalidated: tags });

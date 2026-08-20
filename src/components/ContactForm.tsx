@@ -9,7 +9,44 @@ const inputClass =
 
 export function ContactForm() {
   const [sent, setSent] = useState(false);
+  const [mengirim, setMengirim] = useState(false);
+  const [galat, setGalat] = useState("");
   const { t } = useLang();
+
+  async function kirim(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (mengirim) return;
+    setMengirim(true);
+    setGalat("");
+    const isi = new FormData(e.currentTarget);
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama: isi.get("nama"),
+          email: isi.get("email"),
+          telepon: isi.get("telepon"),
+          subjek: isi.get("subjek"),
+          pesan: isi.get("pesan"),
+          // Umpan bot: kolom tersembunyi yang tak pernah diisi manusia.
+          situs: isi.get("situs"),
+          sumber: window.location.pathname,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        // Pesan server berbahasa Indonesia; kamus memetakannya saat EN.
+        setGalat(data.error ? t(data.error) : t("Pesan gagal terkirim, coba lagi nanti."));
+        return;
+      }
+      setSent(true);
+    } catch {
+      setGalat(t("Pesan gagal terkirim, coba lagi nanti."));
+    } finally {
+      setMengirim(false);
+    }
+  }
 
   if (sent) {
     return (
@@ -26,13 +63,7 @@ export function ContactForm() {
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        setSent(true);
-      }}
-      className="space-y-5"
-    >
+    <form onSubmit={kirim} className="space-y-5">
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <label
@@ -79,10 +110,12 @@ export function ContactForm() {
             <option value="" disabled>
               {t("Pilih subjek…")}
             </option>
-            <option>{t("Redaksi & Hak Jawab")}</option>
-            <option>{t("Kerja Sama & Kemitraan")}</option>
-            <option>{t("Pertanyaan Umum")}</option>
-            <option>{t("Lainnya")}</option>
+            {/* value tetap Indonesia (label boleh EN): nilainya diperiksa
+                terhadap daftar subjek resmi di API & wp-admin. */}
+            <option value="Redaksi & Hak Jawab">{t("Redaksi & Hak Jawab")}</option>
+            <option value="Kerja Sama & Kemitraan">{t("Kerja Sama & Kemitraan")}</option>
+            <option value="Pertanyaan Umum">{t("Pertanyaan Umum")}</option>
+            <option value="Lainnya">{t("Lainnya")}</option>
           </select>
         </div>
       </div>
@@ -95,12 +128,23 @@ export function ContactForm() {
         </label>
         <textarea id="pesan" name="pesan" rows={6} required className={inputClass} />
       </div>
+      {/* Umpan bot: disembunyikan dari mata dan dari pembaca layar. */}
+      <input
+        type="text"
+        name="situs"
+        tabIndex={-1}
+        autoComplete="off"
+        aria-hidden
+        className="hidden"
+      />
       <button
         type="submit"
-        className="rounded-lg border border-ink bg-surface px-7 py-3 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:bg-ink hover:text-surface active:scale-[0.98]"
+        disabled={mengirim}
+        className="rounded-lg border border-ink bg-surface px-7 py-3 text-xs font-bold uppercase tracking-wider text-ink transition-colors hover:bg-ink hover:text-surface active:scale-[0.98] disabled:opacity-60"
       >
         {t("Kirim Pesan")}
       </button>
+      {galat && <p className="mt-2 text-sm text-meta">{galat}</p>}
     </form>
   );
 }

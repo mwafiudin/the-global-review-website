@@ -88,6 +88,15 @@ export const EN: Record<string, string> = {
   "Pendaftaran buletin belum dikonfigurasi":
     "Newsletter signup is not configured yet",
   "Pendaftaran gagal, coba lagi nanti": "Subscription failed, please try again later",
+  // Pesan galat formulir kontak (api/contact)
+  "Nama wajib diisi": "Name is required",
+  "Nomor telepon terlalu panjang": "Phone number is too long",
+  "Subjek tidak dikenal": "Unknown subject",
+  "Pesan wajib diisi": "Message is required",
+  "Pesan terlalu panjang": "Message is too long",
+  "Formulir kontak belum dikonfigurasi": "The contact form is not configured yet",
+  "Pesan gagal terkirim, coba lagi nanti": "Message failed to send, please try again later",
+  "Pesan gagal terkirim, coba lagi nanti.": "Message failed to send, please try again later.",
   // Metadata situs (layout)
   "Media online yang dimiliki Global Future Institute. The Global Review menyajikan analisis dan opini politik luar negeri serta geopolitik dari Indonesia.":
     "An online publication of the Global Future Institute. The Global Review presents foreign-policy and geopolitical analysis and opinion from Indonesia.",

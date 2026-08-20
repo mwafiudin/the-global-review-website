@@ -68,12 +68,20 @@ describe("kamus EN", () => {
   });
 
   it("mencakup pesan galat API yang tampil di klien", () => {
-    // Pesan dari api/subscribe & api/vote yang dirender komponen client.
+    // Pesan dari api/subscribe, api/vote & api/contact yang dirender
+    // komponen client.
     const pesan = [
       "Alamat email tidak sah",
       "Terlalu banyak percobaan, coba lagi sebentar lagi",
       "Pendaftaran buletin belum dikonfigurasi",
       "Pendaftaran gagal, coba lagi nanti",
+      "Nama wajib diisi",
+      "Nomor telepon terlalu panjang",
+      "Subjek tidak dikenal",
+      "Pesan wajib diisi",
+      "Pesan terlalu panjang",
+      "Formulir kontak belum dikonfigurasi",
+      "Pesan gagal terkirim, coba lagi nanti",
     ];
     const hilang = pesan.filter((p) => !(p in EN));
     expect(hilang, "pesan galat API tanpa entri EN").toEqual([]);
