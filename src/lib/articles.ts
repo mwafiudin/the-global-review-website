@@ -55,6 +55,24 @@ export function articleImage(article: Article, w = 800, h = 500): string {
   );
 }
 
+/**
+ * Pecah judul pada kemunculan PERTAMA frasa sorotan; null bila frasa
+ * kosong/tak ditemukan. indexOf, bukan String.split: frasa yang kebetulan
+ * muncul dua kali di judul tidak boleh membuang ekor judul diam-diam.
+ */
+export function splitHighlight(
+  title: string,
+  highlight?: string
+): { before: string; after: string } | null {
+  if (!highlight) return null;
+  const i = title.indexOf(highlight);
+  if (i === -1) return null;
+  return {
+    before: title.slice(0, i),
+    after: title.slice(i + highlight.length),
+  };
+}
+
 /** Estimasi waktu baca dalam menit (≈200 kata/menit). */
 export function readingMinutes(article: Article): number {
   if (article.readMinutes) return article.readMinutes;

@@ -138,7 +138,9 @@ export async function wpPostToArticle(
     body: [],
     readMinutes: Math.max(1, Math.round(wordCount(contentText) / 200)),
     featured: post.sticky === true || undefined,
-    highlight: post.meta?.tgr_sorotan || undefined,
+    // Pembersih yang sama dengan title — frasa mentah dari wp-admin bisa
+    // membawa entity/kutip melengkung yang membuat pencocokan meleset.
+    highlight: cleanText(post.meta?.tgr_sorotan ?? "") || undefined,
   };
 
   if (withBody) {

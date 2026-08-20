@@ -15,6 +15,7 @@ import {
   categoryName,
   formatDate,
   readingMinutes,
+  splitHighlight,
 } from "@/lib/articles";
 
 /** Label kategori: tipografi uppercase kecil, tenang. */
@@ -44,6 +45,13 @@ export function CategoryTag({
  * Menyorot satu frasa kunci judul dengan coretan penanda (stabilo).
  * hover=false → selalu tampil (hero/isu utama).
  * hover=true  → disingkap saat kartu induk (.group) dihover / fokus.
+ *
+ * Spasi di batas frasa dipindah ke <span translate="no"> tersendiri:
+ * widget terjemah Google (Selat) menerjemahkan tiap text node terpisah dan
+ * kerap menelan spasi ujung segmen — tanpa pengaman ini pil menempel kata
+ * di sebelahnya pada /en ("Back[Geopolitics]"). Glyph hasil render di
+ * halaman Indonesia identik: tetap satu spasi biasa yang bisa jadi titik
+ * lipat baris.
  */
 export function TitleWithHighlight({
   title,
@@ -54,18 +62,21 @@ export function TitleWithHighlight({
   highlight?: string;
   hover?: boolean;
 }) {
-  if (!highlight || !title.includes(highlight)) return <>{title}</>;
-  const [before, after] = title.split(highlight);
+  const potongan = splitHighlight(title, highlight);
+  if (!potongan) return <>{title}</>;
+  const { before, after } = potongan;
   return (
     <>
-      {before}
+      {before.trimEnd()}
+      {before.endsWith(" ") && <span translate="no"> </span>}
       <span className={`mk ${hover ? "mk--hover" : "mk--on"}`}>
         <span className="mk__base">{highlight}</span>
         <span className="mk__fill" aria-hidden="true">
           <span className="mk__fillinner">{highlight}</span>
         </span>
       </span>
-      {after}
+      {after.startsWith(" ") && <span translate="no"> </span>}
+      {after.trimStart()}
     </>
   );
 }

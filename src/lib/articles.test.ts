@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { categoryName, formatDate } from "./articles";
+import { categoryName, formatDate, splitHighlight } from "./articles";
 
 describe("categoryName", () => {
   it("memakai label resmi untuk rubrik yang terdaftar", () => {
@@ -15,6 +15,36 @@ describe("categoryName", () => {
       "Asia Timur Jauh"
     );
     expect(categoryName("pendidikan")).toBe("Pendidikan");
+  });
+});
+
+describe("splitHighlight", () => {
+  it("memecah judul pada kemunculan pertama frasa", () => {
+    expect(splitHighlight("Mengapa Geopolitik Penting?", "Geopolitik")).toEqual({
+      before: "Mengapa ",
+      after: " Penting?",
+    });
+  });
+
+  it("frasa yang muncul dua kali tidak memotong ekor judul", () => {
+    // String.split membuang potongan ketiga — regresi yang dijaga tes ini.
+    expect(splitHighlight("Perang dan Perang Dagang", "Perang")).toEqual({
+      before: "",
+      after: " dan Perang Dagang",
+    });
+  });
+
+  it("null bila frasa kosong atau tak ditemukan", () => {
+    expect(splitHighlight("Judul biasa", undefined)).toBeNull();
+    expect(splitHighlight("Judul biasa", "")).toBeNull();
+    expect(splitHighlight("Judul biasa", "geopolitik")).toBeNull();
+  });
+
+  it("frasa di ujung judul menghasilkan sisi kosong", () => {
+    expect(splitHighlight("Poros Maritim", "Poros Maritim")).toEqual({
+      before: "",
+      after: "",
+    });
   });
 });
 

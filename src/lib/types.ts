@@ -24,7 +24,7 @@ export interface Article {
   imageSeed: string;
   body: string[];
   featured?: boolean;
-  /** Satu kata/frasa pada judul yang disorot (hanya untuk hero / featured). */
+  /** Satu kata/frasa pada judul yang disorot (h1 artikel & semua varian kartu). */
   highlight?: string;
   /** URL featured image WordPress; tanpa ini articleImage() memakai picsum. */
   imageUrl?: string;

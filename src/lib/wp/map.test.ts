@@ -98,6 +98,22 @@ describe("wpPostToArticle", () => {
     expect(article.bodyHtml).toContain("<p>Pemerintah menegaskan");
   });
 
+  it("membersihkan entity pada sorotan agar cocok dengan judul yang sudah bersih", async () => {
+    // title melewati cleanText; frasa sorotan mentah dari wp-admin harus
+    // melewati pembersih yang sama supaya includes() tidak meleset.
+    const article = await toArticle({
+      title: { rendered: "Dolar &amp; Rupiah Menguat" },
+      meta: { tgr_sorotan: "Dolar &amp; Rupiah" },
+    });
+    expect(article.title).toBe("Dolar & Rupiah Menguat");
+    expect(article.highlight).toBe("Dolar & Rupiah");
+  });
+
+  it("sorotan kosong menjadi undefined", async () => {
+    expect((await toArticle({ meta: { tgr_sorotan: "" } })).highlight).toBeUndefined();
+    expect((await toArticle()).highlight).toBeUndefined();
+  });
+
   it("mempertahankan excerpt yang ditulis redaksi sendiri", async () => {
     const article = await toArticle(
       {
