@@ -53,6 +53,12 @@ const AUTH =
   "Basic " +
   Buffer.from(`${env.WP_APP_USER}:${env.WP_APP_PASSWORD}`).toString("base64");
 
+/**
+ * Akar REST (…/wp-json) dan User-Agent, untuk skrip yang perlu menyentuh
+ * path di luar /wp/v2 (tgr/v1, indeks namespace) atau HTML situs.
+ */
+export { BASE as AKAR_API, USER_AGENT as AGEN_HTTP };
+
 /* ── Semafor sederhana ─────────────────────────────────────────────── */
 
 let terpakai = 0;

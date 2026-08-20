@@ -2,9 +2,10 @@
 /**
  * Plugin Name:  TGR Headless — Tipe Konten & Field
  * Description:  Mendaftarkan tipe konten khusus (Podcast, Album Galeri, Jajak
- *               Pendapat) dan field tambahan Bedah Buku, seluruhnya terekspos
- *               ke REST API untuk dikonsumsi frontend Next.js.
- * Version:      2.3.0
+ *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
+ *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
+ *               dikonsumsi frontend Next.js.
+ * Version:      3.0.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -277,6 +278,8 @@ function tgr_register_book_meta() {
 		'tgr_buku_tahun'           => 'string',
 		'tgr_buku_isbn'            => 'string',
 		'tgr_buku_podcast'         => 'string',
+		// "1" pada satu-satunya buku yang tampil di kartu promo sidebar.
+		'tgr_buku_unggulan'        => 'string',
 	);
 
 	foreach ( $fields as $key => $type ) {
@@ -373,6 +376,13 @@ function tgr_boleh_simpan( $post_id ) {
 function tgr_kiriman_teks( $key ) {
 	return isset( $_POST[ $key ] )
 		? sanitize_text_field( wp_unslash( $_POST[ $key ] ) )
+		: '';
+}
+
+/** Teks multi-baris dari $_POST — baris baru dipertahankan (isi halaman, bio). */
+function tgr_kiriman_teks_panjang( $key ) {
+	return isset( $_POST[ $key ] )
+		? sanitize_textarea_field( wp_unslash( $_POST[ $key ] ) )
 		: '';
 }
 
@@ -938,6 +948,17 @@ function tgr_kotak_buku( $post ) {
 				</tr>
 			<?php endforeach; ?>
 			<tr>
+				<th scope="row">Buku pilihan sidebar</th>
+				<td>
+					<label>
+						<input type="checkbox" name="tgr_buku_unggulan" value="1"
+							<?php checked( '1', tgr_meta( $post->ID, 'tgr_buku_unggulan' ) ); ?>>
+						Tampilkan di kartu &ldquo;Buku pilihan&rdquo; sidebar situs baru
+					</label>
+					<p class="description">Hanya satu yang bisa aktif &mdash; mencentang di sini melepas tanda dari buku lain.</p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row">Sampul buku</th>
 				<td>
 					<input type="hidden" id="tgr_buku_sampul" name="tgr_buku_sampul" value="<?php echo esc_attr( $sampul ); ?>">
@@ -1003,6 +1024,27 @@ add_action(
 		// Slug podcast diinterpolasi ke URL /podcast/{slug} di frontend.
 		update_post_meta( $post_id, 'tgr_buku_podcast', sanitize_title( tgr_kiriman_teks( 'tgr_buku_podcast' ) ) );
 		update_post_meta( $post_id, 'tgr_buku_sampul', absint( tgr_kiriman_teks( 'tgr_buku_sampul' ) ) );
+
+		// Buku pilihan sidebar: tunggal-aktif, pola yang sama dengan
+		// penampilan utama podcast.
+		$buku_unggulan = isset( $_POST['tgr_buku_unggulan'] ) ? '1' : '';
+		update_post_meta( $post_id, 'tgr_buku_unggulan', $buku_unggulan );
+		if ( '1' === $buku_unggulan ) {
+			$lainnya = get_posts(
+				array(
+					'post_type'   => 'post',
+					'post_status' => 'any',
+					'numberposts' => -1,
+					'exclude'     => array( $post_id ),
+					'meta_key'    => 'tgr_buku_unggulan',
+					'meta_value'  => '1',
+					'fields'      => 'ids',
+				)
+			);
+			foreach ( $lainnya as $id_lain ) {
+				update_post_meta( $id_lain, 'tgr_buku_unggulan', '' );
+			}
+		}
 
 		$frasa = tgr_kiriman_teks( 'tgr_sorotan' );
 		$judul = get_post_field( 'post_title', $post_id );
@@ -1527,6 +1569,726 @@ function tgr_terima_pelanggan( $request ) {
 
 	return array( 'terdaftar' => true, 'baru' => true );
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Pengurus & Redaksi (tgr_orang).
+ *
+ * Satu tipe konten untuk dua halaman: Pengurus GFI (kelompok "pengurus")
+ * dan masthead Susunan Redaksi (kelompok "redaksi"). Nama = judul pos,
+ * foto = Gambar Unggulan, urutan tampil = kotak Atribut bawaan
+ * (menu_order) sehingga bisa diubah cepat lewat Quick Edit.
+ *
+ * Jabatan dan bio berpasangan dua bahasa (situs punya pohon /en); kolom EN
+ * yang kosong jatuh kembali ke bahasa Indonesia di frontend.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+add_action(
+	'init',
+	function () {
+		register_post_type(
+			'tgr_orang',
+			array(
+				'labels'        => array(
+					'name'          => 'Pengurus & Redaksi',
+					'singular_name' => 'Profil',
+					'add_new_item'  => 'Tambah Profil',
+					'edit_item'     => 'Sunting Profil',
+					'all_items'     => 'Semua Profil',
+				),
+				'public'        => false,
+				'show_ui'       => true,
+				'menu_icon'     => 'dashicons-groups',
+				'menu_position' => 25,
+				'supports'      => array( 'title', 'thumbnail', 'page-attributes' ),
+				'show_in_rest'  => true,
+				'rest_base'     => 'orang',
+			)
+		);
+
+		register_post_meta(
+			'tgr_orang',
+			'tgr_kelompok',
+			array(
+				'type'              => 'string',
+				'single'            => true,
+				'default'           => 'pengurus',
+				'show_in_rest'      => true,
+				'sanitize_callback' => function ( $nilai ) {
+					return in_array( $nilai, array( 'pengurus', 'redaksi' ), true ) ? $nilai : 'pengurus';
+				},
+				'auth_callback'     => function () {
+					return current_user_can( 'edit_posts' );
+				},
+			)
+		);
+
+		foreach ( array( 'tgr_jabatan', 'tgr_jabatan_en' ) as $key ) {
+			register_post_meta(
+				'tgr_orang',
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_posts' );
+					},
+				)
+			);
+		}
+
+		foreach ( array( 'tgr_bio', 'tgr_bio_en' ) as $key ) {
+			register_post_meta(
+				'tgr_orang',
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'sanitize_textarea_field',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_posts' );
+					},
+				)
+			);
+		}
+	}
+);
+
+add_action(
+	'add_meta_boxes_tgr_orang',
+	function () {
+		add_meta_box( 'tgr_isi_orang', 'Detail Profil', 'tgr_kotak_orang', 'tgr_orang', 'normal', 'high' );
+	}
+);
+
+function tgr_kotak_orang( $post ) {
+	wp_nonce_field( 'tgr_simpan_meta', 'tgr_meta_nonce' );
+	$kelompok = tgr_meta( $post->ID, 'tgr_kelompok', 'pengurus' );
+	?>
+	<table class="form-table" role="presentation">
+		<tbody>
+			<tr>
+				<th scope="row">Kelompok</th>
+				<td>
+					<label style="margin-right:16px">
+						<input type="radio" name="tgr_kelompok" value="pengurus"
+							<?php checked( 'pengurus', $kelompok ); ?>>
+						Pengurus GFI
+					</label>
+					<label>
+						<input type="radio" name="tgr_kelompok" value="redaksi"
+							<?php checked( 'redaksi', $kelompok ); ?>>
+						Susunan Redaksi
+					</label>
+					<p class="description">
+						Pengurus tampil di halaman Pengurus GFI (butuh foto, jabatan, dan bio);
+						Susunan Redaksi tampil di halaman Redaksi (cukup jabatan/peran).
+					</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="tgr_jabatan">Jabatan</label></th>
+				<td>
+					<input type="text" id="tgr_jabatan" name="tgr_jabatan" class="large-text"
+						value="<?php echo esc_attr( tgr_meta( $post->ID, 'tgr_jabatan' ) ); ?>">
+					<p class="description">Mis. &ldquo;Direktur Eksekutif&rdquo; atau peran redaksi &ldquo;Pemimpin Redaksi&rdquo;.</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="tgr_jabatan_en">Jabatan (EN)</label></th>
+				<td>
+					<input type="text" id="tgr_jabatan_en" name="tgr_jabatan_en" class="large-text"
+						value="<?php echo esc_attr( tgr_meta( $post->ID, 'tgr_jabatan_en' ) ); ?>">
+					<p class="description">Untuk halaman /en. Kosong &rarr; memakai versi Indonesia.</p>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="tgr_bio">Bio</label></th>
+				<td>
+					<textarea id="tgr_bio" name="tgr_bio" class="large-text" rows="5"><?php
+						echo esc_textarea( tgr_meta( $post->ID, 'tgr_bio' ) );
+					?></textarea>
+				</td>
+			</tr>
+			<tr>
+				<th scope="row"><label for="tgr_bio_en">Bio (EN)</label></th>
+				<td>
+					<textarea id="tgr_bio_en" name="tgr_bio_en" class="large-text" rows="5"><?php
+						echo esc_textarea( tgr_meta( $post->ID, 'tgr_bio_en' ) );
+					?></textarea>
+					<p class="description">Kosong &rarr; memakai versi Indonesia.</p>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<p class="description">
+		Foto profil diatur lewat kotak <strong>Gambar Unggulan</strong> di kanan;
+		urutan tampil lewat kotak <strong>Atribut &rarr; Urutan</strong> (angka kecil
+		tampil lebih dulu). Pengurus tanpa foto tidak ditampilkan di situs.
+	</p>
+	<?php
+}
+
+add_action(
+	'save_post_tgr_orang',
+	function ( $post_id ) {
+		if ( ! tgr_boleh_simpan( $post_id ) ) {
+			return;
+		}
+		$kelompok = tgr_kiriman_teks( 'tgr_kelompok' );
+		update_post_meta(
+			$post_id,
+			'tgr_kelompok',
+			in_array( $kelompok, array( 'pengurus', 'redaksi' ), true ) ? $kelompok : 'pengurus'
+		);
+		update_post_meta( $post_id, 'tgr_jabatan', tgr_kiriman_teks( 'tgr_jabatan' ) );
+		update_post_meta( $post_id, 'tgr_jabatan_en', tgr_kiriman_teks( 'tgr_jabatan_en' ) );
+		update_post_meta( $post_id, 'tgr_bio', tgr_kiriman_teks_panjang( 'tgr_bio' ) );
+		update_post_meta( $post_id, 'tgr_bio_en', tgr_kiriman_teks_panjang( 'tgr_bio_en' ) );
+	}
+);
+
+add_filter(
+	'manage_tgr_orang_posts_columns',
+	function ( $kolom ) {
+		return array_slice( $kolom, 0, 2, true ) + array(
+			'tgr_kelompok' => 'Kelompok',
+			'tgr_jabatan'  => 'Jabatan',
+			'menu_order'   => 'Urutan',
+		) + array_slice( $kolom, 2, null, true );
+	}
+);
+
+add_action(
+	'manage_tgr_orang_posts_custom_column',
+	function ( $kolom, $post_id ) {
+		if ( 'menu_order' === $kolom ) {
+			echo esc_html( (string) get_post_field( 'menu_order', $post_id ) );
+			return;
+		}
+		if ( 'tgr_kelompok' === $kolom ) {
+			echo 'redaksi' === tgr_meta( $post_id, 'tgr_kelompok' ) ? 'Redaksi' : 'Pengurus';
+			return;
+		}
+		if ( 'tgr_jabatan' === $kolom ) {
+			echo esc_html( tgr_meta( $post_id, 'tgr_jabatan', '—' ) );
+		}
+	},
+	10,
+	2
+);
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Pesan masuk (formulir kontak situs).
+ *
+ * Pola yang sama dengan Pelanggan Buletin: tersimpan sebagai tipe konten
+ * agar bisa dibaca, dicari, dan diekspor dari wp-admin — plus satu email
+ * pemberitahuan ke redaksi supaya pesan tidak menunggu dibuka dulu.
+ *
+ * TIDAK diekspos ke REST (show_in_rest false): nama, email, dan isi pesan
+ * adalah data pribadi, dan endpoint wp/v2 situs ini terbuka dibaca publik.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/** Pilihan subjek yang sah — cermin opsi <select> di formulir situs. */
+function tgr_daftar_subjek() {
+	return array( 'Redaksi & Hak Jawab', 'Kerja Sama & Kemitraan', 'Pertanyaan Umum', 'Lainnya' );
+}
+
+add_action(
+	'init',
+	function () {
+		register_post_type(
+			'tgr_pesan',
+			array(
+				'labels'        => array(
+					'name'          => 'Pesan Masuk',
+					'singular_name' => 'Pesan',
+					'all_items'     => 'Semua Pesan',
+					'search_items'  => 'Cari Pesan',
+				),
+				'public'        => false,
+				'show_ui'       => true,
+				'show_in_menu'  => true,
+				'show_in_rest'  => false,
+				'menu_icon'     => 'dashicons-email',
+				'menu_position' => 26,
+				'supports'      => array( 'title' ),
+				'capabilities'  => array( 'create_posts' => 'do_not_allow' ),
+				'map_meta_cap'  => true,
+			)
+		);
+
+		foreach ( array( 'tgr_email', 'tgr_telepon', 'tgr_subjek', 'tgr_sumber', 'tgr_ip_hash', 'tgr_email_terkirim' ) as $key ) {
+			register_post_meta(
+				'tgr_pesan',
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => false,
+					'sanitize_callback' => 'sanitize_text_field',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_others_posts' );
+					},
+				)
+			);
+		}
+	}
+);
+
+/** Detail pesan, baca-saja: isinya milik pengirim, bukan untuk disunting. */
+add_action(
+	'add_meta_boxes_tgr_pesan',
+	function () {
+		add_meta_box( 'tgr_isi_pesan', 'Isi Pesan', 'tgr_kotak_pesan', 'tgr_pesan', 'normal', 'high' );
+	}
+);
+
+function tgr_kotak_pesan( $post ) {
+	$email = tgr_meta( $post->ID, 'tgr_email' );
+	$baris = array(
+		'Telepon' => tgr_meta( $post->ID, 'tgr_telepon', '—' ),
+		'Subjek'  => tgr_meta( $post->ID, 'tgr_subjek', '—' ),
+		'Halaman' => tgr_meta( $post->ID, 'tgr_sumber', '—' ),
+	);
+	?>
+	<table class="form-table" role="presentation">
+		<tbody>
+			<tr>
+				<th scope="row">Email</th>
+				<td>
+					<?php if ( $email ) : ?>
+						<a href="<?php echo esc_url( 'mailto:' . $email ); ?>"><?php echo esc_html( $email ); ?></a>
+					<?php else : ?>
+						&mdash;
+					<?php endif; ?>
+				</td>
+			</tr>
+			<?php foreach ( $baris as $label => $nilai ) : ?>
+				<tr>
+					<th scope="row"><?php echo esc_html( $label ); ?></th>
+					<td><?php echo esc_html( $nilai ); ?></td>
+				</tr>
+			<?php endforeach; ?>
+			<tr>
+				<th scope="row">Notifikasi email</th>
+				<td><?php echo '1' === tgr_meta( $post->ID, 'tgr_email_terkirim' ) ? 'Terkirim ke redaksi' : 'Gagal terkirim — baca di sini'; ?></td>
+			</tr>
+			<tr>
+				<th scope="row">Pesan</th>
+				<td>
+					<div style="max-width:44rem;padding:12px 14px;background:#fff;border:1px solid #dcdcde;border-radius:4px;line-height:1.6">
+						<?php echo nl2br( esc_html( $post->post_content ) ); ?>
+					</div>
+				</td>
+			</tr>
+		</tbody>
+	</table>
+	<?php
+}
+
+add_filter(
+	'manage_tgr_pesan_posts_columns',
+	function ( $kolom ) {
+		return array(
+			'cb'                 => isset( $kolom['cb'] ) ? $kolom['cb'] : '',
+			'title'              => 'Nama',
+			'tgr_email'          => 'Email',
+			'tgr_subjek'         => 'Subjek',
+			'tgr_email_terkirim' => 'Notifikasi',
+			'date'               => 'Diterima',
+		);
+	}
+);
+
+add_action(
+	'manage_tgr_pesan_posts_custom_column',
+	function ( $kolom, $post_id ) {
+		if ( 'tgr_email_terkirim' === $kolom ) {
+			echo '1' === tgr_meta( $post_id, 'tgr_email_terkirim' ) ? '&#10003;' : '&mdash;';
+			return;
+		}
+		if ( in_array( $kolom, array( 'tgr_email', 'tgr_subjek' ), true ) ) {
+			echo esc_html( tgr_meta( $post_id, $kolom, '—' ) );
+		}
+	},
+	10,
+	2
+);
+
+/** Tombol ekspor di atas daftar pesan. */
+add_action(
+	'restrict_manage_posts',
+	function ( $post_type ) {
+		if ( 'tgr_pesan' !== $post_type || ! current_user_can( 'edit_others_posts' ) ) {
+			return;
+		}
+		$url = wp_nonce_url(
+			admin_url( 'admin-post.php?action=tgr_ekspor_pesan' ),
+			'tgr_ekspor_pesan'
+		);
+		printf(
+			'<a href="%s" class="button" style="margin-left:8px">Unduh CSV</a>',
+			esc_url( $url )
+		);
+	}
+);
+
+/**
+ * Sel CSV yang diawali karakter formula dinetralkan dengan tanda kutip:
+ * isi pesan diketik orang luar, dan Excel/Sheets mengeksekusi sel berawalan
+ * "=" begitu berkasnya dibuka.
+ */
+function tgr_csv_teks( $nilai ) {
+	$nilai = (string) $nilai;
+	return preg_match( '/^[=+\-@]/', $nilai ) ? "'" . $nilai : $nilai;
+}
+
+add_action(
+	'admin_post_tgr_ekspor_pesan',
+	function () {
+		if ( ! current_user_can( 'edit_others_posts' ) ) {
+			wp_die( 'Tidak punya izin mengekspor daftar pesan.', '', array( 'response' => 403 ) );
+		}
+		check_admin_referer( 'tgr_ekspor_pesan' );
+
+		$pesan = get_posts(
+			array(
+				'post_type'   => 'tgr_pesan',
+				'post_status' => 'any',
+				'numberposts' => -1,
+				'orderby'     => 'date',
+				'order'       => 'ASC',
+			)
+		);
+
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename=pesan-masuk-' . gmdate( 'Y-m-d' ) . '.csv' );
+
+		$keluaran = fopen( 'php://output', 'w' );
+		fputcsv( $keluaran, array( 'nama', 'email', 'telepon', 'subjek', 'pesan', 'halaman', 'diterima' ) );
+		foreach ( $pesan as $satu ) {
+			fputcsv(
+				$keluaran,
+				array(
+					tgr_csv_teks( $satu->post_title ),
+					tgr_csv_teks( get_post_meta( $satu->ID, 'tgr_email', true ) ),
+					tgr_csv_teks( get_post_meta( $satu->ID, 'tgr_telepon', true ) ),
+					get_post_meta( $satu->ID, 'tgr_subjek', true ),
+					tgr_csv_teks( $satu->post_content ),
+					tgr_csv_teks( get_post_meta( $satu->ID, 'tgr_sumber', true ) ),
+					$satu->post_date,
+				)
+			);
+		}
+		fclose( $keluaran );
+		exit;
+	}
+);
+
+/**
+ * Penerima formulir kontak dari frontend — pola yang sama dengan
+ * tgr/v1/subscribe: hanya server frontend yang memegang secret-nya, jadi
+ * endpoint ini tidak bisa dibanjiri langsung dari peramban.
+ */
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'tgr/v1',
+			'/contact',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => function ( $request ) {
+					return tgr_secret_cocok( $request->get_header( 'x-tgr-secret' ) );
+				},
+				'callback'            => 'tgr_terima_pesan',
+				'args'                => array(
+					'nama'  => array( 'required' => true ),
+					'email' => array( 'required' => true ),
+					'pesan' => array( 'required' => true ),
+				),
+			)
+		);
+	}
+);
+
+function tgr_terima_pesan( $request ) {
+	$nama  = mb_substr( sanitize_text_field( (string) $request->get_param( 'nama' ) ), 0, 120 );
+	$email = sanitize_email( (string) $request->get_param( 'email' ) );
+	$pesan = mb_substr( sanitize_textarea_field( (string) $request->get_param( 'pesan' ) ), 0, 5000 );
+	if ( '' === $nama ) {
+		return new WP_Error( 'tgr_nama_kosong', 'Nama wajib diisi.', array( 'status' => 400 ) );
+	}
+	if ( ! $email || ! is_email( $email ) ) {
+		return new WP_Error( 'tgr_email_tidak_sah', 'Alamat email tidak sah.', array( 'status' => 400 ) );
+	}
+	if ( '' === $pesan ) {
+		return new WP_Error( 'tgr_pesan_kosong', 'Pesan wajib diisi.', array( 'status' => 400 ) );
+	}
+
+	$telepon = mb_substr(
+		preg_replace( '/[^0-9+()\s.\-]/', '', (string) $request->get_param( 'telepon' ) ),
+		0,
+		40
+	);
+	// Subjek di luar daftar dianggap "Lainnya", bukan diteruskan mentah:
+	// nilainya ikut menjadi judul email pemberitahuan.
+	$subjek = (string) $request->get_param( 'subjek' );
+	if ( ! in_array( $subjek, tgr_daftar_subjek(), true ) ) {
+		$subjek = 'Lainnya';
+	}
+
+	// Rem per IP, lapis kedua setelah pembatas frontend — 5 pesan per jam
+	// sudah lebih dari cukup untuk pengirim yang sungguhan.
+	$ip     = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$sidik  = 'tgr_msg_' . md5( $ip . wp_salt() );
+	$hitung = (int) get_transient( $sidik );
+	if ( $hitung >= 5 ) {
+		return new WP_Error( 'tgr_terlalu_sering', 'Terlalu banyak percobaan, coba lagi nanti.', array( 'status' => 429 ) );
+	}
+	set_transient( $sidik, $hitung + 1, HOUR_IN_SECONDS );
+
+	// SIMPAN DULU, email belakangan: pesan yang gagal terkirim ke inbox
+	// redaksi tetap utuh di wp-admin.
+	$id = wp_insert_post(
+		array(
+			'post_type'    => 'tgr_pesan',
+			'post_status'  => 'publish',
+			'post_title'   => $nama,
+			'post_content' => $pesan,
+		),
+		true
+	);
+	if ( is_wp_error( $id ) ) {
+		return new WP_Error( 'tgr_gagal_simpan', 'Gagal menyimpan pesan.', array( 'status' => 500 ) );
+	}
+
+	update_post_meta( $id, 'tgr_email', $email );
+	update_post_meta( $id, 'tgr_telepon', $telepon );
+	update_post_meta( $id, 'tgr_subjek', $subjek );
+	update_post_meta( $id, 'tgr_sumber', sanitize_text_field( (string) $request->get_param( 'sumber' ) ) );
+	update_post_meta( $id, 'tgr_ip_hash', $ip ? wp_hash( $ip ) : '' );
+
+	// Tujuan bisa dipindah tanpa menyentuh kode: define('TGR_KONTAK_EMAIL', …)
+	// di wp-config.php; tanpa itu jatuh ke email admin situs.
+	$tujuan = ( defined( 'TGR_KONTAK_EMAIL' ) && TGR_KONTAK_EMAIL )
+		? TGR_KONTAK_EMAIL
+		: get_option( 'admin_email' );
+
+	// Judul dari subjek ber-whitelist + nama hasil sanitize_text_field —
+	// keduanya bebas CR/LF. Satu-satunya header dinamis adalah Reply-To
+	// dengan alamat yang sudah lolos is_email, jadi tidak ada celah
+	// menyisipkan header tambahan.
+	$judul = sprintf( '[TGR] %s — %s', $subjek, $nama );
+	$badan = sprintf(
+		"Pesan baru dari formulir kontak situs.\n\nNama    : %s\nEmail   : %s\nTelepon : %s\nSubjek  : %s\n\n%s\n\n—\nBalas email ini untuk menjawab langsung ke pengirim.\nArsip lengkap: %s",
+		$nama,
+		$email,
+		$telepon ? $telepon : '—',
+		$subjek,
+		$pesan,
+		admin_url( 'edit.php?post_type=tgr_pesan' )
+	);
+	$terkirim = wp_mail( $tujuan, $judul, $badan, array( 'Reply-To: ' . $email ) );
+	update_post_meta( $id, 'tgr_email_terkirim', $terkirim ? '1' : '' );
+
+	return array( 'terkirim' => true );
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Isi halaman statis situs baru.
+ *
+ * Teks halaman Tentang, Pengurus, dan Hubungi Kami disimpan sebagai meta
+ * pada Laman yang memang sudah ada di WordPress — bukan mem-parse isi
+ * editor lama (HTML tema lama, rapuh) dan bukan halaman opsi tersendiri
+ * (tanpa revisi, butuh plumbing REST sendiri). Webhook tgr-revalidate
+ * sudah meneruskan penyimpanan Laman ke frontend.
+ *
+ * PENTING — peta memakai ID, bukan slug: slug Laman lama saling tertukar
+ * (id 574 ber-slug "tentang-gfi" padahal judulnya "Tentang The Global
+ * Review", sementara id 576 ber-slug "tentang-gfi-2").
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/** Laman yang punya kotak isi + rute frontend yang membacanya. */
+function tgr_halaman_konfig() {
+	return array(
+		574 => '/tentang-tgr',
+		576 => '/tentang-gfi',
+		572 => '/hubungi-kami',
+		611 => '/pengurus-gfi',
+	);
+}
+
+/**
+ * Deskriptor field per Laman: [kunci, label, jenis(input|textarea), petunjuk].
+ * Kunci ber-akhiran _en adalah versi Inggris untuk pohon /en; kosong →
+ * frontend memakai versi Indonesia.
+ */
+function tgr_halaman_field( $post_id ) {
+	$lead = array(
+		array( 'tgr_lead', 'Lead', 'input', 'Kalimat pembuka di bawah judul halaman.' ),
+		array( 'tgr_lead_en', 'Lead (EN)', 'input', '' ),
+	);
+	switch ( $post_id ) {
+		case 574: // /tentang-tgr
+			return array_merge(
+				$lead,
+				array(
+					array( 'tgr_paragraf', 'Paragraf isi', 'textarea', 'Satu paragraf per baris.' ),
+					array( 'tgr_paragraf_en', 'Paragraf isi (EN)', 'textarea', '' ),
+				)
+			);
+		case 576: // /tentang-gfi
+			return array_merge(
+				$lead,
+				array(
+					array( 'tgr_paragraf', 'Paragraf pembuka', 'textarea', 'Satu paragraf per baris.' ),
+					array( 'tgr_paragraf_en', 'Paragraf pembuka (EN)', 'textarea', '' ),
+					array( 'tgr_isu_judul', 'Judul bagian isu', 'input', '' ),
+					array( 'tgr_isu_judul_en', 'Judul bagian isu (EN)', 'input', '' ),
+					array( 'tgr_isu_intro', 'Pengantar isu', 'textarea', '' ),
+					array( 'tgr_isu_intro_en', 'Pengantar isu (EN)', 'textarea', '' ),
+					array( 'tgr_isu_butir', 'Butir isu pokok', 'textarea', 'Satu butir per baris.' ),
+					array( 'tgr_isu_butir_en', 'Butir isu pokok (EN)', 'textarea', '' ),
+					array( 'tgr_visi', 'Kutipan visi', 'input', '' ),
+					array( 'tgr_visi_en', 'Kutipan visi (EN)', 'input', '' ),
+					array( 'tgr_visi_label', 'Keterangan visi', 'input', 'Mis. "Visi Global Future Institute".' ),
+					array( 'tgr_visi_label_en', 'Keterangan visi (EN)', 'input', '' ),
+					array( 'tgr_misi_butir', 'Butir misi', 'textarea', 'Satu butir per baris.' ),
+					array( 'tgr_misi_butir_en', 'Butir misi (EN)', 'textarea', '' ),
+					array( 'tgr_fokus_intro', 'Pengantar fokus kegiatan', 'textarea', '' ),
+					array( 'tgr_fokus_intro_en', 'Pengantar fokus kegiatan (EN)', 'textarea', '' ),
+					array( 'tgr_fokus_butir', 'Butir fokus kegiatan', 'textarea', 'Satu butir per baris.' ),
+					array( 'tgr_fokus_butir_en', 'Butir fokus kegiatan (EN)', 'textarea', '' ),
+					array( 'tgr_fokus_penutup', 'Penutup fokus kegiatan', 'textarea', '' ),
+					array( 'tgr_fokus_penutup_en', 'Penutup fokus kegiatan (EN)', 'textarea', '' ),
+				)
+			);
+		case 572: // /hubungi-kami
+			return array_merge(
+				$lead,
+				array(
+					array( 'tgr_alamat', 'Alamat kantor', 'textarea', 'Satu baris alamat per baris teks.' ),
+					array( 'tgr_jam', 'Jam operasional', 'input', 'Mis. "Senin–Jumat · 09.00–17.00 WIB".' ),
+					array( 'tgr_jam_en', 'Jam operasional (EN)', 'input', '' ),
+					array( 'tgr_peta_q', 'Lokasi peta Google', 'input', 'Alamat yang dicari peta, mis. "Jl. Iskandarsyah Raya No. 7, Kebayoran Baru".' ),
+				)
+			);
+		case 611: // /pengurus-gfi
+			return array_merge(
+				$lead,
+				array(
+					array( 'tgr_paragraf', 'Paragraf pengantar', 'textarea', 'Satu paragraf per baris.' ),
+					array( 'tgr_paragraf_en', 'Paragraf pengantar (EN)', 'textarea', '' ),
+				)
+			);
+	}
+	return array();
+}
+
+/** Seluruh kunci meta halaman (gabungan semua deskriptor, tanpa kembar). */
+function tgr_halaman_semua_kunci() {
+	$kunci = array();
+	foreach ( array_keys( tgr_halaman_konfig() ) as $id ) {
+		foreach ( tgr_halaman_field( $id ) as $field ) {
+			$kunci[ $field[0] ] = $field[2];
+		}
+	}
+	return $kunci; // kunci => jenis input.
+}
+
+add_action(
+	'init',
+	function () {
+		foreach ( tgr_halaman_semua_kunci() as $key => $jenis ) {
+			register_post_meta(
+				'page',
+				$key,
+				array(
+					'type'              => 'string',
+					'single'            => true,
+					'default'           => '',
+					'show_in_rest'      => true,
+					'sanitize_callback' => 'textarea' === $jenis
+						? 'sanitize_textarea_field'
+						: 'sanitize_text_field',
+					'auth_callback'     => function () {
+						return current_user_can( 'edit_pages' );
+					},
+				)
+			);
+		}
+	}
+);
+
+add_action(
+	'add_meta_boxes_page',
+	function ( $post ) {
+		if ( ! array_key_exists( $post->ID, tgr_halaman_konfig() ) ) {
+			return;
+		}
+		add_meta_box( 'tgr_isi_halaman', 'Isi Halaman — Situs Baru', 'tgr_kotak_halaman', 'page', 'normal', 'high' );
+	}
+);
+
+function tgr_kotak_halaman( $post ) {
+	wp_nonce_field( 'tgr_simpan_meta', 'tgr_meta_nonce' );
+	$rute = tgr_halaman_konfig()[ $post->ID ];
+	?>
+	<p class="description">
+		Field di bawah ini mengisi halaman <code><?php echo esc_html( $rute ); ?></code>
+		di situs baru. Isi editor lama di bawah TIDAK dipakai situs baru.
+		Field EN yang kosong memakai versi Indonesia.
+	</p>
+	<table class="form-table" role="presentation">
+		<tbody>
+			<?php foreach ( tgr_halaman_field( $post->ID ) as $field ) : ?>
+				<?php list( $kunci, $label, $jenis, $petunjuk ) = $field; ?>
+				<tr>
+					<th scope="row"><label for="<?php echo esc_attr( $kunci ); ?>"><?php echo esc_html( $label ); ?></label></th>
+					<td>
+						<?php if ( 'textarea' === $jenis ) : ?>
+							<textarea id="<?php echo esc_attr( $kunci ); ?>" name="<?php echo esc_attr( $kunci ); ?>"
+								class="large-text" rows="5"><?php
+								echo esc_textarea( tgr_meta( $post->ID, $kunci ) );
+							?></textarea>
+						<?php else : ?>
+							<input type="text" id="<?php echo esc_attr( $kunci ); ?>" name="<?php echo esc_attr( $kunci ); ?>"
+								class="large-text" value="<?php echo esc_attr( tgr_meta( $post->ID, $kunci ) ); ?>">
+						<?php endif; ?>
+						<?php if ( $petunjuk ) : ?>
+							<p class="description"><?php echo esc_html( $petunjuk ); ?></p>
+						<?php endif; ?>
+					</td>
+				</tr>
+			<?php endforeach; ?>
+		</tbody>
+	</table>
+	<?php
+}
+
+add_action(
+	'save_post_page',
+	function ( $post_id ) {
+		if ( ! array_key_exists( $post_id, tgr_halaman_konfig() ) || ! tgr_boleh_simpan( $post_id ) ) {
+			return;
+		}
+		foreach ( tgr_halaman_field( $post_id ) as $field ) {
+			list( $kunci, , $jenis ) = $field;
+			$nilai = 'textarea' === $jenis
+				? tgr_kiriman_teks_panjang( $kunci )
+				: tgr_kiriman_teks( $kunci );
+			update_post_meta( $post_id, $kunci, $nilai );
+		}
+	}
+);
 
 /**
  * Naikkan batas per_page REST dari 100 ke 200 khusus permintaan ber-token,

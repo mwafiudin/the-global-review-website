@@ -1,0 +1,43 @@
+{
+  "waktu": "2026-08-20T06:30:58.163Z",
+  "versiCore": "6.5.10",
+  "koleksi": {
+    "posts": 887,
+    "pages": 12,
+    "categories": 34,
+    "tags": 475,
+    "media": 7015,
+    "users": 4,
+    "podcasts": 9,
+    "albums": 0,
+    "polls": 0,
+    "orang": null
+  },
+  "contohArtikel": {
+    "id": 30602,
+    "slug": "mengapa-kita-harus-hidupkan-kembali-geopolitik",
+    "polaLink": true,
+    "adaYoast": true,
+    "adaGambar": true
+  },
+  "auth": {
+    "ok": true,
+    "user": "frontend-api"
+  },
+  "tgr": {
+    "vote": 401,
+    "subscribe": 401,
+    "contact": 404
+  },
+  "namespaces": [
+    "oembed/1.0",
+    "tgr/v1",
+    "wp-toolkit/api",
+    "contact-form-7/v1",
+    "yoast/v1",
+    "wp/v2",
+    "wp-site-health/v1",
+    "wp-block-editor/v1"
+  ],
+  "webhookVercel": 401
+}

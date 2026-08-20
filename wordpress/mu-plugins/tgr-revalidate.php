@@ -5,7 +5,7 @@
  *               diterbitkan, disunting, atau dihapus, lewat webhook
  *               /api/revalidate — perubahan di wp-admin langsung tampil
  *               tanpa deploy ulang.
- * Version:      1.0.0
+ * Version:      1.1.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ bersama tgr-headless.php.
@@ -29,9 +29,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-/** Tipe konten yang perubahannya perlu diteruskan ke frontend. */
+/**
+ * Tipe konten yang perubahannya perlu diteruskan ke frontend.
+ * tgr_pesan dan tgr_subscriber sengaja TIDAK di sini: keduanya kiriman
+ * pembaca, bukan konten halaman — tiap pesan masuk berarti satu webhook
+ * blocking yang tidak menggugurkan cache apa pun.
+ */
 function tgr_revalidate_post_types() {
-	return array( 'post', 'page', 'tgr_podcast', 'tgr_album', 'tgr_poll' );
+	return array( 'post', 'page', 'tgr_podcast', 'tgr_album', 'tgr_poll', 'tgr_orang' );
 }
 
 /**
