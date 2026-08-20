@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.0.0
+ * Version:      3.1.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -1059,6 +1059,120 @@ add_action(
 			$frasa  = false === $posisi ? '' : substr( $judul, $posisi, strlen( $frasa ) );
 		}
 		update_post_meta( $post_id, 'tgr_sorotan', $frasa );
+	}
+);
+
+/* ── Sorotan wajib saat terbit ─────────────────────────────────────── */
+
+/**
+ * Kebijakan redaksi: tulisan tidak boleh terbit tanpa Sorotan Judul.
+ * Draf tetap bebas disimpan — kuncian hanya menjaga gerbang terbit.
+ *
+ * Dua jalur karena meta box klasik di editor blok disimpan TERPISAH dari
+ * simpan utama (validasi server pada jalur REST membaca nilai lama, salah
+ * blokir): editor blok dijaga skrip di sisi editor (kunci tombol Terbitkan
+ * + notice), editor klasik dijaga filter wp_insert_post_data yang membaca
+ * field dari request yang sama.
+ */
+add_filter(
+	'wp_insert_post_data',
+	function ( $data, $postarr ) {
+		if ( 'post' !== $data['post_type'] || 'publish' !== $data['post_status'] ) {
+			return $data;
+		}
+		// Hanya jalur form klasik: field sorotan ikut di request ini. Request
+		// meta-box-loader Gutenberg (susulan setelah terbit) dikecualikan —
+		// menurunkan status di sana berarti membatalkan terbit diam-diam.
+		if ( ! isset( $_POST['tgr_sorotan'], $_POST['tgr_meta_nonce'] ) || isset( $_GET['meta-box-loader'] ) ) {
+			return $data;
+		}
+		$nonce = sanitize_text_field( wp_unslash( $_POST['tgr_meta_nonce'] ) );
+		if ( ! wp_verify_nonce( $nonce, 'tgr_simpan_meta' ) ) {
+			return $data;
+		}
+		$frasa = sanitize_text_field( wp_unslash( $_POST['tgr_sorotan'] ) );
+		$judul = isset( $data['post_title'] ) ? wp_unslash( $data['post_title'] ) : '';
+		// Selaras penambal simpan: frasa yang tak ditemukan di judul (walau
+		// beda kapital) akan berakhir kosong — dianggap belum diisi.
+		$efektif = ( '' !== $frasa && false !== stripos( $judul, $frasa ) ) ? $frasa : '';
+		if ( '' === $efektif ) {
+			$data['post_status'] = 'draft';
+			set_transient( 'tgr_sorotan_wajib_' . get_current_user_id(), 1, MINUTE_IN_SECONDS );
+		}
+		return $data;
+	},
+	10,
+	2
+);
+
+add_action(
+	'admin_notices',
+	function () {
+		$kunci = 'tgr_sorotan_wajib_' . get_current_user_id();
+		if ( ! get_transient( $kunci ) ) {
+			return;
+		}
+		delete_transient( $kunci );
+		echo '<div class="notice notice-error"><p><strong>Sorotan Judul wajib diisi sebelum terbit.</strong> ' .
+			'Tulisan disimpan sebagai draf — salin satu frasa dari judul ke kotak Sorotan Judul, lalu terbitkan lagi.</p></div>';
+	}
+);
+
+/**
+ * Editor blok: kunci tombol Terbitkan/Perbarui selama kotak Sorotan Judul
+ * kosong. Kuncian aktif hanya saat panel pra-terbit terbuka atau tulisan
+ * sudah berstatus terbit — menyimpan draf tidak pernah terkunci.
+ */
+add_action(
+	'admin_footer',
+	function () {
+		$layar = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+		if ( ! $layar || 'post' !== $layar->base || 'post' !== $layar->post_type ) {
+			return;
+		}
+		?>
+		<script>
+		( function () {
+			if ( ! window.wp || ! wp.data || ! wp.data.select( 'core/editor' ) ) {
+				return; // editor klasik — dijaga jalur server.
+			}
+			var KUNCI  = 'tgr-sorotan-wajib';
+			var NOTICE = 'tgr-sorotan-wajib-notice';
+			var PESAN  = 'Sorotan Judul wajib diisi sebelum terbit — salin satu frasa dari judul ke kotak Sorotan Judul.';
+
+			function periksa() {
+				var input = document.getElementById( 'tgr_sorotan' );
+				if ( ! input ) {
+					return;
+				}
+				var editor     = wp.data.select( 'core/editor' );
+				var editPost   = wp.data.select( 'core/edit-post' );
+				var kosong     = '' === input.value.trim();
+				var sudahTerbit = 'publish' === editor.getEditedPostAttribute( 'status' );
+				var panelTerbit = !! ( editPost && editPost.isPublishSidebarOpened && editPost.isPublishSidebarOpened() );
+				if ( kosong && ( sudahTerbit || panelTerbit ) ) {
+					wp.data.dispatch( 'core/editor' ).lockPostSaving( KUNCI );
+					wp.data.dispatch( 'core/notices' ).createNotice( 'error', PESAN, { id: NOTICE, isDismissible: false } );
+				} else {
+					wp.data.dispatch( 'core/editor' ).unlockPostSaving( KUNCI );
+					wp.data.dispatch( 'core/notices' ).removeNotice( NOTICE );
+				}
+			}
+
+			// Meta box klasik dimuat menyusul editor — tunggu inputnya hadir.
+			var tunggu = setInterval( function () {
+				var input = document.getElementById( 'tgr_sorotan' );
+				if ( ! input ) {
+					return;
+				}
+				clearInterval( tunggu );
+				input.addEventListener( 'input', periksa );
+				wp.data.subscribe( periksa );
+				periksa();
+			}, 500 );
+		} )();
+		</script>
+		<?php
 	}
 );
 
