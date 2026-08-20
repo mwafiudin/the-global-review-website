@@ -246,10 +246,6 @@ export const EN: Record<string, string> = {
   "Album Lainnya": "Other Albums",
   "Semua album": "All albums",
   // Tombol terjemah artikel (hanya tampil di /en — nilai EN yang terlihat)
-  "Terjemahkan artikel": "Translate article",
-  "Menerjemahkan…": "Translating…",
-  "Tampilkan asli": "Show original",
-  "Terjemahan gagal — coba lagi": "Translation failed — try again",
 };
 
 /** Penerjemah untuk satu bahasa; dipakai bersama oleh sisi server & client. */

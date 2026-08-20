@@ -1,10 +1,9 @@
 /**
- * Jembatan widget Google Translate (element.js) — mesin yang sama dengan
- * plugin GTranslate versi gratis, dipakai langsung tanpa WordPress. Widget
- * menerjemahkan DOM di browser pembaca dan menyimpan bahasa aktifnya di
- * cookie `googtrans`; tidak ada API per string yang bisa dipanggil, jadi
- * modul ini hanya memuat bagian murni yang bisa diuji: konstanta pemasangan
- * dan urusan cookie. Orkestrasi DOM-nya ada di components/ArticleTranslate.
+ * Fondasi Selat — jembatan widget Google Translate (element.js), mesin yang
+ * sama dengan plugin GTranslate versi gratis, dipakai langsung tanpa
+ * WordPress. Widget menerjemahkan DOM di browser pembaca; tidak ada API per
+ * string yang bisa dipanggil, jadi modul ini hanya memuat konstanta
+ * pemasangan yang bisa diuji. Orkestrasinya ada di components/Selat.
  *
  * Catatan risiko (diputuskan sadar): layanan element.js berstatus
  * deprecated tanpa SLA — bila kelak mati, jalur penggantinya adalah
@@ -33,20 +32,12 @@ export const ELEMENT_STYLE = [
 ].join("\n");
 
 /**
- * Bahasa tujuan dari cookie `googtrans` — formatnya "/sumber/tujuan"
- * (mis. "/id/en"). null bila cookie tak ada atau bentuknya tak dikenal.
- */
-export function bahasaGoogtrans(cookie: string): string | null {
-  const cocok = cookie.match(/(?:^|;\s*)googtrans=([^;]*)/);
-  if (!cocok) return null;
-  return decodeURIComponent(cocok[1]).split("/")[2] || null;
-}
-
-/**
  * Nilai-nilai document.cookie untuk memusnahkan `googtrans` di semua varian
  * yang mungkin ditulis Google: tanpa domain, host persis, host berawalan
- * titik, dan domain induk (widget kadang menulis di keduanya sekaligus —
- * satu yang tersisa membuat terjemahan hidup lagi setelah reload).
+ * titik, dan domain induk. Wajib dijalankan SEBELUM skrip Google dimuat —
+ * bila cookie sudah ada saat init, widget kadang macet "merasa sudah
+ * menerjemahkan" tanpa menyapu satu node pun, dan dorongan combo bernilai
+ * sama tidak menyembuhkannya (diamati langsung saat verifikasi).
  */
 export function penghapusGoogtrans(hostname: string): string[] {
   const basi = "googtrans=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/";

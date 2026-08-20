@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getAuthor } from "@/data/authors";
-import { ArticleTranslate } from "@/components/ArticleTranslate";
 import { getT } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { kanonik, robotsEn } from "@/lib/seo";
@@ -120,7 +119,6 @@ export default async function ArticlePage({
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
-              {lang === "en" && <ArticleTranslate />}
               <ShareButtons title={article.title} />
             </div>
           </div>

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BackToTop } from "@/components/BackToTop";
+import { Selat } from "@/components/Selat";
 import { RouteTransition } from "@/components/RouteTransition";
 import { SearchProvider } from "@/components/Search";
 import { LanguageProvider } from "@/lib/i18n";
@@ -101,6 +102,8 @@ export default async function RootLayout({
             </main>
             <SiteFooter />
             <BackToTop />
+            {/* Selat: saklar bahasa di menu = kendali tunggal terjemahan. */}
+            {lang === "en" && <Selat />}
           </SearchProvider>
         </LanguageProvider>
       </body>

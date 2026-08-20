@@ -1,33 +1,30 @@
 import { describe, expect, it } from "vitest";
 import {
   ELEMENT_CALLBACK,
+  ELEMENT_DIV_ID,
   ELEMENT_SCRIPT_SRC,
-  bahasaGoogtrans,
+  ELEMENT_STYLE,
   penghapusGoogtrans,
 } from "./element";
 
-describe("bahasaGoogtrans", () => {
-  it("membaca bahasa tujuan dari cookie googtrans", () => {
-    expect(bahasaGoogtrans("googtrans=/id/en")).toBe("en");
+describe("konstanta pemasangan Selat", () => {
+  it("URL skrip memakai nama callback yang sama", () => {
+    expect(ELEMENT_SCRIPT_SRC).toContain(`cb=${ELEMENT_CALLBACK}`);
+    expect(ELEMENT_SCRIPT_SRC).toMatch(/^https:\/\/translate\.google\.com\//);
   });
 
-  it("menemukan googtrans di antara cookie lain", () => {
-    expect(bahasaGoogtrans("tgr-theme=dark; googtrans=/id/en; a=b")).toBe("en");
+  it("CSS penetral menyembunyikan banner Google dan placeholder widget", () => {
+    expect(ELEMENT_STYLE).toContain("div.skiptranslate");
+    expect(ELEMENT_STYLE).toContain(`#${ELEMENT_DIV_ID}`);
+    expect(ELEMENT_STYLE).toContain("display:none!important");
   });
 
-  it("memahami nilai yang ter-encode", () => {
-    expect(bahasaGoogtrans("googtrans=%2Fid%2Fen")).toBe("en");
+  it("CSS penetral membatalkan offset banner pada body", () => {
+    expect(ELEMENT_STYLE).toContain("body{top:0!important}");
   });
 
-  it("null bila cookie tak ada atau bentuknya tak dikenal", () => {
-    expect(bahasaGoogtrans("")).toBeNull();
-    expect(bahasaGoogtrans("tgr-theme=dark")).toBeNull();
-    expect(bahasaGoogtrans("googtrans=")).toBeNull();
-    expect(bahasaGoogtrans("googtrans=ngawur")).toBeNull();
-  });
-
-  it("tidak tertipu cookie yang berakhiran googtrans", () => {
-    expect(bahasaGoogtrans("xgoogtrans=/id/en")).toBeNull();
+  it("CSS penetral membersihkan highlight pada <font> suntikan Google", () => {
+    expect(ELEMENT_STYLE).toContain("font font{background-color:transparent");
   });
 });
 
@@ -36,13 +33,19 @@ describe("penghapusGoogtrans", () => {
     const resep = penghapusGoogtrans("theglobal-review.com");
     expect(resep).toHaveLength(3);
     expect(resep[0]).not.toContain("domain=");
-    expect(resep).toContainEqual(expect.stringContaining("domain=theglobal-review.com"));
-    expect(resep).toContainEqual(expect.stringContaining("domain=.theglobal-review.com"));
+    expect(resep).toContainEqual(
+      expect.stringContaining("domain=theglobal-review.com")
+    );
+    expect(resep).toContainEqual(
+      expect.stringContaining("domain=.theglobal-review.com")
+    );
   });
 
   it("menambah domain induk untuk subdomain", () => {
     const resep = penghapusGoogtrans("www.theglobal-review.com");
-    expect(resep).toContainEqual(expect.stringContaining("domain=.theglobal-review.com"));
+    expect(resep).toContainEqual(
+      expect.stringContaining("domain=.theglobal-review.com")
+    );
   });
 
   it("setiap resep kedaluwarsa di masa lalu dan ber-path akar", () => {
@@ -50,11 +53,5 @@ describe("penghapusGoogtrans", () => {
       expect(r).toContain("expires=Thu, 01 Jan 1970");
       expect(r).toContain("path=/");
     }
-  });
-});
-
-describe("konstanta pemasangan", () => {
-  it("URL skrip memakai nama callback yang sama", () => {
-    expect(ELEMENT_SCRIPT_SRC).toContain(`cb=${ELEMENT_CALLBACK}`);
   });
 });
