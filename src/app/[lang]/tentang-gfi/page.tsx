@@ -5,6 +5,7 @@ import { tentangGfiCopy } from "@/data/pages/tentang-gfi";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { dwibahasa } from "@/lib/seo";
+import { wpTentangGfi } from "@/lib/wp/halaman";
 
 export async function generateMetadata({
   params,
@@ -31,7 +32,7 @@ function SubHeading({ children }: { children: React.ReactNode }) {
 }
 
 export default async function TentangGfiPage() {
-  const copy = tentangGfiCopy[await getLang()];
+  const copy = await wpTentangGfi(await getLang());
   const [pembukaAwal, ...pembukaSisa] = copy.pembuka;
   return (
     <>

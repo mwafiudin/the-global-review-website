@@ -39,6 +39,7 @@ interface WpBookPost {
     tgr_buku_isbn?: string;
     tgr_buku_sampul?: number;
     tgr_buku_podcast?: string;
+    tgr_buku_unggulan?: string;
   };
 }
 
@@ -80,6 +81,7 @@ export function wpPostToBook(
     ringkasan: ringkasan || ulasan[0] || "",
     ulasan,
     podcastTerkait: teksMeta(item.meta?.tgr_buku_podcast),
+    unggulan: item.meta?.tgr_buku_unggulan === "1",
   };
 }
 
@@ -142,4 +144,16 @@ export async function wpBooks(): Promise<Book[]> {
 /** Satu ulasan berdasarkan slug. */
 export async function wpBook(slug: string): Promise<Book | undefined> {
   return (await wpBooks()).find((b) => b.slug === slug);
+}
+
+/**
+ * Buku untuk kartu "Buku pilihan" sidebar: yang dicentang redaksi di
+ * wp-admin (tunggal-aktif), atau buku unggulan data cadangan bila belum
+ * ada yang dicentang / WordPress tak terjangkau.
+ */
+export async function bukuPilihan(): Promise<Book> {
+  const daftar = await wpBooks();
+  return (
+    daftar.find((b) => b.unggulan) ?? bukuContoh.find((b) => b.unggulan) ?? daftar[0]
+  );
 }

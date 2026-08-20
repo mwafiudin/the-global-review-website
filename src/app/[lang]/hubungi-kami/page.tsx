@@ -12,11 +12,13 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { PageHeader } from "@/components/PageHeader";
 import { ContactForm } from "@/components/ContactForm";
+import { Fragment } from "react";
 import { hubungiKamiCopy } from "@/data/pages/hubungi-kami";
 import { site } from "@/data/site";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { dwibahasa } from "@/lib/seo";
+import { wpHubungi } from "@/lib/wp/halaman";
 
 export async function generateMetadata({
   params,
@@ -40,12 +42,11 @@ const kanalIcons = [Newspaper, Handshake, ChatCircleText];
 const mail = (subjek: string) =>
   `mailto:${site.email}?subject=${encodeURIComponent(subjek)}`;
 
-const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(
-  "Jl. Iskandarsyah Raya No. 7, Kebayoran Baru, Jakarta Selatan"
-)}&z=15&output=embed`;
-
 export default async function HubungiKamiPage() {
-  const copy = hubungiKamiCopy[await getLang()];
+  const { copy, alamat, petaQ } = await wpHubungi(await getLang());
+  const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(
+    petaQ
+  )}&z=15&output=embed`;
   return (
     <>
       <PageHeader title={copy.title} icon={ChatCircleText} lead={copy.lead} />
@@ -114,11 +115,12 @@ export default async function HubungiKamiPage() {
                   {copy.alamatLabel}
                 </p>
                 <p className="mt-1.5 text-sm leading-relaxed text-body">
-                  DARIA Building, Suite 402
-                  <br />
-                  Jl. Iskandarsyah Raya No. 7
-                  <br />
-                  Kebayoran Baru, Jakarta Selatan
+                  {alamat.map((baris, i) => (
+                    <Fragment key={baris}>
+                      {i > 0 && <br />}
+                      {baris}
+                    </Fragment>
+                  ))}
                 </p>
               </div>
             </div>

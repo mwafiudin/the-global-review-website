@@ -17,6 +17,8 @@ export interface Book {
   ulasan: string[];
   /** Slug podcast/video terkait (opsional) untuk embed di halaman ulasan. */
   podcastTerkait?: string;
+  /** Satu buku ber-nilai true tampil di kartu "Buku pilihan" sidebar. */
+  unggulan?: boolean;
 }
 
 export const books: Book[] = [
@@ -26,6 +28,7 @@ export const books: Book[] = [
     penulis: "Hendrajit",
     penerbit: "Global Future Institute",
     tahun: "2019",
+    unggulan: true,
     cover: "/images/buku-perang-asimetris-skema-penjajahan-gaya-baru.jpg",
     podcastTerkait: "tribrata-tv-bedah-buku-perang-asimetris",
     ringkasan:

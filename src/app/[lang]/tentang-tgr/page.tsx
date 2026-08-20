@@ -7,6 +7,7 @@ import { tentangTgrCopy } from "@/data/pages/tentang-tgr";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { dwibahasa } from "@/lib/seo";
+import { wpTentangTgr } from "@/lib/wp/halaman";
 
 export async function generateMetadata({
   params,
@@ -25,7 +26,7 @@ export async function generateMetadata({
 }
 
 export default async function TentangTgrPage() {
-  const copy = tentangTgrCopy[await getLang()];
+  const copy = await wpTentangTgr(await getLang());
   return (
     <>
       <PageHeader title={copy.title} lead={copy.lead} />

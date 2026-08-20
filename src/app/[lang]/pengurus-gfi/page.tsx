@@ -2,10 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { PageHeader } from "@/components/PageHeader";
 import { CompassDivider } from "@/components/Ornaments";
-import { pengurus, pengurusGfiCopy } from "@/data/pages/pengurus-gfi";
+import { pengurusGfiCopy } from "@/data/pages/pengurus-gfi";
 import { getLang } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { dwibahasa } from "@/lib/seo";
+import { wpPengurusTeks } from "@/lib/wp/halaman";
+import { wpPengurus } from "@/lib/wp/orang";
 
 export async function generateMetadata({
   params,
@@ -23,17 +25,24 @@ export async function generateMetadata({
   };
 }
 
-const [ketua, ...anggota] = pengurus;
-
 export default async function PengurusGfiPage() {
   const lang = await getLang();
   const copy = pengurusGfiCopy[lang];
+  const [daftar, teksWp] = await Promise.all([
+    wpPengurus(),
+    wpPengurusTeks(lang),
+  ]);
+  const [ketua, ...anggota] = daftar;
   return (
     <>
-      <PageHeader title={copy.title} lead={copy.lead} />
+      <PageHeader title={copy.title} lead={teksWp.lead} />
       <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
         <div className="mx-auto max-w-[75ch] space-y-5">
-          <p className="text-base leading-relaxed">{copy.pengantar}</p>
+          {teksWp.pengantar.map((p) => (
+            <p key={p.slice(0, 40)} className="text-base leading-relaxed">
+              {p}
+            </p>
+          ))}
         </div>
 
         <CompassDivider className="mt-10" />

@@ -13,9 +13,11 @@ import {
   partnerLinksInternational,
   site,
 } from "@/data/site";
+import { bookByline } from "@/data/books";
 import { articleHref } from "@/lib/articles";
 import { featuredArticles } from "@/lib/wp/articles";
 import { getT } from "@/lib/i18n-server";
+import { bukuPilihan } from "@/lib/wp/books";
 import { wpPodcasts } from "@/lib/wp/podcasts";
 import { youtubeThumb } from "./VideoEmbed";
 import type { PollView } from "@/lib/polls";
@@ -69,9 +71,10 @@ function ReferenceGroup({
 
 /** polls: hanya diisi di halaman artikel yang memiliki jajak pendapat. */
 export async function Sidebar({ polls }: { polls?: PollView[] }) {
-  const [populer, semuaPodcast] = await Promise.all([
+  const [populer, semuaPodcast, buku] = await Promise.all([
     featuredArticles(5),
     wpPodcasts(),
+    bukuPilihan(),
   ]);
   const podcastTerbaru = semuaPodcast.slice(0, 3);
   const { t, l } = await getT();
@@ -168,8 +171,8 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
           className="group block overflow-hidden rounded-xl border border-line bg-surface transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
         >
           <Image
-            src="/images/buku-perang-asimetris-skema-penjajahan-gaya-baru.jpg"
-            alt="Sampul buku Perang Asimetris terbitan Global Future Institute"
+            src={buku.cover}
+            alt={`Sampul buku ${buku.judul}`}
             width={1088}
             height={1452}
             sizes="320px"
@@ -180,11 +183,9 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
               {t("Buku pilihan")}
             </p>
             <p className="mt-2.5 font-display text-lg font-bold leading-snug tracking-tight text-ink">
-              Perang Asimetris &amp; Skema Penjajahan Gaya Baru
+              {buku.judul}
             </p>
-            <p className="mt-2 text-sm text-body">
-              Hendrajit, Global Future Institute (2019)
-            </p>
+            <p className="mt-2 text-sm text-body">{bookByline(buku)}</p>
             <span className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-accent">
               {t("Baca ulasannya")}
               <ArrowRight

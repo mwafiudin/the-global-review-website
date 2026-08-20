@@ -23,6 +23,7 @@ import { getT } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { dwibahasa } from "@/lib/seo";
 import { byAuthorCount } from "@/lib/wp/articles";
+import { wpMasthead } from "@/lib/wp/orang";
 
 export async function generateMetadata({
   params,
@@ -54,6 +55,7 @@ function Heading({ children }: { children: React.ReactNode }) {
 export default async function RedaksiPage() {
   const { lang, l } = await getT();
   const copy = redaksiCopy[lang];
+  const masthead = (await wpMasthead())[lang];
   const kontributor = (
     await Promise.all(
       authors.map(async (a) => ({ ...a, jumlah: await byAuthorCount(a.slug) }))
@@ -94,7 +96,7 @@ export default async function RedaksiPage() {
             <section>
               <Heading>{copy.susunanHeading}</Heading>
               <dl className="overflow-hidden rounded-2xl border border-line bg-surface">
-                {copy.masthead.map((m, i) => (
+                {masthead.map((m, i) => (
                   <div
                     key={m.peran}
                     className={`flex flex-col gap-1 px-6 py-5 sm:flex-row sm:items-baseline sm:justify-between ${

@@ -19,6 +19,14 @@ export interface HubungiKamiCopy {
   ikutiLabel: string;
 }
 
+/** Alamat kantor (tak diterjemahkan), satu baris tampilan per baris teks. */
+export const alamatKantor =
+  "DARIA Building, Suite 402\nJl. Iskandarsyah Raya No. 7\nKebayoran Baru, Jakarta Selatan";
+
+/** Lokasi yang dicari iframe peta Google. */
+export const petaQuery =
+  "Jl. Iskandarsyah Raya No. 7, Kebayoran Baru, Jakarta Selatan";
+
 export const hubungiKamiCopy: Record<Lang, HubungiKamiCopy> = {
   id: {
     metaTitle: "Hubungi Kami",
