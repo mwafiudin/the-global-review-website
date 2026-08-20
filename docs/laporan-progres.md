@@ -110,11 +110,27 @@ lewat kode.
   `docs/terjemahan-tersimpan-rencana.md` (terjemahan tersimpan di
   WordPress, gratis via kuota Azure; aktivasi menunggu keputusan).
 
+**8. Sorotan Judul: jarak aman di /en, wajib sebelum terbit, arsip terisi**
+
+- Pil sorotan tak lagi menempel kata di sebelahnya saat halaman /en
+  diterjemahkan (spasi batas frasa kini dilindungi dari mesin terjemah);
+  tampilan Indonesia tidak berubah. Dua penambal laten ikut: frasa yang
+  muncul dua kali di judul tidak lagi memotong ekor judul, dan frasa
+  ber-karakter khusus kini dicocokkan setelah dibersihkan seperti judulnya.
+- Kebijakan baru di wp-admin: **Sorotan Judul wajib diisi sebelum tulisan
+  terbit** — tombol Terbitkan terkunci + peringatan merah selama kosong;
+  menyimpan draf tetap bebas. (Aktif setelah `tgr-headless.php` v3.1.0
+  diunggah.)
+- Pengisi otomatis dijalankan ulang: kini **530 dari 887** tulisan
+  ber-sorotan; 357 sisanya tak punya frasa yang bisa ditebak mesin dan
+  akan terisi lewat aturan wajib di atas saat tulisannya disunting.
+
 ### Menunggu tindakan pemilik akses
 
 - **Unggah ulang dua mu-plugin** lewat cPanel File Manager:
-  `tgr-headless.php` v3.0.0 dan `tgr-revalidate.php` v1.1.0 — seluruh
-  butir di atas baru aktif di produksi setelah ini.
+  `tgr-headless.php` **v3.1.0** (termasuk aturan wajib Sorotan Judul) dan
+  `tgr-revalidate.php` v1.1.0 — seluruh butir di atas baru aktif di
+  produksi setelah ini.
 - Setelah itu, **jalankan dua skrip pemindah dengan `APPLY=1`** agar
   profil dan teks halaman berpindah dari kode ke wp-admin.
 - **Pembaruan inti WordPress 6.5.10 → 7.0.4**: runbook-nya sudah

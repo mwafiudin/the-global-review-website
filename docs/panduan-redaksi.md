@@ -63,7 +63,7 @@ spesifik (misalnya "Asia Tenggara" menang atas "Internasional").
 Tata letak sudah menangani judul panjang. Namun judul di atas ±15 kata
 akan mendominasi kartunya dan menenggelamkan yang lain.
 
-### 6. Sorotan Judul: coretan penanda pada frasa kunci
+### 6. Sorotan Judul: coretan penanda pada frasa kunci — WAJIB sebelum terbit
 
 Di sisi kanan layar edit ada kotak **Sorotan Judul**. Isi dengan satu
 frasa yang disalin **persis dari judul** — frasa itu akan diberi coretan
@@ -71,17 +71,22 @@ penanda (navy, atau emas pada mode gelap) di situs baru.
 
 - Pada artikel utama beranda dan halaman artikelnya, coretan langsung tampil.
 - Pada kartu artikel di daftar, coretan muncul saat kursor menyapu kartunya.
-- Kosongkan bila judulnya tidak perlu penanda — ini opsional.
+
+**Sejak Agustus 2026 kotak ini wajib untuk menerbitkan.** Saat kotaknya
+kosong, tombol Terbitkan/Perbarui terkunci dan muncul peringatan merah;
+isi frasanya, tombol langsung terbuka lagi. Menyimpan **draf** tidak
+pernah terkunci — tulisan setengah jadi tetap aman disimpan kapan pun.
 
 Frasa yang tidak ada di judul akan dikosongkan saat disimpan. Jadi kalau
 kotaknya kembali kosong setelah Perbarui, artinya frasanya belum cocok
 dengan judul — bukan gagal tersimpan. (Beda huruf besar-kecil dibetulkan
 otomatis.)
 
-Tulisan lama sudah diisikan sekali secara otomatis. **Tulisan baru tidak** —
-jadi kotak ini perlu diisi saat menulis. Di daftar **Tulisan** ada kolom
-**Sorotan** yang memperlihatkan mana yang masih kosong (bertanda "—"),
-supaya tidak perlu membuka satu per satu untuk memeriksanya.
+Sebagian besar tulisan lama sudah terisi otomatis (530 dari 887); sisanya
+menunggu tangan redaksi — tulisan lama yang masih kosong akan diminta
+mengisi saat pertama kali disunting dan diterbitkan ulang. Di daftar
+**Tulisan** ada kolom **Sorotan** yang memperlihatkan mana yang masih
+kosong (bertanda "—"), supaya tidak perlu membuka satu per satu.
 
 ---
 
