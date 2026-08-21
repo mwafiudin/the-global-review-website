@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.1.0
+ * Version:      3.1.1
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -1098,6 +1098,16 @@ add_filter(
 		if ( '' === $efektif ) {
 			$data['post_status'] = 'draft';
 			set_transient( 'tgr_sorotan_wajib_' . get_current_user_id(), 1, MINUTE_IN_SECONDS );
+			// redirect_post() memilih pesan sukses dari tombol yang ditekan,
+			// bukan dari status akhir — tanpa ini notice hijau "Pos
+			// diterbitkan." tampil berdampingan dengan notice merah di bawah.
+			// Didaftarkan di sini agar hanya berlaku pada request demosi ini.
+			add_filter(
+				'redirect_post_location',
+				function ( $location ) {
+					return remove_query_arg( 'message', $location );
+				}
+			);
 		}
 		return $data;
 	},
