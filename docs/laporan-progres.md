@@ -10,6 +10,55 @@ dan SUBSCRIBER. Butir 3.4 REAL-TIME dan 3.5 (analitik) dikerjakan pihak lain.
 
 ---
 
+## Periode 21 Agustus 2026
+
+### Status: seluruh arsip tayang praktis ber-sorotan; runbook pembaruan WordPress tertulis
+
+### Yang selesai
+
+**1. Pengisian sorotan menyeluruh — 870 dari 886 tulisan tayang**
+
+- 356 judul yang kemarin tak tertebak mesin kini dikurasi satu per satu:
+  tiap judul dibaca dan dipilihkan frasa kuncinya, diperiksa tiga lapis
+  (aturan bentuk, perbaikan otomatis, tinjauan redaksional), lalu
+  divalidasi ulang terhadap judul asli produksi sebelum ditulis — 340
+  terisi.
+- 16 sisanya memang tak layak dipil otomatis: judul satu kata ("Ganis",
+  "Poerba"), nama tokoh utuh ("Ong Hok Ham"), atau slogan/judul retoris
+  utuh ("No Viral, No Justice!") — terbuka untuk selera redaksi saat
+  menyuntingnya.
+- Temuan sampingan: pos id 21200 terbit dengan judul kosong (slug
+  `21200-2`) — pos hantu, perlu ditinjau redaksi.
+
+**2. Notif keliru di editor klasik dipadamkan (`tgr-headless.php` v3.1.1)**
+
+- Saat terbit ditahan karena sorotan kosong, WordPress tetap memamerkan
+  notice hijau "Pos diterbitkan." — core memilih pesan dari tombol yang
+  ditekan, bukan dari status akhir tulisan. Pesan sukses palsu itu kini
+  dibuang pada request demosi; yang tampil hanya peringatan merah.
+
+**3. Runbook pembaruan inti WordPress ditulis**
+
+- `docs/runbook-pembaruan-wordpress.md`: langkah klik-demi-klik dari sisi
+  pemilik akses — backup, plugin dulu baru inti 7.1, potret kesehatan
+  sebelum/sesudah (`periksa-kesehatan.mjs --banding`), jalur pemulihan.
+  Pembaca tidak terdampak apa pun hasilnya: situs disajikan Next.js dari
+  cache, terlepas hidup-matinya WordPress.
+
+### Menunggu tindakan pemilik akses
+
+- **Terbitkan ulang "Remilitarisasi Jepang…"** — artikel itu turun jadi
+  draf saat dipakai menguji aturan wajib sorotan; isi kotak Sorotan
+  Judul lalu terbitkan lagi (selama draf, ia hilang dari situs).
+- **Unggah `tgr-headless.php` v3.1.1** — urutannya: push dulu, tunggu CI
+  hijau (gerbang `php -l` ada di CI), baru unggah lewat cPanel File
+  Manager.
+- **Pembaruan inti WordPress → 7.1** mengikuti runbook baru — tinggal
+  menyepakati jendela pemeliharaan.
+- Tinjau pos hantu 21200: lengkapi judulnya atau arsipkan.
+
+---
+
 ## Periode 20 Agustus 2026
 
 ### Status: formulir kontak berfungsi; profil & halaman statis disunting dari wp-admin

@@ -72,19 +72,22 @@ penanda (navy, atau emas pada mode gelap) di situs baru.
 - Pada artikel utama beranda dan halaman artikelnya, coretan langsung tampil.
 - Pada kartu artikel di daftar, coretan muncul saat kursor menyapu kartunya.
 
-**Sejak Agustus 2026 kotak ini wajib untuk menerbitkan.** Saat kotaknya
-kosong, tombol Terbitkan/Perbarui terkunci dan muncul peringatan merah;
-isi frasanya, tombol langsung terbuka lagi. Menyimpan **draf** tidak
-pernah terkunci — tulisan setengah jadi tetap aman disimpan kapan pun.
+**Sejak Agustus 2026 kotak ini wajib untuk menerbitkan.** Di editor
+klasik, menekan Terbitkan/Perbarui dengan kotak kosong membuat tulisan
+disimpan sebagai **draf** disertai peringatan merah — isi frasanya, lalu
+terbitkan lagi. (Di editor blok, tombol Terbitkan terkunci sampai kotak
+terisi.) Menyimpan draf tidak pernah terkunci — tulisan setengah jadi
+tetap aman disimpan kapan pun.
 
 Frasa yang tidak ada di judul akan dikosongkan saat disimpan. Jadi kalau
 kotaknya kembali kosong setelah Perbarui, artinya frasanya belum cocok
 dengan judul — bukan gagal tersimpan. (Beda huruf besar-kecil dibetulkan
 otomatis.)
 
-Sebagian besar tulisan lama sudah terisi otomatis (530 dari 887); sisanya
-menunggu tangan redaksi — tulisan lama yang masih kosong akan diminta
-mengisi saat pertama kali disunting dan diterbitkan ulang. Di daftar
+Hampir seluruh tulisan tayang sudah ber-sorotan (870 dari 886). Enam
+belas sisanya berjudul terlalu pendek atau berupa idiom/slogan utuh
+(mis. "Ganis", "No Viral, No Justice!") sehingga sengaja tidak diisi
+otomatis — silakan isi menurut selera saat menyuntingnya. Di daftar
 **Tulisan** ada kolom **Sorotan** yang memperlihatkan mana yang masih
 kosong (bertanda "—"), supaya tidak perlu membuka satu per satu.
 
