@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.1.1
+ * Version:      3.2.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -1066,53 +1066,116 @@ add_action(
 
 /**
  * Kebijakan redaksi: tulisan tidak boleh terbit tanpa Sorotan Judul.
- * Draf tetap bebas disimpan — kuncian hanya menjaga gerbang terbit.
+ * Draf tetap bebas disimpan — gerbangnya hanya menjaga jalan menuju terbit.
  *
- * Dua jalur karena meta box klasik di editor blok disimpan TERPISAH dari
- * simpan utama (validasi server pada jalur REST membaca nilai lama, salah
- * blokir): editor blok dijaga skrip di sisi editor (kunci tombol Terbitkan
- * + notice), editor klasik dijaga filter wp_insert_post_data yang membaca
- * field dari request yang sama.
+ * Terbit bisa dicapai dari lebih dari satu pintu, dan tiap pintu membawa
+ * nilai sorotan di tempat yang berbeda:
+ *
+ *   form klasik        field ikut di request yang sama  → baca $_POST
+ *   Sunting Cepat      tidak mengirim field sama sekali → baca meta tersimpan
+ *   Sunting Massal     idem                             → baca meta tersimpan
+ *   penjadwalan        status 'future', lalu WP-Cron     → jaring transisi
+ *   editor blok        meta box menyusul di request lain → $_POST di request itu
+ *
+ * Sebelumnya hanya pintu pertama yang dijaga, sehingga pintu-pintu lain bisa
+ * menerbitkan tulisan tanpa sorotan tanpa keluhan apa pun.
  */
+function tgr_sorotan_berlaku( $post_id, $judul ) {
+	$frasa = '';
+	if ( isset( $_POST['tgr_sorotan'], $_POST['tgr_meta_nonce'] )
+		&& wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['tgr_meta_nonce'] ) ), 'tgr_simpan_meta' ) ) {
+		$frasa = sanitize_text_field( wp_unslash( $_POST['tgr_sorotan'] ) );
+	} elseif ( $post_id ) {
+		$frasa = (string) get_post_meta( $post_id, 'tgr_sorotan', true );
+	}
+	// Selaras penambal simpan: frasa yang tak ditemukan di judul (walau beda
+	// kapital) akan berakhir kosong — dianggap belum diisi.
+	return ( '' !== $frasa && false !== stripos( (string) $judul, $frasa ) ) ? $frasa : '';
+}
+
+/** Tandai agar peringatan merah muncul pada permintaan halaman berikutnya. */
+function tgr_sorotan_tandai_tertahan() {
+	set_transient( 'tgr_sorotan_wajib_' . get_current_user_id(), 1, MINUTE_IN_SECONDS );
+}
+
 add_filter(
 	'wp_insert_post_data',
 	function ( $data, $postarr ) {
-		if ( 'post' !== $data['post_type'] || 'publish' !== $data['post_status'] ) {
+		if ( 'post' !== $data['post_type'] ) {
 			return $data;
 		}
-		// Hanya jalur form klasik: field sorotan ikut di request ini. Request
-		// meta-box-loader Gutenberg (susulan setelah terbit) dikecualikan —
-		// menurunkan status di sana berarti membatalkan terbit diam-diam.
-		if ( ! isset( $_POST['tgr_sorotan'], $_POST['tgr_meta_nonce'] ) || isset( $_GET['meta-box-loader'] ) ) {
+		// 'future' ikut dijaga: menjadwalkan adalah menerbitkan, hanya nanti.
+		if ( ! in_array( $data['post_status'], array( 'publish', 'future' ), true ) ) {
 			return $data;
 		}
-		$nonce = sanitize_text_field( wp_unslash( $_POST['tgr_meta_nonce'] ) );
-		if ( ! wp_verify_nonce( $nonce, 'tgr_simpan_meta' ) ) {
+		// Simpan utama editor blok lewat REST membawa isi tulisan tanpa meta
+		// box klasik — meta sorotan baru ditulis pada request susulan. Membaca
+		// meta di sini berarti membaca nilai lama dan menahan terbit yang
+		// sebetulnya sah. Jalur itu punya penjaganya sendiri di bawah.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
 			return $data;
 		}
-		$frasa = sanitize_text_field( wp_unslash( $_POST['tgr_sorotan'] ) );
-		$judul = isset( $data['post_title'] ) ? wp_unslash( $data['post_title'] ) : '';
-		// Selaras penambal simpan: frasa yang tak ditemukan di judul (walau
-		// beda kapital) akan berakhir kosong — dianggap belum diisi.
-		$efektif = ( '' !== $frasa && false !== stripos( $judul, $frasa ) ) ? $frasa : '';
-		if ( '' === $efektif ) {
-			$data['post_status'] = 'draft';
-			set_transient( 'tgr_sorotan_wajib_' . get_current_user_id(), 1, MINUTE_IN_SECONDS );
-			// redirect_post() memilih pesan sukses dari tombol yang ditekan,
-			// bukan dari status akhir — tanpa ini notice hijau "Pos
-			// diterbitkan." tampil berdampingan dengan notice merah di bawah.
-			// Didaftarkan di sini agar hanya berlaku pada request demosi ini.
-			add_filter(
-				'redirect_post_location',
-				function ( $location ) {
-					return remove_query_arg( 'message', $location );
-				}
-			);
+		$post_id = isset( $postarr['ID'] ) ? (int) $postarr['ID'] : 0;
+		$judul   = isset( $data['post_title'] ) ? wp_unslash( $data['post_title'] ) : '';
+		// Tanpa field di request, satu-satunya sumber adalah meta tersimpan —
+		// dan itu berlaku juga bagi simpanan yang bukan perbuatan redaksi
+		// (plugin lain, cron, wp_update_post dari mana pun). Menurunkan
+		// tulisan yang SUDAH tayang atas dasar itu berarti 16 arsip tanpa
+		// sorotan bisa hilang dari situs karena sentuhan yang tak
+		// disengaja. Gerbang ini menjaga pintu masuk, bukan menyapu yang
+		// sudah di dalam.
+		if ( ! isset( $_POST['tgr_sorotan'], $_POST['tgr_meta_nonce'] )
+			&& 'publish' === get_post_status( $post_id ) ) {
+			return $data;
 		}
+		if ( '' !== tgr_sorotan_berlaku( $post_id, $judul ) ) {
+			return $data;
+		}
+		$data['post_status'] = 'draft';
+		tgr_sorotan_tandai_tertahan();
+		// redirect_post() memilih pesan sukses dari tombol yang ditekan,
+		// bukan dari status akhir — tanpa ini notice hijau "Pos
+		// diterbitkan." tampil berdampingan dengan notice merah di bawah.
+		// Didaftarkan di sini agar hanya berlaku pada request demosi ini.
+		add_filter(
+			'redirect_post_location',
+			function ( $location ) {
+				return remove_query_arg( 'message', $location );
+			}
+		);
 		return $data;
 	},
 	10,
 	2
+);
+
+/**
+ * Jaring terakhir untuk tulisan terjadwal.
+ *
+ * wp_publish_post() menulis status langsung ke basis data, jadi WP-Cron yang
+ * menerbitkan tulisan berstatus 'future' tidak pernah melewati filter di
+ * atas. Tanpa jaring ini, menjadwalkan adalah cara termudah menembus gerbang
+ * — dan yang paling tidak kelihatan, karena terjadi berjam-jam kemudian.
+ */
+add_action(
+	'transition_post_status',
+	function ( $baru, $lama, $post ) {
+		if ( 'publish' !== $baru || 'future' !== $lama || 'post' !== $post->post_type ) {
+			return;
+		}
+		if ( '' !== tgr_sorotan_berlaku( $post->ID, $post->post_title ) ) {
+			return;
+		}
+		wp_update_post(
+			array(
+				'ID'          => $post->ID,
+				'post_status' => 'draft',
+			)
+		);
+		tgr_sorotan_tandai_tertahan();
+	},
+	10,
+	3
 );
 
 add_action(
@@ -1129,9 +1192,17 @@ add_action(
 );
 
 /**
- * Editor blok: kunci tombol Terbitkan/Perbarui selama kotak Sorotan Judul
- * kosong. Kuncian aktif hanya saat panel pra-terbit terbuka atau tulisan
- * sudah berstatus terbit — menyimpan draf tidak pernah terkunci.
+ * Editor blok: kunci tombol Terbitkan selama kotak Sorotan Judul kosong.
+ *
+ * Ini lapis kenyamanan, bukan gerbangnya. Gerbangnya ada di filter di atas:
+ * request meta-box-loader yang menyusul simpan utama bukan request REST dan
+ * membawa nilai sorotan yang benar-benar diketik, jadi ikut diperiksa di
+ * sana. Kuncian ini menahan lebih awal supaya redaksi tidak sempat mengira
+ * tulisannya sudah tayang.
+ *
+ * Yang sengaja TIDAK dikunci: tulisan yang sudah terbit tanpa sorotan.
+ * Mengunci penyimpanannya berarti mengunci satu-satunya suntingan yang bisa
+ * memperbaikinya — persis 16 tulisan arsip yang panduan minta dilengkapi.
  */
 add_action(
 	'admin_footer',
@@ -1155,16 +1226,27 @@ add_action(
 				if ( ! input ) {
 					return;
 				}
-				var editor     = wp.data.select( 'core/editor' );
-				var editPost   = wp.data.select( 'core/edit-post' );
-				var kosong     = '' === input.value.trim();
-				var sudahTerbit = 'publish' === editor.getEditedPostAttribute( 'status' );
-				var panelTerbit = !! ( editPost && editPost.isPublishSidebarOpened && editPost.isPublishSidebarOpened() );
-				if ( kosong && ( sudahTerbit || panelTerbit ) ) {
+				var editor   = wp.data.select( 'core/editor' );
+				var editPost = wp.data.select( 'core/edit-post' );
+				var kosong   = '' === input.value.trim();
+				// Status yang SEDANG DISUNTING, bukan yang tersimpan: menekan
+				// Terbitkan mengubah nilai ini lebih dulu, jadi niat terbit
+				// tertangkap walau pemeriksaan pra-terbit dimatikan.
+				var akanTerbit = 'publish' === editor.getEditedPostAttribute( 'status' ) ||
+					!! ( editPost && editPost.isPublishSidebarOpened && editPost.isPublishSidebarOpened() );
+				var sudahTayang = 'publish' === editor.getCurrentPost().status;
+
+				// Tulisan yang sudah tayang tanpa sorotan tidak dikunci —
+				// lihat catatan di atas: kuncian akan menghalangi perbaikannya
+				// sendiri. Peringatannya tetap tampil.
+				if ( kosong && akanTerbit && ! sudahTayang ) {
 					wp.data.dispatch( 'core/editor' ).lockPostSaving( KUNCI );
-					wp.data.dispatch( 'core/notices' ).createNotice( 'error', PESAN, { id: NOTICE, isDismissible: false } );
 				} else {
 					wp.data.dispatch( 'core/editor' ).unlockPostSaving( KUNCI );
+				}
+				if ( kosong && ( akanTerbit || sudahTayang ) ) {
+					wp.data.dispatch( 'core/notices' ).createNotice( 'error', PESAN, { id: NOTICE, isDismissible: false } );
+				} else {
 					wp.data.dispatch( 'core/notices' ).removeNotice( NOTICE );
 				}
 			}
