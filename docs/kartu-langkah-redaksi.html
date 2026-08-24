@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kartu Langkah Redaksi — The Global Review</title>
+<style>
+/* Lembar tempel A4 untuk redaksi. Sengaja bukan salinan panduan lengkap:
+   panduan-redaksi.md tetap sumber kebenaran, kartu ini hanya enam langkah
+   yang dilihat tiap hari. Token warna & huruf mengikuti situs (globals.css);
+   tidak ada aset eksternal supaya bisa dicetak tanpa internet. */
+
+@page { size: A4; margin: 14mm 14mm 12mm; }
+
+:root {
+  --ink: #111111;
+  --body: #333333;
+  /* Abu di sini lebih gelap daripada --meta situs (#9a9a9a): tinta di
+     kertas tidak bercahaya seperti layar, dan pembacanya berusia lanjut.
+     Semua pasangan warna di lembar ini diukur >= 5.2:1 terhadap latarnya. */
+  --meta: #545454;
+  --line: #e8e8e8;
+  --accent: #0b3d91;
+  --brand: #b27d0f;
+  --tanda: #b3261e;
+}
+
+* { box-sizing: border-box; }
+
+html { background: #f4f4f2; }
+
+body {
+  margin: 0;
+  font-family: Cardo, Georgia, "Times New Roman", serif;
+  font-size: 12pt;
+  line-height: 1.5;
+  color: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.lembar {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 14mm 14mm 12mm;
+  margin: 0 auto 8mm;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+/* ── Kepala ─────────────────────────────────────────────────────── */
+
+.kepala {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8mm;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 3mm;
+}
+
+.kop {
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 8.5pt;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--meta);
+}
+
+h1 {
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 17pt;
+  line-height: 1.15;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 1mm;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  margin: 2mm 0 4mm;
+  font-size: 11pt;
+  color: var(--meta);
+}
+
+/* ── Langkah ────────────────────────────────────────────────────── */
+
+.langkah {
+  display: grid;
+  grid-template-columns: 11mm 1fr;
+  gap: 0 4mm;
+  padding: 2.5mm 0;
+  border-bottom: 1px solid var(--line);
+  break-inside: avoid;
+}
+
+.langkah:last-of-type { border-bottom: 0; }
+
+.nomor {
+  grid-row: span 2;
+  width: 9mm;
+  height: 9mm;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 11pt;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.5mm;
+}
+
+.judul-langkah {
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 12.5pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 1mm;
+}
+
+.langkah p { margin: 0; }
+
+.langkah .di-mana {
+  display: block;
+  margin-top: 1.5mm;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 9.5pt;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--meta);
+}
+
+.wajib {
+  display: inline-block;
+  margin-left: 2mm;
+  padding: 0.4mm 2mm;
+  border: 1px solid var(--tanda);
+  border-radius: 2mm;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 9pt;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tanda);
+  vertical-align: 1.2mm;
+}
+
+/* ── Gambar ─────────────────────────────────────────────────────── */
+
+figure {
+  margin: 2.5mm 0 0;
+  break-inside: avoid;
+}
+
+/* Slot gambar diisi oleh wordpress/potret/potret-wp-admin.mjs. Selama
+   berkasnya belum ada, teks alt tampil di dalam bingkai — bukan ikon
+   rusak yang menggantung. */
+figure img {
+  display: block;
+  width: 100%;
+  max-width: 96mm;
+  min-height: 18mm;
+  /* Dipagari supaya tangkapan layar setinggi apa pun tidak menggeser
+     langkah berikutnya ke halaman lain. */
+  max-height: 20mm;
+  height: auto;
+  object-fit: contain;
+  object-position: left top;
+  padding: 2.5mm;
+  border: 1px solid var(--line);
+  border-radius: 1mm;
+  background: #fafaf9;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 9.5pt;
+  color: var(--meta);
+}
+
+figcaption {
+  margin-top: 1.5mm;
+  font-size: 9.5pt;
+  color: var(--meta);
+}
+
+/* ── Kotak peringatan ───────────────────────────────────────────── */
+
+.kotak {
+  margin-top: 5mm;
+  padding: 3.5mm 5mm;
+  border: 0.4mm solid var(--tanda);
+  background: #fbf4f3;
+  break-inside: avoid;
+}
+
+.kotak.tenang {
+  border-color: var(--brand);
+  background: #fbf7ef;
+}
+
+.kotak h2 {
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 12pt;
+  font-weight: 700;
+  color: var(--tanda);
+  margin: 0 0 2mm;
+}
+
+.kotak.tenang h2 { color: #8a5f08; }
+
+.kotak ol,
+.kotak ul { margin: 0; padding-left: 5mm; }
+
+.kotak li { margin-bottom: 1.5mm; }
+
+.kotak li:last-child { margin-bottom: 0; }
+
+h2.bab {
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 14pt;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 0 0 4mm;
+  padding-bottom: 2mm;
+  border-bottom: 2px solid var(--ink);
+}
+
+/* ── Kaki ───────────────────────────────────────────────────────── */
+
+.kaki {
+  margin-top: 5mm;
+  padding-top: 2.5mm;
+  border-top: 1px solid var(--line);
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 9pt;
+  color: var(--meta);
+  display: flex;
+  justify-content: space-between;
+  gap: 6mm;
+}
+
+.kaki strong { color: var(--body); font-weight: 600; }
+
+@media print {
+  html, body { background: #fff; }
+  .lembar {
+    width: auto;
+    min-height: 0;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+  }
+  .lembar + .lembar { break-before: page; }
+  .cetak-petunjuk { display: none; }
+}
+
+.cetak-petunjuk {
+  max-width: 210mm;
+  margin: 6mm auto 0;
+  padding: 0 14mm;
+  font-family: Montserrat, "Segoe UI", system-ui, sans-serif;
+  font-size: 10pt;
+  color: var(--meta);
+}
+</style>
+</head>
+<body>
+
+<!-- ══ Halaman 1 ══════════════════════════════════════════════════ -->
+<section class="lembar">
+
+  <div class="kepala">
+    <h1>Enam langkah<br>sebelum Terbitkan</h1>
+    <div class="kop">The Global Review<br>Redaksi</div>
+  </div>
+
+  <p class="sub">Tempel di sebelah komputer. Kurang dari satu menit,
+    dikerjakan setiap kali menerbitkan tulisan.</p>
+
+  <div class="langkah">
+    <div class="nomor">1</div>
+    <div>
+      <p class="judul-langkah">Gambar Unggulan</p>
+      <p>Satu gambar <strong>mendatar</strong>, sekitar 1200 × 630 piksel.
+        Gambar tegak terpotong atas-bawahnya.</p>
+      <span class="di-mana">Kotak “Featured Image”, sisi kanan layar</span>
+    </div>
+  </div>
+
+  <div class="langkah">
+    <div class="nomor">2</div>
+    <div>
+      <p class="judul-langkah">Kutipan</p>
+      <p>Satu sampai dua kalimat. Inilah yang dibaca orang di beranda dan di
+        Google. Dibiarkan kosong, sistem memotong kalimat pertama tulisan,
+        sering terputus di tengah.</p>
+      <span class="di-mana">Kotak “Kutipan”, di bawah editor</span>
+    </div>
+  </div>
+
+  <div class="langkah">
+    <div class="nomor">3</div>
+    <div>
+      <p class="judul-langkah">Sorotan Judul <span class="wajib">Wajib</span></p>
+      <p>Salin satu frasa <strong>persis dari judul</strong>. Tanpa diisi,
+        tulisan tidak terbit — ia turun menjadi draf.</p>
+      <span class="di-mana">Kotak “Sorotan Judul”, sisi kanan layar</span>
+      <figure>
+        <img src="gambar/wp-sorotan-judul.png"
+             alt="Kotak Sorotan Judul di sisi kanan layar sunting, berisi satu frasa yang disalin dari judul">
+        <figcaption>Kalau kotaknya kembali kosong setelah disimpan,
+          frasanya belum cocok dengan judul.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="langkah">
+    <div class="nomor">4</div>
+    <div>
+      <p class="judul-langkah">Rubrik</p>
+      <p>Pilih dari kategori yang sudah ada; boleh lebih dari satu. Butuh
+        rubrik baru? Kabari pengelola situs dulu.</p>
+      <span class="di-mana">Kotak “Kategori”, sisi kanan layar</span>
+    </div>
+  </div>
+
+  <div class="langkah">
+    <div class="nomor">5</div>
+    <div>
+      <p class="judul-langkah">Artikel utama beranda</p>
+      <p>Hanya bila tulisan ini yang mau ditaruh besar di paling atas
+        beranda. <strong>Lepas dulu centang tulisan sebelumnya.</strong></p>
+      <span class="di-mana">Terbitkan → Visibilitas → Sunting → “Lekatkan di atas blog”</span>
+    </div>
+  </div>
+
+  <div class="langkah">
+    <div class="nomor">6</div>
+    <div>
+      <p class="judul-langkah">Terbitkan, lalu tunggu warna hijau</p>
+      <p><strong>Hijau</strong> berarti situs sudah diperbarui.
+        <strong>Kuning</strong> tetap aman: tulisan menyusul paling lama satu
+        jam.</p>
+      <span class="di-mana">Pemberitahuan di atas layar sunting</span>
+    </div>
+  </div>
+
+  <div class="kaki">
+    <span>Panduan lengkap: <strong>docs/panduan-redaksi.md</strong></span>
+    <span>Menyimpan draf tidak pernah terkunci</span>
+  </div>
+
+</section>
+
+<!-- ══ Halaman 2 ══════════════════════════════════════════════════ -->
+<section class="lembar">
+
+  <h2 class="bab">Bila ada yang terlihat aneh</h2>
+
+  <div class="kotak">
+    <h2>Kalau muncul peringatan merah</h2>
+    <p>Tulisan Anda <strong>turun menjadi draf</strong> dan belum tayang.
+      Hampir selalu karena langkah 3: kotak Sorotan Judul masih kosong.
+      Isi frasanya, lalu tekan Terbitkan sekali lagi. Tidak ada yang
+      hilang — isi tulisan Anda tetap tersimpan utuh.</p>
+  </div>
+
+  <div class="kotak tenang">
+    <h2>Yang tidak perlu dikhawatirkan</h2>
+    <ul>
+      <li>Situs tidak akan pernah menampilkan tulisan yang belum
+        diterbitkan.</li>
+      <li>Menghapus tulisan di wp-admin selalu ikut menghapusnya dari
+        situs.</li>
+      <li>Menyimpan draf tidak pernah terkunci, sekalipun kotak Sorotan
+        Judul masih kosong.</li>
+    </ul>
+  </div>
+
+  <div class="kotak">
+    <h2>Empat langkah bila tulisan tidak muncul</h2>
+    <ol>
+      <li><strong>Baru beberapa menit?</strong> Muat ulang paksa halaman
+        dengan <strong>Ctrl + Shift + R</strong>. Sering kali itu hanya
+        ingatan peramban Anda sendiri.</li>
+      <li><strong>Sudah lewat satu jam?</strong> Laporkan ke pengelola
+        situs, sertakan tautan tulisannya.</li>
+      <li><strong>Gambarnya yang tidak tampil?</strong> Periksa Gambar
+        Unggulan sudah terpasang di wp-admin.</li>
+      <li><strong>Rubriknya salah?</strong> Kemungkinan kategorinya baru
+        dan belum didaftarkan di situs. Laporkan nama kategorinya.</li>
+    </ol>
+  </div>
+
+  <div class="kotak tenang">
+    <h2>Kabari pengelola dulu, jangan langsung</h2>
+    <p>Membuat <strong>rubrik baru</strong>, menambah <strong>penulis
+      baru</strong>, atau membuat <strong>Halaman</strong> baru (bukan Pos)
+      perlu penyesuaian kecil di situs lebih dulu. Ketiganya bukan
+      larangan — yang berbahaya adalah melakukannya diam-diam, karena
+      <strong>tidak ada pesan galat apa pun</strong> yang muncul.</p>
+    <p style="margin-top:2.5mm">Satu larangan sungguhan:
+      <strong>jangan mengubah alamat (slug) kategori</strong> yang sudah
+      ada. Mengganti nama tampilannya aman; mengganti alamatnya membuat
+      tulisan di dalamnya kehilangan rubrik — tanpa peringatan.</p>
+  </div>
+
+  <div class="kaki">
+    <span>Panduan lengkap: <strong>docs/panduan-redaksi.md</strong></span>
+    <span>Pertanyaan lain: hubungi pengelola situs</span>
+  </div>
+
+</section>
+
+<p class="cetak-petunjuk">Untuk mencetak: tekan <strong>Ctrl + P</strong>,
+  pilih ukuran kertas <strong>A4</strong>, dan pastikan pilihan
+  <strong>“Grafik latar belakang”</strong> (Background graphics) dicentang
+  agar kotak-kotak berwarnanya ikut tercetak. Catatan ini tidak ikut
+  tercetak.</p>
+
+</body>
+</html>

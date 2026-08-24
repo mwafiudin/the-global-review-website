@@ -18,9 +18,17 @@ Setiap kali menyimpan, di layar sunting akan muncul pemberitahuan hijau
 yang muncul kuning, tulisan Anda **tetap aman dan tetap akan tampil** —
 paling lama satu jam kemudian; laporkan saja bila sering terjadi.
 
+![Pemberitahuan di atas layar sunting wp-admin setelah tulisan disimpan](gambar/wp-notice-situs-diperbarui.png)
+
+*Pemberitahuan ini muncul di atas layar sunting setiap kali Anda menyimpan.*
+
 ---
 
-## Lima kebiasaan yang sangat memengaruhi tampilan
+## Enam kebiasaan yang sangat memengaruhi tampilan
+
+![Layar sunting tulisan di wp-admin dengan empat penanda bernomor](gambar/wp-edit-pos-peta.png)
+
+*Layar sunting tulisan. **1** judul · **2** Gambar Unggulan · **3** Sorotan Judul · **4** panel Terbitkan.*
 
 ### 1. Gambar Unggulan itu wajib
 
@@ -32,6 +40,10 @@ hubungannya dengan isi.
 Ukuran ideal **1200 × 630 piksel** (mendatar). Gambar tegak akan terpotong
 di bagian atas dan bawah.
 
+![Kotak Featured Image di sisi kanan layar sunting](gambar/wp-gambar-unggulan.png)
+
+*Kotak Featured Image, di sisi kanan layar sunting.*
+
 ### 2. Kutipan (Excerpt) adalah ringkasan yang dibaca orang
 
 Kolom **Kutipan** di bawah editor menjadi teks ringkasan di kartu artikel
@@ -40,6 +52,10 @@ kalimat-kalimat pertama tulisan — sering terpotong di tengah kalimat.
 
 Tulis 1–2 kalimat yang membuat orang ingin membaca. Ini pekerjaan lima
 belas detik yang berdampak besar.
+
+![Kotak Kutipan di bawah editor tulisan](gambar/wp-kutipan.png)
+
+*Kotak Kutipan, di bawah editor tulisan.*
 
 ### 3. "Lekatkan di atas blog" menentukan artikel utama beranda
 
@@ -51,6 +67,10 @@ utama besar di paling atas beranda**.
 - **Lepas centang tulisan sebelumnya** ketika mengganti — kalau tidak,
   yang tampil bisa bukan yang Anda maksud.
 - Tanpa ada yang dicentang, beranda menampilkan tulisan terbaru.
+
+![Panel Terbitkan dengan Visibilitas terbuka dan centang Lekatkan di atas blog ditandai](gambar/wp-terbitkan-visibilitas-lekatkan.png)
+
+*Panel Terbitkan setelah **Visibilitas → Sunting** diklik. **1** centang “Lekatkan di atas blog”.*
 
 ### 4. Rubrik: pilih dari yang sudah ada
 
@@ -72,24 +92,65 @@ penanda (navy, atau emas pada mode gelap) di situs baru.
 - Pada artikel utama beranda dan halaman artikelnya, coretan langsung tampil.
 - Pada kartu artikel di daftar, coretan muncul saat kursor menyapu kartunya.
 
-**Sejak Agustus 2026 kotak ini wajib untuk menerbitkan.** Di editor
-klasik, menekan Terbitkan/Perbarui dengan kotak kosong membuat tulisan
-disimpan sebagai **draf** disertai peringatan merah — isi frasanya, lalu
-terbitkan lagi. (Di editor blok, tombol Terbitkan terkunci sampai kotak
-terisi.) Menyimpan draf tidak pernah terkunci — tulisan setengah jadi
-tetap aman disimpan kapan pun.
+![Kotak Sorotan Judul di sisi kanan layar sunting](gambar/wp-sorotan-judul.png)
+
+*Kotak Sorotan Judul. **1** frasa yang disalin persis dari judul.*
+
+**Sejak Agustus 2026 kotak ini wajib untuk menerbitkan.** Menekan
+Terbitkan dengan kotak kosong membuat tulisan disimpan sebagai **draf**
+disertai peringatan merah — isi frasanya, lalu terbitkan lagi.
+
+Yang dijaga bukan cuma tombol Terbitkan di layar sunting. **Sunting
+Cepat**, **Sunting Massal**, dan **penjadwalan** juga diperiksa: tulisan
+tanpa sorotan yang dijadwalkan akan tetap menjadi draf pada waktu
+tayangnya, bukan terbit diam-diam. Satu-satunya jalur yang tidak
+diperiksa adalah skrip pengelola situs — dan itu memang bukan pekerjaan
+redaksi.
+
+**Menyimpan draf tidak pernah terkunci** — tulisan setengah jadi tetap
+aman disimpan kapan pun. Begitu pula tulisan lama yang sudah tayang tanpa
+sorotan: ia tetap bisa dibuka, disunting, dan disimpan. Peringatannya
+muncul, tapi tidak menghalangi Anda memperbaikinya.
+
+![Peringatan merah di wp-admin: Sorotan Judul wajib diisi sebelum terbit](gambar/wp-sorotan-peringatan-merah.png)
+
+*Yang muncul bila Terbitkan ditekan dengan kotak Sorotan Judul kosong.*
 
 Frasa yang tidak ada di judul akan dikosongkan saat disimpan. Jadi kalau
 kotaknya kembali kosong setelah Perbarui, artinya frasanya belum cocok
 dengan judul — bukan gagal tersimpan. (Beda huruf besar-kecil dibetulkan
 otomatis.)
 
-Hampir seluruh tulisan tayang sudah ber-sorotan (870 dari 886). Enam
+Hampir seluruh tulisan tayang sudah ber-sorotan (871 dari 887). Enam
 belas sisanya berjudul terlalu pendek atau berupa idiom/slogan utuh
 (mis. "Ganis", "No Viral, No Justice!") sehingga sengaja tidak diisi
 otomatis — silakan isi menurut selera saat menyuntingnya. Di daftar
 **Tulisan** ada kolom **Sorotan** yang memperlihatkan mana yang masih
 kosong (bertanda "—"), supaya tidak perlu membuka satu per satu.
+
+![Daftar Tulisan di wp-admin dengan kolom Sorotan ditandai](gambar/wp-daftar-tulisan-kolom-sorotan.png)
+
+*Daftar **Tulisan**. **1** kolom Sorotan — yang masih kosong bertanda “—”.*
+
+---
+
+## Checklist sebelum menekan Terbitkan
+
+Enam butir, kurang dari satu menit. Versi cetaknya ada di
+`kartu-langkah-redaksi.html` — buka di peramban lalu Ctrl+P bila ingin
+menempelnya di sebelah komputer.
+
+1. **Gambar Unggulan** terpasang, mendatar, sekitar 1200 × 630 piksel.
+2. **Kutipan** terisi 1–2 kalimat.
+3. **Sorotan Judul** terisi, disalin persis dari judul. *Tanpa ini
+   tulisan tidak akan terbit.*
+4. **Rubrik** dipilih dari yang sudah ada.
+5. **"Lekatkan di atas blog"** — hanya bila tulisan ini yang mau jadi
+   artikel utama, dan centang yang lama sudah dilepas.
+6. Tekan **Terbitkan**, lalu tunggu pemberitahuan **hijau** muncul.
+
+Bila yang muncul peringatan **merah**, tulisan Anda turun menjadi draf:
+hampir selalu karena butir 3. Isi kotaknya, lalu terbitkan lagi.
 
 ---
 
@@ -122,8 +183,26 @@ Untuk penampilan tim GFI di kanal media lain. Isi: judul, kanal,
 narasumber, format, **video YouTube** (boleh tempel tautan penuh — sistem
 mengambil sendiri kodenya), tanggal tayang, dan ringkasan di editor.
 
+**Podcast tanpa video YouTube tidak tampil di situs** — sama seperti
+album tanpa foto. Kalau sebuah penampilan sudah diterbitkan tapi tidak
+muncul, itu kolom pertama yang perlu diperiksa.
+
+Dua kolom yang berdiam diri bila salah isi: **tautan YouTube** yang tidak
+dikenali bentuknya, dan **tanggal** yang diketik bebas alih-alih dipilih
+dari kalender, sama-sama tersimpan sebagai kosong tanpa pesan galat. Bila
+sepulang menyimpan kolomnya kembali kosong, isinya belum diterima —
+tempel ulang tautannya, dan pilih tanggal lewat kalendernya.
+
 Centang **"Penampilan utama"** untuk menaruhnya besar di atas halaman
 Podcast — mencentang yang baru otomatis melepas yang lama.
+
+![Kotak Detail Penampilan pada layar Podcast baru](gambar/wp-podcast-detail.png)
+
+*Kotak **Detail Penampilan**. **1** kolom video YouTube · **2** tanggal tayang, pilih lewat kalender.*
+
+![Daftar Podcast di wp-admin dengan kolom Kanal, Format, Tayang, dan Utama](gambar/wp-podcast-daftar.png)
+
+*Daftar Podcast: kolom Kanal, Format, Tayang, dan Utama.*
 
 ### Album Galeri
 
@@ -134,6 +213,10 @@ tidak akan tampil di situs.**
 
 Keterangan tiap foto diambil dari kolom *Caption* foto itu di Media
 Library — isilah di sana bila ingin ada teks di bawah foto.
+
+![Kotak Detail Album dengan tombol Pilih foto ditandai](gambar/wp-album-detail.png)
+
+*Kotak **Detail Album**. **1** tombol Pilih foto — bisa memilih banyak foto sekaligus.*
 
 Contoh album yang dulu mengisi halaman Galeri sudah dihapus. Selama belum
 ada satu album pun yang terbit, halaman itu menampilkan keterangan
@@ -146,14 +229,28 @@ Isi pertanyaan, pilih **artikel sumber** (kartu jajak pendapat menautkan
 pembaca ke sana — wajib), tanggal tutup, lalu daftar pilihan jawaban.
 Tombol **Tambah pilihan** untuk menambah baris. Minimal dua pilihan.
 
+Daftar **artikel sumber** hanya memuat **100 tulisan terbaru**. Bila jajak
+pendapatnya tentang artikel yang lebih lama, artikel itu tidak akan ada di
+daftar — mintakan bantuan pengelola situs.
+
+![Kotak Isi Jajak Pendapat dengan pemilih artikel sumber dan tombol Tambah pilihan](gambar/wp-jajak-detail.png)
+
+*Kotak **Isi Jajak Pendapat**. **1** pemilih artikel sumber · **2** tombol Tambah pilihan.*
+
 Kolom **"Suara awal"** adalah angka pembuka sebelum pembaca ikut memilih —
 isi 0 bila ingin mulai dari nol.
 
 **Melihat hasilnya:** buka kembali jajak pendapat itu, dan di bawah tabel
 pilihan ada bagian **Suara pembaca** — berisi jumlah suara nyata per
-pilihan, terpisah dari angka pembuka yang Anda ketik. Layar daftar Jajak
-Pendapat juga punya kolom **Suara** berisi totalnya. Angka ini dihitung
-otomatis dari situs dan tidak bisa disunting.
+pilihan, terpisah dari angka pembuka yang Anda ketik. Selama belum ada
+satu pembaca pun yang memilih, bagian itu hanya berbunyi **"Belum ada
+pembaca yang memilih."** — tabelnya muncul setelah suara pertama masuk.
+Layar daftar Jajak Pendapat juga punya kolom **Suara** berisi totalnya.
+Angka ini dihitung otomatis dari situs dan tidak bisa disunting.
+
+![Bagian Suara pembaca di bawah tabel pilihan jajak pendapat](gambar/wp-jajak-suara-pembaca.png)
+
+*Bagian **Suara pembaca**, di bawah tabel pilihan.*
 
 Satu pembaca dihitung sekali per jajak pendapat (dibatasi per perangkat dan
 per alamat internet selama 24 jam). Ini penahan wajar, bukan pengaman
@@ -171,22 +268,39 @@ Bukan menu tersendiri — **ulasan buku ditulis seperti tulisan biasa**, cukup
 beri kategori **Bedah Buku**. Ulasan itu otomatis muncul di halaman Bedah
 Buku situs baru.
 
-Bila yang diulas memang sebuah buku, isi kotak **Identitas Buku** di bagian
-bawah layar edit: judul buku, penulis, penerbit, tahun, ISBN, dan sampul.
-Semuanya opsional — yang kosong disembunyikan, tidak menyisakan ruang
-kosong. Sampul sebaiknya foto sampul buku (potret), bukan gambar artikel
-biasa; kalau dikosongkan, Gambar Unggulan tulisan yang dipakai.
+Bila yang diulas memang sebuah buku, isi kotak **Identitas Buku — rubrik
+Bedah Buku** di bagian bawah layar edit: judul buku, penulis, penerbit,
+tahun, ISBN, dan sampul. Semuanya opsional — yang kosong disembunyikan,
+tidak menyisakan ruang kosong. Sampul sebaiknya foto sampul buku (potret),
+bukan gambar artikel biasa; kalau dikosongkan, Gambar Unggulan tulisan
+yang dipakai. Kolom penulis ada dua: satu ringkas untuk kartu, satu
+lengkap untuk halaman ulasannya. Dikosongkan keduanya, situs menulis
+"Redaksi".
+
+Kotak ini muncul di **semua** layar sunting tulisan, bukan hanya yang
+berkategori Bedah Buku. Pada tulisan biasa, biarkan saja kosong — tidak
+ada pengaruhnya.
 
 Di kotak yang sama ada centang **"Buku pilihan sidebar"**: buku yang
 dicentang tampil sebagai kartu promosi di kolom samping situs. Satu buku
 saja pada satu waktu — mencentang yang baru otomatis melepas yang lama,
 sama seperti "Penampilan utama" di Podcast.
 
+![Kotak Identitas Buku — rubrik Bedah Buku di bagian bawah layar sunting](gambar/wp-identitas-buku.png)
+
+*Kotak **Identitas Buku — rubrik Bedah Buku**, di bagian bawah layar sunting.*
+
 ### Pelanggan Buletin
 
 Daftar pembaca yang mendaftar lewat formulir di situs. Hanya untuk
 dilihat — tidak bisa ditambah manual. Tombol **Unduh CSV** mengekspor
-seluruh daftarnya kapan saja.
+seluruh daftarnya kapan saja; tombol itu hanya tampil bagi Editor dan
+Administrator, jadi kalau Anda tidak melihatnya, itu bukan kekeliruan
+panduan.
+
+![Daftar Pelanggan Buletin di wp-admin dengan alamat email yang disamarkan](gambar/wp-pelanggan-buletin.png)
+
+*Daftar Pelanggan Buletin. Alamat email pada gambar ini sengaja diganti contoh.*
 
 Daftar ini berisi **data pribadi pembaca**: jangan dibagikan ke luar
 redaksi, dan gunakan hanya untuk mengirim buletin sebagaimana yang
@@ -196,9 +310,16 @@ dijanjikan saat mereka mendaftar.
 
 Kiriman formulir **Hubungi Kami** di situs. Tiap pesan tampil dengan nama
 pengirim sebagai judulnya; buka untuk melihat email, telepon, subjek, dan
-isi pesannya. Semuanya **hanya untuk dibaca** — tidak bisa disunting, dan
-tidak bisa ditambah manual. Tombol **Unduh CSV** mengekspor seluruh
-daftarnya kapan saja.
+isi pesannya. **Isi pesannya hanya untuk dibaca** — tidak bisa disunting,
+dan pesan tidak bisa ditambah manual. (Judulnya, yaitu nama pengirim,
+secara teknis masih bisa diubah — sebaiknya jangan, supaya daftarnya tetap
+mencerminkan kiriman aslinya.) Tombol **Unduh CSV** mengekspor seluruh
+daftarnya kapan saja, dan seperti di Pelanggan Buletin hanya tampil bagi
+Editor dan Administrator.
+
+![Daftar Pesan Masuk di wp-admin dengan nama dan email pengirim yang disamarkan](gambar/wp-pesan-masuk.png)
+
+*Daftar Pesan Masuk. **1** kolom Notifikasi. Nama dan email pada gambar ini sengaja diganti contoh.*
 
 Setiap pesan baru juga dikirim sebagai **email pemberitahuan**. Membalas
 email itu langsung sampai ke si penanya — alamat balasannya sudah
@@ -219,17 +340,29 @@ dibagikan ke luar redaksi.
 Menu ini mengisi dua halaman situs sekaligus: **Pengurus GFI** dan
 **Redaksi** (susunan redaksi). Satu orang = satu entri:
 
+Layar ini tidak punya editor tulisan seperti Pos — hanya kolom Nama dan
+satu kotak besar bernama **Detail Profil** tepat di bawahnya. Semua isian
+ada di kotak itu.
+
 - **Nama** ditulis sebagai judul.
-- **Kelompok** dipilih di kotak sisi kanan — *Pengurus* atau *Redaksi* —
-  menentukan orangnya tampil di halaman mana. Orang yang ada di keduanya
-  dibuat dua entri.
+- **Kelompok** dipilih di baris paling atas kotak **Detail Profil** —
+  *Pengurus GFI* atau *Susunan Redaksi* — menentukan orangnya tampil di
+  halaman mana. Orang yang ada di keduanya dibuat dua entri.
 - **Foto** dipasang lewat **Gambar Unggulan**, seperti pada tulisan biasa.
-- **Jabatan** dan **bio** diisi di kotak isian di bawah editor. Kolom
+- **Jabatan** dan **bio** diisi di kotak **Detail Profil** yang sama. Kolom
   versi Inggrisnya boleh dikosongkan — halaman bahasa Inggris memakai
   teks Indonesia sebagai gantinya.
 - **Urutan tampil** diatur di kotak **Atribut → Urutan**: angka kecil
   tampil lebih dulu. Bisa juga diubah cepat lewat **Sunting Cepat** di
   daftarnya, tanpa membuka entri satu per satu.
+
+![Kotak Detail Profil dengan pilihan Kelompok dan kolom Jabatan ditandai](gambar/wp-orang-detail-profil.png)
+
+*Kotak **Detail Profil**. **1** pilihan Kelompok: Pengurus GFI atau Susunan Redaksi · **2** Jabatan.*
+
+![Kotak Atribut dengan kolom Urutan pada layar Pengurus & Redaksi](gambar/wp-orang-atribut-urutan.png)
+
+*Kotak **Atribut** — angka kecil tampil lebih dulu.*
 
 Syarat tampil berbeda per kelompok: entri **Pengurus** butuh foto,
 jabatan, **dan** bio supaya muncul di halamannya; entri **Redaksi** cukup
@@ -247,7 +380,17 @@ kerja, lokasi peta).
 Buka **Laman** di wp-admin lalu buka salah satu dari keempatnya. Di bawah
 editor ada kotak **"Isi Halaman — Situs Baru"** — di situlah teks yang
 dipakai situs, kolom per kolom. (Kotak ini hanya muncul di keempat Laman
-itu.)
+itu; kalau tidak ada, berarti Laman-nya salah.)
+
+**Kenali dari judulnya, jangan dari alamatnya.** Keempat Laman ini
+alamatnya tertukar sejak lama — Laman berjudul "Tentang The Global
+Review", misalnya, beralamat `tentang-gfi`. Alamatnya sengaja tidak
+dibetulkan karena akan memutus tautan lama, jadi berpeganglah pada judul
+yang tertulis di daftar Laman.
+
+![Kotak Isi Halaman — Situs Baru di bawah editor Laman](gambar/wp-laman-isi-halaman.png)
+
+*Kotak **Isi Halaman — Situs Baru**, di bawah editor Laman.*
 
 - Kolom yang berupa daftar (butir isu, butir misi, dan sejenisnya) diisi
   **satu item per baris** — tekan Enter untuk butir baru, tanpa tanda

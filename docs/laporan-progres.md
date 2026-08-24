@@ -10,6 +10,92 @@ dan SUBSCRIBER. Butir 3.4 REAL-TIME dan 3.5 (analitik) dikerjakan pihak lain.
 
 ---
 
+## Periode 24 Agustus 2026
+
+### Status: panduan redaksi diaudit dan dibetulkan, dibuat bergambar; gerbang sorotan ditutup rapat
+
+### Yang selesai
+
+**1. Audit panduan redaksi terhadap kode — sembilan klaim meleset**
+
+Panduan disandingkan baris demi baris dengan `tgr-headless.php` dan
+`src/lib/wp/`. Sebagian besar cocok, tapi sembilan hal salah — dan tiga di
+antaranya ada di bab yang paling mungkin dibaca sambil menatap layar:
+
+- Bab **Pengurus & Redaksi** meleset di tiga titik sekaligus: kotak
+  Kelompok disebut di sisi kanan padahal ada di kolom utama, labelnya
+  ditulis "Pengurus"/"Redaksi" padahal berbunyi "Pengurus GFI"/"Susunan
+  Redaksi", dan jabatan/bio disebut "di bawah editor" padahal tipe konten
+  ini tidak punya editor sama sekali.
+- Metabox buku bernama **"Identitas Buku — rubrik Bedah Buku"**, bukan
+  "Identitas Buku"; dan ia muncul di semua tulisan, bukan hanya yang
+  berkategori Bedah Buku.
+- **"Menyimpan draf tidak pernah terkunci"** tidak berlaku untuk tulisan
+  yang sudah tayang tanpa sorotan — justru 16 arsip yang panduan minta
+  dilengkapi. Diperbaiki di kode, lihat butir 3.
+- Aturan wajib sorotan disajikan sebagai gerbang mutlak padahal bisa
+  ditembus tiga jalur. Diperbaiki di kode, lihat butir 3.
+- "Pesan Masuk tidak bisa disunting" — judulnya (nama pengirim) sebetulnya
+  masih bisa diubah.
+- Angka arsip diperbarui: **871 dari 887** tulisan tayang ber-sorotan
+  (diukur ulang lewat REST hari ini; sebelumnya tertulis 870 dari 886).
+- "Lima kebiasaan" padahal isinya enam.
+
+Ditambahkan pula tujuh perilaku yang selama ini tidak terdokumentasi
+padahal gagal secara senyap: podcast tanpa video YouTube tidak tampil,
+tautan YouTube/tanggal yang tak dikenali dikosongkan tanpa pesan, dropdown
+artikel sumber hanya memuat 100 tulisan terbaru, tombol Unduh CSV hanya
+terlihat oleh Editor ke atas, bagian "Suara pembaca" baru bertabel setelah
+ada suara, dan empat Laman statis harus dikenali dari judul karena
+slug-nya tertukar.
+
+**2. Panduan dibuat bergambar + kartu langkah A4**
+
+- 19 tangkapan layar wp-admin ditautkan di sepanjang panduan, lengkap
+  dengan penunjuk bernomor pada kotak yang sedang dibicarakan. Latar
+  belakangnya: redaksi berusia sepuh dan panduan ini seluruhnya berbicara
+  tentang posisi di layar.
+- `wordpress/potret/` — skrip Playwright yang memotret ke-19 layar itu
+  sekali jalan. Login dikerjakan manual sekali oleh pemilik akses (skrip
+  tidak pernah menyentuh kata sandi), sesinya disimpan di berkas
+  ter-gitignore. Data pribadi di layar Pelanggan Buletin dan Pesan Masuk
+  diganti teks contoh **sebelum** jepretan diambil, jadi piksel aslinya
+  tidak pernah masuk ke PNG.
+- `docs/kartu-langkah-redaksi.html` — dua halaman A4 siap cetak berisi
+  enam langkah pra-terbit, untuk ditempel di sebelah komputer. Sengaja
+  bukan salinan panduan: hanya yang dilihat tiap hari.
+- Bab **"Checklist sebelum menekan Terbitkan"** ditambahkan ke panduan.
+
+**3. Gerbang sorotan ditutup rapat (`tgr-headless.php` v3.2.0)**
+
+Kebijakan wajib sorotan ternyata hanya menjaga satu pintu. **Sunting
+Cepat**, **Sunting Massal**, dan **penjadwalan** menembusnya karena tidak
+mengirim field sorotan di request. Semua pintu kini bermuara ke satu
+pemeriksa; `future` ikut dijaga, dan `transition_post_status` menangkap
+penerbitan oleh WP-Cron. Rinciannya di `wordpress/README.md`.
+
+Sekalian dilepas: kuncian editor blok yang membekukan seluruh penyimpanan
+pada tulisan tayang tanpa sorotan — kuncian yang justru menghalangi
+perbaikan 16 arsip itu.
+
+### Menunggu tindakan pemilik akses
+
+- **Unggah `tgr-headless.php` v3.2.0** (menggantikan v3.1.1 yang juga belum
+  naik) — push dulu, tunggu CI hijau, baru unggah lewat cPanel File
+  Manager. Uji empat jalur terbit setelahnya: layar sunting, Sunting Cepat,
+  Sunting Massal, dan penjadwalan.
+- **Jalankan `npm run potret`** setelah login sekali — 19 gambar panduan
+  belum ada isinya sampai langkah ini dikerjakan.
+- **Terbitkan ulang "Remilitarisasi Jepang…"** — diperiksa hari ini, masih
+  draf.
+- Tinjau pos hantu 21200 — diperiksa hari ini, masih tayang dengan judul
+  kosong.
+- **Pembaruan inti WordPress → 7.1** — masih di 6.5.10. Sesudahnya,
+  jalankan ulang `npm run potret` agar seluruh gambar panduan mengikuti
+  tampilan baru.
+
+---
+
 ## Periode 21 Agustus 2026
 
 ### Status: seluruh arsip tayang praktis ber-sorotan; runbook pembaruan WordPress tertulis
