@@ -40,6 +40,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# sesi login wp-admin untuk skrip potret (berisi cookie, jangan pernah di-commit)
+wordpress/potret/.sesi.json
+
 # vercel
 .vercel
 

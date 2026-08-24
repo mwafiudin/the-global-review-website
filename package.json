@@ -12,7 +12,8 @@
     "lint": "eslint --max-warnings 0",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "ikon": "node scripts/buat-ikon.mjs"
+    "ikon": "node scripts/buat-ikon.mjs",
+    "potret": "node wordpress/potret/potret-wp-admin.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

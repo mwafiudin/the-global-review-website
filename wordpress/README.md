@@ -323,6 +323,82 @@ Field tambahan pada tulisan biasa (`/wp-json/wp/v2/posts`):
 **Bedah Buku sengaja tetap berupa kategori**, bukan tipe konten tersendiri,
 agar 78 URL ulasan yang sudah terindeks tidak berubah.
 
+### Gerbang sorotan ditutup rapat (v3.2.0)
+
+v3.1.0 memperkenalkan kebijakan "tidak boleh terbit tanpa Sorotan Judul",
+tapi hanya menjaga satu pintu: form editor klasik, yang mengirim field
+sorotan di request yang sama. Tiga pintu lain lolos karena tidak mengirim
+field itu sama sekali — **Sunting Cepat**, **Sunting Massal**, dan
+**penjadwalan** (status `future` tidak ikut diperiksa, dan WP-Cron
+menerbitkannya lewat `wp_publish_post()` yang menulis langsung ke basis
+data tanpa melewati `wp_insert_post_data`).
+
+v3.2.0 memindahkan keputusannya ke satu tempat, `tgr_sorotan_berlaku()`:
+nilai dibaca dari `$_POST` bila request membawanya, selain itu dari meta
+tersimpan. Filter `wp_insert_post_data` kini menjaga `publish` **dan**
+`future`, dan `transition_post_status` menangkap `future → publish` dari
+cron.
+
+Dua pengecualian yang disengaja:
+
+- **Request REST dilewati.** Simpan utama editor blok membawa isi tulisan
+  tanpa meta box klasik — meta sorotan baru ditulis pada request
+  meta-box-loader yang menyusul. Memeriksa meta pada simpan utama berarti
+  membaca nilai lama dan menahan terbit yang sah. Request susulan itu
+  bukan REST, jadi tetap ikut diperiksa.
+- **Tulisan yang sudah tayang tidak diturunkan** bila requestnya tidak
+  membawa field sorotan. Tanpa batas ini, sentuhan programatik apa pun
+  (plugin lain, cron, `wp_update_post` dari mana saja) akan menendang 16
+  arsip tanpa sorotan keluar dari situs tanpa ada yang menyadarinya.
+  Gerbang ini menjaga pintu masuk, bukan menyapu yang sudah di dalam.
+
+Kuncian di editor blok juga dilonggarkan: sebelumnya `lockPostSaving`
+aktif untuk setiap tulisan berstatus terbit yang sorotannya kosong —
+mengunci **seluruh** penyimpanan, termasuk menurunkannya ke draf. Yang
+terkena persis 16 arsip yang justru perlu disunting. Sekarang tulisan yang
+sudah tayang hanya diberi peringatan, tidak dikunci.
+
+---
+
+## Memotret layar wp-admin untuk panduan redaksi
+
+`docs/panduan-redaksi.md` menautkan 19 tangkapan layar di `docs/gambar/`.
+Semuanya dihasilkan skrip, bukan pekerjaan tangan, supaya bisa diulang
+persis setelah inti WordPress naik versi dan tampilannya bergeser:
+
+```bash
+npm install --no-save playwright     # sengaja bukan devDependency: postinstall-nya
+npx playwright install chromium      # mengunduh browser, dan CI menjalankan npm ci
+npm run potret -- --login            # sekali saja — Anda yang mengetik kata sandi
+npm run potret                       # 17 layar
+npm run potret -- --uji-terbit       # + 2 layar peringatan (membuat 1 tulisan uji)
+npm run potret -- --periksa          # cocokkan tautan panduan vs berkas yang ada
+```
+
+`--login` membuka peramban kasatmata dan menunggu sampai bilah admin
+muncul, lalu menyimpan cookie sesi ke `wordpress/potret/.sesi.json`
+(di-gitignore). Skrip tidak pernah menyentuh kata sandi.
+
+**`--login` harus dijalankan di terminal manusia** (PowerShell atau
+terminal VSCode), bukan dari sesi agen: proses yang dijalankan agen tidak
+punya desktop session, sehingga peluncuran kasatmata mati dengan `spawn
+UNKNOWN`. Skrip mengubahnya menjadi pesan yang menjelaskan hal ini.
+Selebihnya berjalan headless dan boleh dijalankan dari mana saja — jadi
+pembagiannya: satu perintah login oleh Anda, sisanya oleh siapa pun.
+
+Di PowerShell jangan merangkai perintah dengan `&&` (bukan operator sah di
+PowerShell 5.1) — pakai `;` atau satu perintah per baris.
+
+Layar **Pelanggan Buletin** dan **Pesan Masuk** berisi data pribadi
+pembaca. Nilainya **diganti teks contoh di DOM sebelum jepretan diambil**,
+bukan disensor sesudahnya — piksel aslinya tidak pernah masuk ke berkas
+PNG. Bila selector penyamarannya tidak menemukan apa pun, skrip
+membatalkan potret layar itu alih-alih menyimpan gambar yang mungkin
+memuat data asli.
+
+Daftar layarnya ada di `wordpress/potret/layar.mjs`; menambah satu layar
+cukup menambah satu entri di sana.
+
 ---
 
 ## Memasang mu-plugin TANPA SSH (cPanel File Manager)
