@@ -10,6 +10,96 @@ dan SUBSCRIBER. Butir 3.4 REAL-TIME dan 3.5 (analitik) dikerjakan pihak lain.
 
 ---
 
+## Periode 25 Agustus 2026
+
+### Status: domain utama sudah dilayani situs baru; gerbang sorotan aktif di produksi
+
+### Yang selesai
+
+**1. Peralihan domain tuntas**
+
+`theglobal-review.com` kini dilayani Vercel — pembaca yang mengetik alamat
+lama langsung mendarat di situs baru, tanpa singgah ke mana pun. WordPress
+pindah ke `cms.theglobal-review.com` dan tetap menjadi tempat redaksi
+bekerja.
+
+- Diperiksa saat peralihan: sertifikat SSL terbit; beranda, artikel, dan
+  gambar tayang di domain utama; sitemap terjangkau; REST `cms` sehat;
+  email masuk-keluar tidak tersentuh.
+- Tautan lama ber-garis-miring (`/slug/`) dialihkan sekali ke bentuk
+  kanonis `/slug`. Disengaja: satu alamat untuk satu artikel, supaya mesin
+  pencari tidak menghitungnya dua kali.
+- TTL record baru terpasang 3600 detik (niat semula 300) — bila harus
+  mundur, propagasinya ±1 jam.
+- Runbook lengkap beserta riwayat eksekusinya di `docs/peralihan-domain.md`.
+
+**2. Ranjau email dijinakkan sebelum apex disentuh**
+
+MX domain ini dulu menunjuk ke apex — artinya mengubah A record apex,
+persis yang dilakukan peralihan, akan mematikan seluruh email masuk.
+Ranjau ini tidak tercatat di runbook awal; ditemukan saat gladi 19 Agustus
+dan diperbaiki lebih dulu: `mail.theglobal-review.com` dijadikan A record
+tersendiri dan MX menunjuk ke sana. Email kini kebal terhadap perubahan
+apex apa pun.
+
+**3. Alamat panel berubah — dicatat karena mudah dikira situs rusak**
+
+`theglobal-review.com:2083` mati selamanya. Vercel tidak melayani port itu,
+jadi yang muncul adalah halaman menggantung, bukan pesan error yang
+menjelaskan. Alamat penggantinya:
+
+| Untuk | Alamat baru |
+|---|---|
+| cPanel | `https://cpanel.theglobal-review.com` |
+| Webmail | `https://webmail.theglobal-review.com` |
+| wp-admin | `https://cms.theglobal-review.com/wp-admin` |
+
+Record subdomain `cms`, `mail`, dan `webmail` sengaja tidak disentuh saat
+peralihan justru untuk ini.
+
+**4. Gerbang sorotan aktif sungguhan (`tgr-headless.php` v3.2.0)**
+
+Mu-plugin v3.2.0 sudah terunggah ke produksi. Aturan wajib Sorotan Judul
+yang ditutup rapat kemarin kini berlaku di keempat jalur terbit — layar
+sunting, Sunting Cepat, Sunting Massal, dan penjadwalan. Sebelum ini
+kebijakannya hanya menjaga satu pintu.
+
+### Ringkasan minggu 19–25 Agustus
+
+| Hal | Hasil |
+|---|---|
+| Domain | `theglobal-review.com` beralih ke situs baru; WordPress di `cms.` |
+| Bahasa | Situs `/en` berbahasa Inggris otomatis seluruhnya lewat Selat |
+| Sorotan Judul | Wajib sebelum terbit, empat jalur terbit tertutup; **871 dari 887** tulisan tayang sudah terisi |
+| Panduan redaksi | Diaudit terhadap kode (sembilan klaim dibetulkan), dibuat bergambar, plus kartu langkah A4 |
+| WordPress | Runbook pembaruan inti 6.5.10 → 7.1 siap; eksekusi menunggu jendela pemeliharaan |
+| Mu-plugin | v3.1.0 → v3.1.1 → v3.2.0, seluruhnya sudah di produksi |
+
+Rincian tiap butir ada di entri periodenya masing-masing di bawah.
+
+### Menunggu tindakan pemilik akses
+
+Sisa rapikan peralihan domain:
+
+- **Halangi `cms.theglobal-review.com` dari indeks mesin pencari** — supaya
+  ia tidak bersaing dengan domain utama untuk artikel yang sama.
+- **Kirim sitemap ke Google Search Console** atas nama domain utama.
+- **Pantau Usage di Vercel** — project masih di paket Hobby, sementara
+  seluruh trafik domain utama kini melewatinya.
+
+Terbawa dari periode sebelumnya:
+
+- **Jalankan `npm run potret`** setelah login sekali — 19 gambar panduan
+  redaksi belum ada isinya sampai langkah ini dikerjakan.
+- **Terbitkan ulang "Remilitarisasi Jepang…"** — masih draf; selama draf,
+  artikel itu hilang dari situs.
+- Tinjau pos hantu 21200 — masih tayang dengan judul kosong.
+- **Pembaruan inti WordPress → 7.1** — masih di 6.5.10, satu-satunya risiko
+  keamanan produksi yang tersisa. Sesudahnya jalankan ulang `npm run potret`
+  agar seluruh gambar panduan mengikuti tampilan baru.
+
+---
+
 ## Periode 24 Agustus 2026
 
 ### Status: panduan redaksi diaudit dan dibetulkan, dibuat bergambar; gerbang sorotan ditutup rapat
