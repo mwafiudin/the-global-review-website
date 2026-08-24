@@ -20,6 +20,14 @@ TTL record baru 3600 (niat 300 tidak sempat terpasang) — rollback
 propagasi ±1 jam. Sisa rapikan: blok indeks di cms, sitemap ke GSC,
 pantau Usage Vercel (masih Hobby).
 
+**Alamat panel setelah cutover** — `theglobal-review.com:2083` mati
+selamanya (Vercel tidak melayani port itu; timeout, bukan error).
+Gantinya: cPanel `https://cpanel.theglobal-review.com` (atau
+`https://cms.theglobal-review.com:2083`), webmail
+`https://webmail.theglobal-review.com`, wp-admin
+`https://cms.theglobal-review.com/wp-admin`. Record subdomain ini
+sengaja tidak disentuh saat cutover justru untuk ini.
+
 Riwayat: gladi 19 Agustus berhenti di ambang DNS, lalu dilanjutkan dan
 dituntaskan 24 Agustus. Catatan gladi di bawah dipertahankan sebagai
 konteks.
