@@ -7,11 +7,24 @@ bila gagal.
 
 ---
 
-## Status eksekusi — 19 Agustus 2026
+## Status eksekusi — CUTOVER SELESAI 24 Agustus 2026
 
-Cutover sempat dijalankan sampai ambang tahap DNS, lalu **ditunda atas
-permintaan (tanggalnya menunggu keputusan marketing)**. Persiapan yang
-sudah rampung dan sengaja dibiarkan terpasang:
+`theglobal-review.com` kini dilayani Vercel (A `@` → `216.198.79.1`,
+`www` → CNAME `8db593f322ae9cff.vercel-dns-017.com`, keduanya primary
+apex + www ber-308 ke apex). WordPress hidup di
+`cms.theglobal-review.com`. Terverifikasi saat cutover: SSL terbit,
+beranda + artikel + gambar + sitemap tayang di domain utama, REST cms
+sehat, MX/mail/cms tak tersentuh. URL lama ber-garis-miring (`/slug/`)
+di-308 sekali ke bentuk kanonis `/slug` oleh Next.js — by design.
+TTL record baru 3600 (niat 300 tidak sempat terpasang) — rollback
+propagasi ±1 jam. Sisa rapikan: blok indeks di cms, sitemap ke GSC,
+pantau Usage Vercel (masih Hobby).
+
+Riwayat: gladi 19 Agustus berhenti di ambang DNS, lalu dilanjutkan dan
+dituntaskan 24 Agustus. Catatan gladi di bawah dipertahankan sebagai
+konteks.
+
+Persiapan yang dirampungkan saat gladi:
 
 - **MX diperbaiki**: `mail.theglobal-review.com` kini A record sendiri
   dan MX menunjuk ke sana — email kebal terhadap perubahan apex.
