@@ -68,6 +68,13 @@ export interface WpPost {
   /** ID attachment & term — dipakai mode daftar (tanpa _embed yang berat). */
   featured_media?: number;
   categories?: number[];
+  /**
+   * URL gambar unggulan yang dihitung sisi PHP (mu-plugin ≥3.3) — tetap
+   * terisi walau lampirannya tersembunyi dari REST anonim (induknya pos
+   * non-publik, kelas 401 rest_forbidden). Hanya hadir bila diminta lewat
+   * _fields; null bila pos tak bergambar.
+   */
+  tgr_gambar?: string | null;
   _embedded?: {
     "wp:featuredmedia"?: WpMedia[];
     /** Indeks 0 = taksonomi category, 1 = post_tag. */
@@ -105,15 +112,26 @@ export interface WpFetchOptions {
   timeoutMs?: number;
 }
 
-function apiBase(): string {
+/**
+ * Akar REST WordPress tanpa garis miring ujung, atau null bila belum diatur.
+ * Juga dipakai rute tgr/v1 (vote/contact/subscribe) — sebelumnya mereka
+ * menginterpolasi env mentah, dan nilai berujung "/" mematikan ketiga
+ * endpoint tulis (404 //tgr/v1/…) sementara jalur baca tetap hidup.
+ */
+export function wpApiBase(): string | null {
   const base = process.env.WP_API_URL;
+  return base ? base.replace(/\/+$/, "") : null;
+}
+
+function apiBase(): string {
+  const base = wpApiBase();
   if (!base) {
     throw new Error(
       "WP_API_URL belum diatur. Salin .env.example ke .env.local (lokal) " +
         "atau tambahkan di Vercel → Settings → Environment Variables."
     );
   }
-  return base.replace(/\/+$/, "");
+  return base;
 }
 
 function buildUrl(path: string, query?: WpFetchOptions["query"]): string {

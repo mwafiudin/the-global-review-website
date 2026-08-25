@@ -32,7 +32,19 @@ export const site = {
     facebook: "https://www.facebook.com/theglobalreviewcom/",
     twitter: "https://twitter.com/GlobalReview07",
   },
-  copyright: `Copyright © 2008-${new Date().getFullYear()} The Global Review`,
+  /**
+   * Getter, bukan nilai beku: dievaluasi saat modul dimuat berarti instansi
+   * server berumur panjang memajang tahun lama, dan getFullYear() memakai
+   * zona server (UTC di Vercel) — pembaca WIB melihat tahun lalu selama
+   * 31 Des 17:00 UTC sampai pergantian tahun UTC.
+   */
+  get copyright(): string {
+    const tahun = new Intl.DateTimeFormat("id-ID", {
+      timeZone: "Asia/Jakarta",
+      year: "numeric",
+    }).format(new Date());
+    return `Copyright © 2008-${tahun} The Global Review`;
+  },
 };
 
 export interface NavItem {

@@ -32,7 +32,16 @@ function decodeEntities(text: string): string {
 }
 
 function stripTags(html: string): string {
-  return html.replace(/<[^>]+>/g, " ");
+  return (
+    html
+      // Tag yang menempel tanda baca tidak boleh menyisipkan spasi:
+      // "…<a>laporan</a>." dulu menjadi "laporan ." dan bocor sampai meta
+      // description. Hanya posisi bersinggungan langsung yang dirapatkan —
+      // spasi sah di dalam teks ("Rupiah ’26") tidak tersentuh.
+      .replace(/<[^>]+>(?=[.,;:!?…%)\]}»”’])/g, "")
+      .replace(/(?<=[(\[{«“‘])<[^>]+>/g, "")
+      .replace(/<[^>]+>/g, " ")
+  );
 }
 
 /** HTML → teks polos rapi (untuk judul, excerpt, hitung kata). */

@@ -24,10 +24,12 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  // Kecualikan API, aset internal Next, dan semua path berekstensi
-  // (favicon.ico, sitemap.xml, robots.txt, manifest.webmanifest,
-  // theme-init.js, /images/*). Catatan: SLUG_RE di api/revalidate
-  // mengizinkan titik pada slug — bila redaksi pernah menerbitkan slug
-  // bertitik, ganti pola titik ini dengan daftar ekstensi eksplisit.
-  matcher: ["/((?!api|_next|wp-content|.*\\..*).*)"],
+  // Kecualikan API, aset internal Next, umpan RSS (/feed — rute tanpa
+  // bahasa; feed(?:/|$) agar slug berawalan "feed…" tetap diproksi), dan
+  // semua path berekstensi (favicon.ico, sitemap.xml, robots.txt,
+  // manifest.webmanifest, theme-init.js, /images/*). Catatan: SLUG_RE di
+  // api/revalidate mengizinkan titik pada slug — bila redaksi pernah
+  // menerbitkan slug bertitik, ganti pola titik ini dengan daftar ekstensi
+  // eksplisit.
+  matcher: ["/((?!api|_next|wp-content|feed(?:/|$)|.*\\..*).*)"],
 };

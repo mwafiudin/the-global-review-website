@@ -49,7 +49,6 @@ export default async function HomePage() {
     ]);
   const [heroMain, ...heroSide] = heroes;
   const { lang, t, l } = await getT();
-  const heroAuthor = getAuthor(heroMain.author);
 
   const usedSlugs = new Set([
     ...heroes.map((a) => a.slug),
@@ -65,7 +64,10 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero: satu cerita utama + daftar headline */}
+      {/* Hero: satu cerita utama + daftar headline. Daftar kosong (WP tak
+          terjangkau / arsip tergeser) melewati seksi ini alih-alih merobohkan
+          seluruh beranda — pola guard yang sama dengan internasionalMain. */}
+      {heroMain && (
       <section
         aria-label={t("Isu Utama")}
         className="mx-auto grid max-w-7xl gap-12 px-4 py-14 md:py-20 lg:grid-cols-12 lg:px-6"
@@ -89,7 +91,9 @@ export default async function HomePage() {
             {heroMain.excerpt}
           </p>
           <p className="mt-5 text-sm text-meta">
-            <span className="font-semibold text-ink">{heroAuthor.name}</span>
+            <span className="font-semibold text-ink">
+              {getAuthor(heroMain.author).name}
+            </span>
             <span className="px-2" aria-hidden>
               ·
             </span>
@@ -126,6 +130,7 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+      )}
 
       {/* Analisis dengan tab filter */}
       <div className="mx-auto max-w-7xl px-4 py-12 md:py-16 lg:px-6">

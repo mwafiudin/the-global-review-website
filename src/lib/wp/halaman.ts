@@ -28,7 +28,11 @@ import { dedup, wpFetchFresh } from "./client";
  *
  * PENTING — Laman dirujuk lewat ID, bukan slug: slug Laman lama saling
  * tertukar (id 574 ber-slug "tentang-gfi" padahal judulnya "Tentang The
- * Global Review", sementara id 576 ber-slug "tentang-gfi-2").
+ * Global Review", sementara id 576 ber-slug "tentang-gfi-2"), jadi lookup
+ * slug justru mengikat ke Laman yang salah. Konsekuensinya: menghapus lalu
+ * membuat ulang sebuah Laman mengganti ID-nya — metaHalaman() mencatat
+ * galat saat itu terjadi supaya tidak diam-diam menyajikan teks kode; ID
+ * barunya tinggal diperbarui di HALAMAN_ID.
  */
 
 export const HALAMAN_ID = {
@@ -160,7 +164,17 @@ export async function metaHalaman(
       console.error("[wp] isi halaman gagal dibaca, memakai teks kode:", err);
       return {} as Record<number, MetaHalaman>;
     }
-  }).then((semua) => semua[id] ?? {});
+  }).then((semua) => {
+    // Fetch berhasil tapi ID-nya absen = Laman-nya dihapus/dibuat ulang di
+    // wp-admin (ID baru). Tanpa catatan ini halaman diam-diam kembali ke
+    // teks kode padahal redaksi merasa suntingannya tersimpan.
+    if (!semua[id] && Object.keys(semua).length > 0) {
+      console.error(
+        `[wp] Laman id ${id} tidak ditemukan — dihapus & dibuat ulang? Perbarui HALAMAN_ID di src/lib/wp/halaman.ts`
+      );
+    }
+    return semua[id] ?? {};
+  });
 }
 
 /* ── API per halaman ───────────────────────────────────────────────── */

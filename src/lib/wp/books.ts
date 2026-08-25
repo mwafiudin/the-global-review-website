@@ -1,7 +1,8 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { books as bukuContoh, type Book } from "@/data/books";
+import { type Book } from "@/data/books";
+import { placeholderImage } from "@/lib/articles";
 import {
   dedup,
   wpFetchAllFresh,
@@ -18,8 +19,9 @@ import { wpCategoryIds } from "./rubrik";
  * dengan URL terindeks, dan memindahkannya berarti memutus URL itu.
  * Identitas bukunya (sampul, penerbit, ISBN) menumpang sebagai meta.
  *
- * Selama kategorinya kosong atau WordPress tak terjangkau, halaman jatuh
- * ke `src/data/books.ts` supaya rubriknya tidak pernah tampil kosong.
+ * Koleksi kosong/gagal → [] dan halaman menampilkan keadaan kosong yang
+ * jujur — bukan snapshot hardcode yang diam-diam menyimpang dari wp-admin
+ * (redaksi menghapus ulasannya, situs terus memajangnya).
  */
 
 interface WpBookPost {
@@ -30,6 +32,9 @@ interface WpBookPost {
   excerpt?: WpRendered;
   content?: WpRendered;
   featured_media?: number;
+  /** URL komputasi sisi PHP (mu-plugin ≥3.3) — lihat catatan di articles.ts. */
+  tgr_gambar?: string | null;
+  tgr_sampul_gambar?: string | null;
   meta?: {
     tgr_buku_judul?: string;
     tgr_buku_penulis?: string;
@@ -44,16 +49,22 @@ interface WpBookPost {
 }
 
 const FIELDS =
-  "id,slug,date,title,excerpt,content,featured_media,meta";
+  "id,slug,date,title,excerpt,content,featured_media,tgr_gambar,tgr_sampul_gambar,meta";
 
-/** Sampul buku, urut prioritas: unggahan khusus → gambar unggulan → seed. */
+/**
+ * Sampul buku, urut prioritas: unggahan khusus → gambar unggulan →
+ * pengganti. URL komputasi PHP menang atas batch /media — batch itu
+ * menghilangkan lampiran yang tersembunyi dari REST anonim tanpa galat.
+ */
 function coverUntuk(item: WpBookPost, media: Map<number, string>): string {
   const khusus = item.meta?.tgr_buku_sampul;
+  if (item.tgr_sampul_gambar) return item.tgr_sampul_gambar;
   if (khusus && media.has(khusus)) return media.get(khusus)!;
+  if (item.tgr_gambar) return item.tgr_gambar;
   if (item.featured_media && media.has(item.featured_media)) {
     return media.get(item.featured_media)!;
   }
-  return `https://picsum.photos/seed/${item.slug}/816/1088`;
+  return placeholderImage(item.slug, 816, 1088);
 }
 
 const teksMeta = (nilai: string | undefined): string | undefined =>
@@ -99,12 +110,15 @@ const cachedBooks = unstable_cache(
 
     // Sampul & gambar unggulan diambil sekali sebagai satu permintaan
     // batch, bukan satu per buku — host ini menolak permintaan beruntun.
+    // Hanya untuk pos yang URL komputasinya kosong (mu-plugin belum ≥3.3);
+    // begitu field-nya hidup, permintaan ini hilang sama sekali.
     const idMedia = [
       ...new Set(
         items.flatMap((i) =>
-          [i.meta?.tgr_buku_sampul ?? 0, i.featured_media ?? 0].filter(
-            (n) => n > 0
-          )
+          [
+            i.tgr_sampul_gambar ? 0 : (i.meta?.tgr_buku_sampul ?? 0),
+            i.tgr_gambar ? 0 : (i.featured_media ?? 0),
+          ].filter((n) => n > 0)
         )
       ),
     ];
@@ -128,16 +142,17 @@ const cachedBooks = unstable_cache(
   { revalidate: 300, tags: ["wp:posts"] }
 );
 
-/** Semua ulasan, terbaru dulu; kategori kosong/gagal → data contoh. */
+/** Semua ulasan, terbaru dulu; kategori kosong/gagal → []. */
 export async function wpBooks(): Promise<Book[]> {
   return dedup("books", async () => {
     try {
-      const items = await cachedBooks();
-      if (items.length > 0) return items;
+      return await cachedBooks();
     } catch (err) {
-      console.error("[wp] bedah buku gagal dibaca, memakai data contoh:", err);
+      // Kegagalan harus terlihat DAN jujur: menyajikan snapshot hardcode
+      // membuat wp-admin dan situs menampilkan isi yang berbeda tanpa jejak.
+      console.error("[wp] bedah buku gagal dibaca:", err);
+      return [];
     }
-    return bukuContoh;
   });
 }
 
@@ -148,12 +163,10 @@ export async function wpBook(slug: string): Promise<Book | undefined> {
 
 /**
  * Buku untuk kartu "Buku pilihan" sidebar: yang dicentang redaksi di
- * wp-admin (tunggal-aktif), atau buku unggulan data cadangan bila belum
- * ada yang dicentang / WordPress tak terjangkau.
+ * wp-admin (tunggal-aktif), atau ulasan terbaru bila belum ada yang
+ * dicentang; undefined bila koleksinya kosong (kartunya tidak dirender).
  */
-export async function bukuPilihan(): Promise<Book> {
+export async function bukuPilihan(): Promise<Book | undefined> {
   const daftar = await wpBooks();
-  return (
-    daftar.find((b) => b.unggulan) ?? bukuContoh.find((b) => b.unggulan) ?? daftar[0]
-  );
+  return daftar.find((b) => b.unggulan) ?? daftar[0];
 }

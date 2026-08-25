@@ -32,6 +32,32 @@ export default async function BedahBukuPage() {
   const [utama, ...lainnya] = await wpBooks();
   const { t, l } = await getT();
 
+  // Koleksi kosong (WordPress kosong/tak terjangkau — tanpa data contoh):
+  // keadaan kosong yang jujur, pola yang sama dengan halaman rubrik.
+  if (!utama) {
+    return (
+      <>
+        <PageHeader
+          title="Bedah Buku"
+          lead={t("Ulasan buku terbitan Global Future Institute dan bacaan pilihan redaksi.")}
+        />
+        <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
+          <div className="grid gap-12 lg:grid-cols-[1fr_340px]">
+            <div className="rounded-xl border border-dashed border-line px-6 py-16 text-center">
+              <p className="font-display text-lg font-bold text-ink">
+                {t("Belum ada ulasan buku")}
+              </p>
+              <p className="mt-2 text-sm text-meta">
+                {t("Ulasan akan tampil di sini setelah dipublikasikan pada rubrik Bedah Buku.")}
+              </p>
+            </div>
+            <Sidebar />
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <PageHeader

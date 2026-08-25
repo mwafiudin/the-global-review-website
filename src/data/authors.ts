@@ -35,5 +35,12 @@ export const authors: Author[] = [
 ];
 
 export function getAuthor(slug: string): Author {
-  return authors.find((a) => a.slug === slug) ?? authors[4];
+  // Cadangan dicari lewat slug, bukan indeks: menyisipkan penulis baru di
+  // tengah larik tidak boleh diam-diam mengganti profil cadangan semua
+  // tulisan tak terpetakan (byline, avatar, dan bio-nya ikut salah).
+  return (
+    authors.find((a) => a.slug === slug) ??
+    authors.find((a) => a.slug === "redaksi") ??
+    authors[0]
+  );
 }

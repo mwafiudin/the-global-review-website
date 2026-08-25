@@ -60,4 +60,50 @@ describe("sanitizeWpHtml", () => {
     const out = sanitizeWpHtml('<p>[caption id="attachment_1"]Keterangan[/caption]</p>');
     expect(out).toBe("<p>Keterangan</p>");
   });
+
+  it("membersihkan shortcode plugin nonaktif (prefiks dikenal & grammar beratribut)", () => {
+    expect(sanitizeWpHtml("<p>[su_button]Unduh[/su_button]</p>")).toBe(
+      "<p>Unduh</p>"
+    );
+    expect(sanitizeWpHtml('<p>[contact-form-7 id="12" title="Kontak"]</p>')).toBe(
+      "<p></p>"
+    );
+    expect(sanitizeWpHtml("<p>[plugin_lain id=5 gaya=besar]Isi[/plugin_lain]</p>")).toBe(
+      "<p>Isi</p>"
+    );
+  });
+
+  it("tidak menyapu teks berkurung yang bukan shortcode", () => {
+    // Sitasi dan [sic] adalah prosa — menghapusnya merusak kutipan arsip.
+    expect(sanitizeWpHtml("<p>Menurut laporan [1], kata beliau [sic] demikian.</p>")).toBe(
+      "<p>Menurut laporan [1], kata beliau [sic] demikian.</p>"
+    );
+  });
+
+  it("meloloskan iframe embed yang dipakai arsip (Vimeo/Spotify/SoundCloud/Maps)", () => {
+    for (const src of [
+      "https://player.vimeo.com/video/123",
+      "https://open.spotify.com/embed/episode/abc",
+      "https://w.soundcloud.com/player/?url=x",
+      "https://www.google.com/maps/embed?pb=x",
+    ]) {
+      expect(sanitizeWpHtml(`<iframe src="${src}"></iframe>`)).toContain(src);
+    }
+  });
+
+  it("membuka pembungkus blok Gutenberg agar <p> kembali anak langsung .wp-body", () => {
+    // div/span dibuang tapi isinya naik level — tanpa ini `.wp-body > p`
+    // (tipografi artikel) tidak mengenai paragraf di dalam wp-block-group.
+    const out = sanitizeWpHtml('<div class="wp-block-group"><p>Isi</p></div>');
+    expect(out).toBe("<p>Isi</p>");
+  });
+
+  it("mempertahankan class twitter-tweet pada blockquote, membuang class lain", () => {
+    const out = sanitizeWpHtml(
+      '<blockquote class="twitter-tweet"><p>Cuit</p></blockquote>'
+    );
+    expect(out).toContain('class="twitter-tweet"');
+    const liar = sanitizeWpHtml('<blockquote class="menyaru-gaya-situs"><p>x</p></blockquote>');
+    expect(liar).not.toContain("menyaru-gaya-situs");
+  });
 });

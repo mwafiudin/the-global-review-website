@@ -227,8 +227,14 @@ export const EN: Record<string, string> = {
   ". The Global Review menautkannya sebagai bagian dari rekam jejak narasumber GFI.":
     ". The Global Review links to it as part of the GFI speakers' track record.",
   "Penampilan lainnya": "Other appearances",
+  "Belum ada penampilan podcast": "No podcast appearances yet",
+  "Penampilan tim GFI akan tampil di sini setelah dipublikasikan di wp-admin.":
+    "GFI team appearances will show up here once published in wp-admin.",
   "Ulasan buku terbitan Global Future Institute dan bacaan pilihan redaksi.":
     "Reviews of Global Future Institute titles and the editors' selected reading.",
+  "Belum ada ulasan buku": "No book reviews yet",
+  "Ulasan akan tampil di sini setelah dipublikasikan pada rubrik Bedah Buku.":
+    "Reviews will show up here once published in the Bedah Buku section.",
   "Buku Utama": "Featured Book",
   "Baca ulasan lengkap": "Read the full review",
   "Koleksi Lainnya": "More from the Collection",

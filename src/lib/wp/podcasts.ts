@@ -1,15 +1,15 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { allPodcasts, type Podcast } from "@/data/podcasts";
+import { type Podcast } from "@/data/podcasts";
 import { dedup, wpFetchAllFresh, type WpRendered } from "./client";
 import { cleanExcerpt, cleanText, htmlParagraphs, isoDate } from "./map";
 
 /**
- * Podcast dari CPT tgr_podcast (rest_base: podcasts). Selama redaksi belum
- * mengisi kontennya, seluruh pengakses jatuh kembali ke data contoh
- * src/data/podcasts.ts — seksi Podcast berpindah ke WordPress dengan
- * sendirinya begitu penampilan pertama diterbitkan, tanpa deploy.
+ * Podcast dari CPT tgr_podcast (rest_base: podcasts). Koleksi kosong/gagal
+ * → [] dan halaman menampilkan keadaan kosong yang jujur — bukan snapshot
+ * hardcode yang diam-diam menyimpang dari wp-admin (redaksi menarik semua
+ * penampilan, situs terus memajangnya).
  */
 
 interface WpPodcast {
@@ -84,19 +84,17 @@ const cachedPodcasts = unstable_cache(
   { revalidate: 300, tags: ["wp:podcasts"] }
 );
 
-/** Semua penampilan, terbaru dulu; koleksi kosong/gagal → data contoh. */
+/** Semua penampilan, terbaru dulu; koleksi kosong/gagal → []. */
 export async function wpPodcasts(): Promise<Podcast[]> {
   return dedup("podcasts", async () => {
     try {
-      const items = await cachedPodcasts();
-      if (items.length > 0) return items;
+      return await cachedPodcasts();
     } catch (err) {
-      // WP tak terjangkau — data contoh menjaga halaman tetap hidup, tapi
-      // kegagalannya harus terlihat: jatuh ke data contoh tanpa jejak
-      // membuat seksi yang seharusnya sudah hidup tampak baik-baik saja.
-      console.error("[wp] podcast gagal dibaca, memakai data contoh:", err);
+      // Kegagalan harus terlihat DAN jujur: menyajikan snapshot hardcode
+      // membuat wp-admin dan situs menampilkan isi yang berbeda tanpa jejak.
+      console.error("[wp] podcast gagal dibaca:", err);
+      return [];
     }
-    return allPodcasts();
   });
 }
 

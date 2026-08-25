@@ -32,6 +32,31 @@ export default async function PodcastPage() {
   const episodes = await wpPodcasts();
   const { lang, t, l } = await getT();
   const utama = episodes.find((e) => e.featured) ?? episodes[0];
+
+  // Koleksi kosong (WordPress kosong/tak terjangkau — tanpa data contoh):
+  // keadaan kosong yang jujur, pola yang sama dengan halaman rubrik.
+  if (!utama) {
+    return (
+      <>
+        <PageHeader
+          title="Podcast"
+          icon={Microphone}
+          lead={t("Rekam jejak tim Global Future Institute sebagai narasumber di berbagai podcast, talkshow, dan kanal media, lengkap dengan tayangannya.")}
+        />
+        <div className="mx-auto max-w-7xl px-4 py-10 pb-20">
+          <div className="rounded-xl border border-dashed border-line px-6 py-16 text-center">
+            <p className="font-display text-lg font-bold text-ink">
+              {t("Belum ada penampilan podcast")}
+            </p>
+            <p className="mt-2 text-sm text-meta">
+              {t("Penampilan tim GFI akan tampil di sini setelah dipublikasikan di wp-admin.")}
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   const lainnya = episodes.filter((e) => e.slug !== utama.slug);
 
   return (

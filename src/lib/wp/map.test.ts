@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { WpPost, WpUser } from "./client";
 import { feAuthorFromUsers, wpPostToArticle } from "./map";
 
@@ -82,6 +82,42 @@ describe("wpPostToArticle", () => {
       },
     });
     expect(article.imageUrl).toBe("https://x.test/large.jpg");
+  });
+
+  it("tgr_gambar (komputasi PHP) menang atas _embedded", async () => {
+    const article = await toArticle({
+      tgr_gambar: "https://cms.x/tahan-401.jpg",
+      _embedded: {
+        "wp:featuredmedia": [{ source_url: "https://x.test/full.jpg" }],
+      },
+    });
+    expect(article.imageUrl).toBe("https://cms.x/tahan-401.jpg");
+  });
+
+  it("tgr_gambar null/kosong jatuh ke _embedded", async () => {
+    const embedded = {
+      "wp:featuredmedia": [{ source_url: "https://x.test/full.jpg" }],
+    };
+    expect(
+      (await toArticle({ tgr_gambar: null, _embedded: embedded })).imageUrl
+    ).toBe("https://x.test/full.jpg");
+  });
+
+  it("objek galat rest_forbidden di _embedded tidak melempar dan tidak menyaru URL", async () => {
+    // Insiden 25 Agu 2026: lampiran ber-induk draf tersembunyi dari REST
+    // anonim, _embed menyematkan objek galat — dulu lolos guard truthy dan
+    // diam-diam berakhir sebagai gambar pengganti.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const article = await toArticle({
+      _embedded: {
+        "wp:featuredmedia": [
+          { code: "rest_forbidden", data: { status: 401 } } as never,
+        ],
+      },
+    });
+    expect(article.imageUrl).toBeUndefined();
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 
   it("mengosongkan excerpt otomatis WP agar lead tidak tampil dua kali", async () => {

@@ -45,12 +45,35 @@ const CPT_TAGS = new Map([
 /**
  * Tag yang gugur untuk satu kiriman webhook. Laman (page) punya tag bundel
  * sendiri: isi halaman statis di-cache sebagai satu entri wp-halaman, dan
- * sebelumnya simpan Laman keliru menggugurkan wp:posts.
+ * sebelumnya simpan Laman keliru menggugurkan wp:posts. Kategori & user
+ * (mu-plugin ≥1.2) menggugurkan peta rubrik/penulis yang di-cache sehari
+ * penuh — plus wp:posts, karena rubrik dan penulis tiap artikel sudah
+ * terpanggang di entri daftar.
  */
 export function tagsUntuk(type: string, slug: string): string[] {
   if (type === "page") return ["wp:halaman"];
+  if (type === "category") return ["wp:categories", "wp:posts"];
+  if (type === "user") return ["wp:users", "wp:posts"];
   const tagCpt = CPT_TAGS.get(type);
   return tagCpt ? [tagCpt] : [`wp:post:${slug}`, "wp:posts"];
+}
+
+/**
+ * WordPress mengirim post_name apa adanya — ter-persen-encode untuk judul
+ * non-Latin — sedangkan tag wp:post:{slug} di lapisan fetch dibangun dari
+ * param rute yang sudah di-decode Next. Keduanya digugurkan sekaligus:
+ * menggugurkan tag yang tak pernah dipakai adalah no-op, jadi bentuk ini
+ * kebal ke arah mana pun encoding param berubah.
+ */
+export function slugVarian(slug: string): string[] {
+  if (!slug.includes("%")) return [slug];
+  try {
+    const decoded = decodeURIComponent(slug);
+    return decoded === slug ? [slug] : [slug, decoded];
+  } catch {
+    // %-sequence cacat (lolos SLUG_RE tapi bukan encoding sah) — pakai mentah.
+    return [slug];
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -82,7 +105,9 @@ export async function POST(request: NextRequest) {
   // objek: lookup objek ikut membaca kunci warisan Object.prototype, jadi
   // type "constructor"/"toString" akan lolos sebagai tag palsu.
   const type = typeof payload.type === "string" ? payload.type : "post";
-  const tags = tagsUntuk(type, slug);
+  const tags = [
+    ...new Set(slugVarian(slug).flatMap((varian) => tagsUntuk(type, varian))),
+  ];
   for (const tag of tags) revalidateTag(tag, { expire: 0 });
 
   return Response.json({ revalidated: tags });

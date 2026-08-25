@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { wpApiBase } from "@/lib/wp/client";
 
 /**
  * Formulir kontak: browser mengirim ke sini, dan server meneruskannya ke
@@ -91,7 +92,7 @@ export function terlaluSering(kunci: string, sekarang = Date.now()): boolean {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.REVALIDATE_SECRET?.split(",")[0]?.trim();
-  const wpUrl = process.env.WP_API_URL;
+  const wpUrl = wpApiBase();
   if (!secret || !wpUrl) {
     return Response.json(
       { error: "Formulir kontak belum dikonfigurasi" },
@@ -125,7 +126,16 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: hasil.galat }, { status: 400 });
   }
 
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "";
+  // x-forwarded-for selalu ada di Vercel; di deployment lain yang tidak
+  // menyetelnya, tanpa cadangan ini SEMUA pengunjung berbagi satu ember
+  // rate-limit (kunci "") — pengirim sah ke-6 dalam semenit tertolak.
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    request.headers.get("x-real-ip")?.trim() ||
+    "anon";
+  if (ip === "anon") {
+    console.warn("[api/contact] alamat IP tak terbaca — rate limit memakai ember bersama");
+  }
   if (terlaluSering(ip)) {
     return Response.json(
       { error: "Terlalu banyak percobaan, coba lagi sebentar lagi" },

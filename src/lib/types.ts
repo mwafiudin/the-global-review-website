@@ -26,7 +26,8 @@ export interface Article {
   featured?: boolean;
   /** Satu kata/frasa pada judul yang disorot (h1 artikel & semua varian kartu). */
   highlight?: string;
-  /** URL featured image WordPress; tanpa ini articleImage() memakai picsum. */
+  /** URL featured image WordPress; tanpa ini articleImage() memakai
+   *  gambar pengganti brand lokal (placeholderImage). */
   imageUrl?: string;
   /** Waktu terbit penuh dari WordPress (jangkar kueri artikel sebelum/sesudah). */
   dateTime?: string;

@@ -49,26 +49,63 @@ export function articleHref(article: Article): string {
   return `/${article.slug}`;
 }
 
+/**
+ * Gambar pengganti saat artikel tak punya gambar unggulan atau gagal
+ * ter-resolve: aset brand lokal, bukan foto stok acak — foto acak tampil
+ * seolah foto editorial dan menyesatkan pembaca. Pemakaiannya dicatat agar
+ * tidak lagi senyap. Rasio dari w/h memilih aset: potret untuk sampul buku,
+ * lanskap untuk artikel. (seed/w/h dipertahankan di tanda tangan supaya
+ * call site tidak berubah bila strategi penggantinya diganti lagi.)
+ */
+export function placeholderImage(seed: string, w = 800, h = 500): string {
+  console.warn(`[artikel] gambar pengganti dipakai untuk "${seed}" (${w}×${h})`);
+  return h > w
+    ? "/images/tekstur-kertas-editorial.jpg"
+    : "/images/peta-dunia-engraving-antik.jpg";
+}
+
 export function articleImage(article: Article, w = 800, h = 500): string {
-  return (
-    article.imageUrl ?? `https://picsum.photos/seed/${article.imageSeed}/${w}/${h}`
-  );
+  return article.imageUrl ?? placeholderImage(article.imageSeed, w, h);
+}
+
+/**
+ * Lipat variasi wptexturize (kutip keriting, dash panjang, ellipsis) plus
+ * kapitalisasi — pemetaan 1 huruf : 1 huruf, jadi posisi hasil pencocokan
+ * pada teks terlipat tetap sah untuk memotong teks aslinya. Cermin
+ * tgr_sorotan_lipat() di mu-plugin.
+ */
+function normalizeForMatch(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[“”„«»]/g, '"')
+    .replace(/[‘’‚]/g, "'")
+    .replace(/[–—]/g, "-")
+    .replace(/…/g, ".");
 }
 
 /**
  * Pecah judul pada kemunculan PERTAMA frasa sorotan; null bila frasa
  * kosong/tak ditemukan. indexOf, bukan String.split: frasa yang kebetulan
  * muncul dua kali di judul tidak boleh membuang ekor judul diam-diam.
+ *
+ * match = potongan judul ASLINYA (bukan frasa tersimpan): judul rendered
+ * membawa kutip keriting hasil wptexturize sedangkan frasa dari wp-admin
+ * mentah — pencocokan kedua dilakukan pada bentuk terlipat, dan yang
+ * dirender harus glyph judul apa adanya.
  */
 export function splitHighlight(
   title: string,
   highlight?: string
-): { before: string; after: string } | null {
+): { before: string; match: string; after: string } | null {
   if (!highlight) return null;
-  const i = title.indexOf(highlight);
-  if (i === -1) return null;
+  let i = title.indexOf(highlight);
+  if (i === -1) {
+    i = normalizeForMatch(title).indexOf(normalizeForMatch(highlight));
+    if (i === -1) return null;
+  }
   return {
     before: title.slice(0, i),
+    match: title.slice(i, i + highlight.length),
     after: title.slice(i + highlight.length),
   };
 }

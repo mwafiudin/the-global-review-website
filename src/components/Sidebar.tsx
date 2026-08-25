@@ -118,7 +118,8 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
         </ol>
       </section>
 
-      {/* Podcast terbaru */}
+      {/* Podcast terbaru — tanpa data contoh, koleksi kosong = widget absen */}
+      {podcastTerbaru.length > 0 && (
       <section>
         <WidgetTitle>{t("Podcast Terbaru")}</WidgetTitle>
         <ul className="space-y-4">
@@ -162,8 +163,10 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
           <ArrowRight size={12} weight="regular" />
         </Link>
       </section>
+      )}
 
-      {/* Promo buku */}
+      {/* Promo buku — idem: tak ada ulasan berarti kartunya tidak dirender */}
+      {buku && (
       <section>
         <WidgetTitle>{t("Bedah Buku")}</WidgetTitle>
         <Link
@@ -197,6 +200,7 @@ export async function Sidebar({ polls }: { polls?: PollView[] }) {
           </div>
         </Link>
       </section>
+      )}
 
       {/* Halaman Facebook: kartu on-brand, bukan plugin resmi (lihat site.ts) */}
       <section>

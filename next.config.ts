@@ -2,11 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
+    // picsum.photos sudah dicabut: gambar pengganti kini aset lokal
+    // (lib/articles.ts placeholderImage) — foto stok acak tampil seolah
+    // foto editorial, dan ketergantungan pihak ketiganya tidak perlu.
     remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "picsum.photos",
-      },
       {
         protocol: "https",
         hostname: "i.ytimg.com",
@@ -60,6 +59,37 @@ const nextConfig: NextConfig = {
         source: "/category/:path*/halaman/1",
         destination: "/category/:path*",
         permanent: true,
+      },
+      // Umpan RSS era WordPress: pelanggan feed lama (agregator, pembaca
+      // RSS) masih menembak variasi URL-nya — semuanya dipulangkan ke satu
+      // umpan situs baru di /feed alih-alih soft-404.
+      {
+        source: "/comments/feed",
+        destination: "/feed",
+        permanent: true,
+      },
+      {
+        source: "/category/:path*/feed",
+        destination: "/feed",
+        permanent: true,
+      },
+      {
+        source: "/:slug/feed",
+        destination: "/feed",
+        permanent: true,
+      },
+      // Bookmark lama redaksi: apex kini dilayani Vercel, wp-admin pindah ke
+      // cms.*. Temporary (307), bukan permanent — alamat admin tidak layak
+      // dipatri di cache browser selamanya.
+      {
+        source: "/wp-admin/:path*",
+        destination: "https://cms.theglobal-review.com/wp-admin/:path*",
+        permanent: false,
+      },
+      {
+        source: "/wp-login.php",
+        destination: "https://cms.theglobal-review.com/wp-login.php",
+        permanent: false,
       },
     ];
   },

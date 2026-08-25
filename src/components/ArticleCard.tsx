@@ -64,15 +64,17 @@ export function TitleWithHighlight({
 }) {
   const potongan = splitHighlight(title, highlight);
   if (!potongan) return <>{title}</>;
-  const { before, after } = potongan;
+  // match = potongan judul aslinya, bukan frasa tersimpan — glyph judul
+  // (kutip keriting dkk.) tidak boleh berubah hanya karena disorot.
+  const { before, match, after } = potongan;
   return (
     <>
       {before.trimEnd()}
       {before.endsWith(" ") && <span translate="no"> </span>}
       <span className={`mk ${hover ? "mk--hover" : "mk--on"}`}>
-        <span className="mk__base">{highlight}</span>
+        <span className="mk__base">{match}</span>
         <span className="mk__fill" aria-hidden="true">
-          <span className="mk__fillinner">{highlight}</span>
+          <span className="mk__fillinner">{match}</span>
         </span>
       </span>
       {after.startsWith(" ") && <span translate="no"> </span>}

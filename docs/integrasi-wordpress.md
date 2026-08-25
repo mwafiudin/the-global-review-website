@@ -350,8 +350,9 @@ Realisasinya (lihat "Status implementasi" di atas):
 - `src/data/site.ts` → tetap statis + entri rubrik `bedah-buku`
 - `src/lib/articles.ts` → tinggal helper murni (aman diimpor komponen client)
 - `src/data/books.ts`, `podcasts.ts`, `gallery.ts` → menunggu CPT tersedia
-- `articleImage()` → featured media asli, picsum hanya fallback bila
-  tulisan belum punya gambar unggulan
+- `articleImage()` → featured media asli; fallback-nya aset brand lokal
+  (`placeholderImage()` — picsum sudah dicabut: foto stok acak menyaru
+  foto editorial)
 
 ---
 

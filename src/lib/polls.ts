@@ -18,7 +18,11 @@ export interface PollView {
 /** Apakah poll sudah ditutup (dihitung di server, bukan saat render React). */
 export function isPollClosed(poll: Poll): boolean {
   if (!poll.closesAt) return false;
-  return Date.now() > new Date(poll.closesAt + "T23:59:59").getTime();
+  // Offset WIB eksplisit: tanggal tutup redaksi adalah tanggal Jakarta, dan
+  // gerbang suara di mu-plugin menutup pada tengah malam WIB. Tanpa offset,
+  // server Vercel (UTC) menganggap poll masih buka 7 jam lebih lama — kartu
+  // "AKTIF" yang suaranya ditolak 409 oleh WordPress.
+  return Date.now() > new Date(poll.closesAt + "T23:59:59+07:00").getTime();
 }
 
 /** Total suara sebuah poll: angka pembuka redaksi + suara pembaca. */

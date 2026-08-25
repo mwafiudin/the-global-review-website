@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { wpApiBase } from "@/lib/wp/client";
 
 /**
  * Suara jajak pendapat: browser mengirim ke sini, server meneruskannya ke
@@ -22,7 +23,7 @@ export function pollValid(nilai: unknown): nilai is number {
 
 export async function POST(request: NextRequest) {
   const secret = process.env.REVALIDATE_SECRET?.split(",")[0]?.trim();
-  const wpUrl = process.env.WP_API_URL;
+  const wpUrl = wpApiBase();
   if (!secret || !wpUrl) {
     return Response.json(
       { error: "Jajak pendapat belum dikonfigurasi" },

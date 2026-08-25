@@ -1,7 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
-import { wpFetchFresh, type WpCategory, type WpTerm } from "./client";
+import { wpFetchAllFresh, type WpCategory, type WpTerm } from "./client";
 
 /**
  * Peta kategori WordPress → rubrik FE (kunci categoryNames di
@@ -129,11 +129,17 @@ function wpSlugsFor(fePath: string): string[] {
   ).map(([wp]) => wp);
 }
 
-/** Daftar kategori WP (id, slug, …) — di-cache sehari, tag wp:categories. */
+/**
+ * Daftar kategori WP (id, slug, …) — di-cache sehari, tag wp:categories
+ * (digugurkan webhook mu-plugin ≥1.2 saat kategori ditata). Halaman demi
+ * halaman: satu permintaan per_page=100 terpotong DIAM-DIAM di kategori
+ * ke-101, dan kategori yang tak terbaca membuat artikelnya berpindah rubrik
+ * tanpa jejak (feCategoryForIds jatuh ke "analisis").
+ */
 export const wpCategories = unstable_cache(
   async (): Promise<WpCategory[]> =>
-    wpFetchFresh<WpCategory[]>("/categories", {
-      query: { per_page: 100, _fields: "id,slug,name,parent,count" },
+    wpFetchAllFresh<WpCategory>("/categories", {
+      query: { _fields: "id,slug,name,parent,count" },
     }),
   ["wp-categories"],
   { revalidate: 86400, tags: ["wp:categories"] }

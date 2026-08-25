@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { isoDate } from "./map";
 import { parseYoutubeId, wpPodcastToPodcast } from "./podcasts";
 import { wpAlbumToAlbum, wpAttachmentToPhoto } from "./gallery";
@@ -304,9 +304,12 @@ describe("wpPostToBook", () => {
     expect(bookByline(b)).toBe("Redaksi");
   });
 
-  it("tanpa sampul maupun gambar unggulan → seed, bukan alamat kosong", () => {
+  it("tanpa sampul maupun gambar unggulan → pengganti brand potret, bukan alamat kosong", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const b = wpPostToBook({ ...berbuku, meta: {}, featured_media: 0 }, media);
-    expect(b.cover).toContain("tangan-tangan-amerika");
+    expect(b.cover).toBe("/images/tekstur-kertas-editorial.jpg");
+    expect(warn).toHaveBeenCalledOnce();
+    warn.mockRestore();
   });
 
   it("byline menggabungkan penulis dan imprint bila keduanya ada", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { tagsUntuk } from "./route";
+import { slugVarian, tagsUntuk } from "./route";
 
 describe("tagsUntuk", () => {
   it("tulisan biasa: tag halaman detail + seluruh daftar", () => {
@@ -25,5 +25,34 @@ describe("tagsUntuk", () => {
     // "constructor"/"toString" dari prototype dan mengembalikan fungsi.
     expect(tagsUntuk("constructor", "s")).toEqual(["wp:post:s", "wp:posts"]);
     expect(tagsUntuk("toString", "s")).toEqual(["wp:post:s", "wp:posts"]);
+  });
+
+  it("kategori & user (mu-plugin ≥1.2) menggugurkan peta + daftar", () => {
+    // Rubrik/penulis tiap artikel terpanggang di entri daftar, jadi
+    // wp:posts ikut gugur — bukan hanya cache peta yang ber-TTL sehari.
+    expect(tagsUntuk("category", "geopolitik")).toEqual([
+      "wp:categories",
+      "wp:posts",
+    ]);
+    expect(tagsUntuk("user", "hendrajit")).toEqual(["wp:users", "wp:posts"]);
+  });
+});
+
+describe("slugVarian", () => {
+  it("slug Latin biasa: satu varian", () => {
+    expect(slugVarian("geopolitik-asia")).toEqual(["geopolitik-asia"]);
+  });
+
+  it("slug ter-persen-encode: mentah + ter-decode", () => {
+    // WP mengirim post_name ter-encode; tag di lapisan fetch dibangun dari
+    // param rute yang sudah di-decode — keduanya harus digugurkan.
+    expect(slugVarian("%d8%b3%d9%84%d8%a7%d9%85")).toEqual([
+      "%d8%b3%d9%84%d8%a7%d9%85",
+      "سلام",
+    ]);
+  });
+
+  it("%-sequence cacat tidak melempar — jatuh ke bentuk mentah", () => {
+    expect(slugVarian("50%-benar")).toEqual(["50%-benar"]);
   });
 });

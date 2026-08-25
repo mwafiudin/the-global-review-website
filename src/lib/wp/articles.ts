@@ -33,12 +33,18 @@ import { feCategoryForIds, wpCategories, wpCategoryIds } from "./rubrik";
  */
 
 const EMBED = "wp:featuredmedia,wp:term";
+/**
+ * tgr_gambar (mu-plugin ≥3.3): URL gambar unggulan yang dihitung sisi PHP,
+ * kebal terhadap lampiran yang tersembunyi dari REST anonim (401 karena
+ * induknya pos non-publik). _embedded (detail) dan batch /media (daftar)
+ * dipertahankan sebagai cadangan selama mu-plugin lama masih bisa kembali.
+ */
 /** Mode detail: butuh _embedded; _links wajib ikut agar _embed jalan. */
 const DETAIL_FIELDS =
-  "id,slug,date,sticky,author,title,excerpt,content,meta,_links,_embedded";
+  "id,slug,date,sticky,author,title,excerpt,content,meta,tgr_gambar,_links,_embedded";
 /** Mode daftar: ID mentah saja untuk media & kategori (jauh lebih ringan). */
 const LIST_FIELDS =
-  "id,slug,date,sticky,author,title,excerpt,content,meta,featured_media,categories";
+  "id,slug,date,sticky,author,title,excerpt,content,meta,tgr_gambar,featured_media,categories";
 
 const LIST_REVALIDATE = 300;
 const DETAIL_REVALIDATE = 3600;
@@ -77,9 +83,19 @@ function listQuery(query: PostsQuery): PostsQuery {
   return { _fields: LIST_FIELDS, ...withArchive(query) };
 }
 
+/**
+ * ID media yang masih perlu di-resolve lewat batch /media: hanya pos yang
+ * tgr_gambar-nya tak terisi (mu-plugin belum ≥3.3). Begitu field-nya hidup
+ * daftar ini kosong — wpFetchByIdsFresh langsung mengembalikan [] tanpa
+ * request — dan satu permintaan per daftar hilang dari host burst-limited.
+ */
+export function mediaIdsTanpaGambar(posts: WpPost[]): number[] {
+  return posts.filter((p) => !p.tgr_gambar).map((p) => p.featured_media ?? 0);
+}
+
 /** URL gambar unggulan per attachment, satu request batch untuk satu daftar. */
 async function featuredImageMap(posts: WpPost[]): Promise<Map<number, string>> {
-  const ids = posts.map((p) => p.featured_media ?? 0);
+  const ids = mediaIdsTanpaGambar(posts);
   const map = new Map<number, string>();
   // _fields bersarang (media_details.sizes.…) tidak difilter host ini —
   // minta media_details utuh agar ukuran `large` benar-benar terpakai.
@@ -91,6 +107,27 @@ async function featuredImageMap(posts: WpPost[]): Promise<Map<number, string>> {
     if (url) map.set(m.id, url);
   }
   return map;
+}
+
+/**
+ * URL gambar sebuah pos di mode daftar. Batch /media menghilangkan lampiran
+ * yang tak boleh dibaca anonim DIAM-DIAM (?include= tanpa galat), jadi
+ * ketiadaannya dicatat — persis kelas bug yang membuat gambar unggulan
+ * wp-admin tak pernah sampai ke situs.
+ */
+function gambarDaftar(
+  post: WpPost,
+  images: Map<number, string>
+): string | undefined {
+  if (post.tgr_gambar) return post.tgr_gambar;
+  if (!post.featured_media) return undefined;
+  const url = images.get(post.featured_media);
+  if (!url) {
+    console.warn(
+      `[wp] gambar unggulan pos ${post.id} (${post.slug}) tak terbaca REST (media ${post.featured_media})`
+    );
+  }
+  return url;
 }
 
 /**
@@ -109,7 +146,7 @@ async function mapListPosts(posts: WpPost[]): Promise<Article[]> {
       wpPostToArticle(post, {
         users,
         category: feCategoryForIds(post.categories ?? [], categories),
-        imageUrl: post.featured_media ? images.get(post.featured_media) : undefined,
+        imageUrl: gambarDaftar(post, images),
       })
     )
   );
@@ -224,11 +261,16 @@ export async function byCategory(fePath: string, limit = 100): Promise<Article[]
  * page 1 sengaja tidak menyertakan parameter agar kunci cache-nya sama
  * dengan sebelum paginasi ada. Nomor di luar rentang membuat WP menjawab
  * 400 (rest_post_invalid_page_number) — pemanggil menerjemahkannya ke 404.
+ *
+ * extra: parameter kueri tambahan (author[], after, order — dipakai
+ * /api/rubrik untuk filter sisi server). Ikut menjadi kunci cache, jadi
+ * tiap kombinasi filter di-cache terpisah dengan tag wp:posts yang sama.
  */
 export async function byCategoryWithTotal(
   fePath: string,
   limit = 100,
-  page = 1
+  page = 1,
+  extra: PostsQuery = {}
 ): Promise<{ list: Article[]; total: number }> {
   const ids = await wpCategoryIds(fePath);
   if (ids.length === 0) return { list: [], total: 0 };
@@ -236,6 +278,7 @@ export async function byCategoryWithTotal(
     categories: ids.join(","),
     per_page: perPage(limit),
     ...(page > 1 ? { page } : {}),
+    ...extra,
   });
 }
 

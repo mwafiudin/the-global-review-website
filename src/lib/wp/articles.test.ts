@@ -45,3 +45,39 @@ describe("withArchive", () => {
     expect(withArchive({ categories: "6" })).toEqual({ categories: "6" });
   });
 });
+
+describe("mediaIdsTanpaGambar", () => {
+  const pos = (over: Record<string, unknown>) => ({
+    id: 1,
+    slug: "x",
+    date: "2026-08-25T08:00:00",
+    author: 1,
+    title: { rendered: "X" },
+    ...over,
+  });
+
+  it("pos ber-tgr_gambar tidak ikut batch /media", async () => {
+    const { mediaIdsTanpaGambar } = await muat();
+    expect(
+      mediaIdsTanpaGambar([
+        pos({ featured_media: 11, tgr_gambar: "https://cms.x/a.jpg" }),
+        pos({ featured_media: 12 }),
+      ] as never)
+    ).toEqual([12]);
+  });
+
+  it("field null/absen (mu-plugin lama) tetap di-resolve lewat batch", async () => {
+    const { mediaIdsTanpaGambar } = await muat();
+    expect(
+      mediaIdsTanpaGambar([
+        pos({ featured_media: 11, tgr_gambar: null }),
+        pos({ featured_media: 12, tgr_gambar: "" }),
+      ] as never)
+    ).toEqual([11, 12]);
+  });
+
+  it("pos tanpa gambar unggulan menghasilkan 0 (disaring wpFetchByIdsFresh)", async () => {
+    const { mediaIdsTanpaGambar } = await muat();
+    expect(mediaIdsTanpaGambar([pos({})] as never)).toEqual([0]);
+  });
+});

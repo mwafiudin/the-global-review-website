@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { site, categoryNames } from "@/data/site";
 import { authors } from "@/data/authors";
 import { articleSitemapEntries } from "@/lib/wp/articles";
+import { FE_AUTHOR_DENGAN_WP } from "@/lib/wp/map";
 
 /**
  * Peta situs untuk mesin pencari — krusial sejak peralihan domain, supaya
@@ -71,11 +72,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  const penulis: MetadataRoute.Sitemap = authors.map((a) => ({
-    url: `${site.url}/penulis/${a.slug}`,
-    changeFrequency: "weekly",
-    priority: 0.4,
-  }));
+  // Hanya penulis ber-akun WordPress — halaman penulis lain selamanya
+  // "Belum ada tulisan." dan tidak layak diiklankan ke crawler.
+  const penulis: MetadataRoute.Sitemap = authors
+    .filter((a) => FE_AUTHOR_DENGAN_WP.has(a.slug))
+    .map((a) => ({
+      url: `${site.url}/penulis/${a.slug}`,
+      changeFrequency: "weekly",
+      priority: 0.4,
+    }));
 
   // WP tak terjangkau ≠ sitemap tumbang: kembalikan rute non-artikel saja.
   // Sitemap tanpa artikel selama satu jendela revalidasi lebih baik daripada

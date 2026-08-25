@@ -60,6 +60,14 @@ const WP_USER_TO_FE: Record<string, string> = {
   writer: "redaksi",
 };
 
+/**
+ * Slug penulis FE yang punya akun WordPress — hanya mereka yang bisa punya
+ * tulisan (byAuthor penulis lain selalu []), jadi hanya halaman /penulis
+ * mereka yang layak diiklankan sitemap; sisanya "Belum ada tulisan."
+ * permanen yang ikut terindeks.
+ */
+export const FE_AUTHOR_DENGAN_WP = new Set(Object.values(WP_USER_TO_FE));
+
 export const wpUsers = unstable_cache(
   async (): Promise<WpUser[]> =>
     wpFetchFresh<WpUser[]>("/users", {
@@ -86,9 +94,23 @@ export async function wpUserIdFor(feSlug: string): Promise<number | null> {
 /* ── Post → Article ────────────────────────────────────────────────── */
 
 function featuredImageUrl(post: WpPost): string | undefined {
+  // Dihitung sisi PHP oleh mu-plugin ≥3.3 — tetap terisi walau lampirannya
+  // tersembunyi dari REST anonim; jalur _embedded di bawah tinggal cadangan
+  // selama mu-plugin lama masih terpasang.
+  if (post.tgr_gambar) return post.tgr_gambar;
   const media = post._embedded?.["wp:featuredmedia"]?.[0];
-  if (!media) return undefined;
-  return media.media_details?.sizes?.large?.source_url ?? media.source_url;
+  const url = media?.media_details?.sizes?.large?.source_url ?? media?.source_url;
+  if (typeof url === "string") return url;
+  if (media) {
+    // _embed menyematkan objek galat ({code:"rest_forbidden"}) alih-alih
+    // media bila lampirannya tak boleh dibaca anonim — objek itu lolos
+    // pemeriksaan truthy, jadi yang diperiksa URL-nya, dan kegagalannya
+    // dicatat alih-alih diam-diam jatuh ke gambar pengganti.
+    console.warn(
+      `[wp] gambar unggulan pos ${post.id} (${post.slug}) tak terbaca dari _embedded`
+    );
+  }
+  return undefined;
 }
 
 /**
