@@ -6,9 +6,10 @@ import { categoryNames, mainMenu } from "@/data/site";
 import { getT } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
 import { kanonik, robotsEn } from "@/lib/seo";
-import { getAuthor } from "@/data/authors";
+import { authors as semuaPenulis } from "@/data/authors";
 import { categoryName } from "@/lib/articles";
 import { byCategoryWithTotal } from "@/lib/wp/articles";
+import { FE_AUTHOR_DENGAN_WP } from "@/lib/wp/map";
 import { wpCategoryIds } from "@/lib/wp/rubrik";
 import { categoryIcon } from "@/lib/categoryIcons";
 import { parseHalaman } from "@/lib/pagination";
@@ -94,10 +95,12 @@ export default async function CategoryPage({
     key: child.href.replace("/category/", ""),
   }));
 
-  // Penulis yang muncul di rubrik ini
-  const authorSlugs = Array.from(new Set(list.map((a) => a.author)));
-  const authors = authorSlugs
-    .map((s) => ({ slug: s, name: getAuthor(s).name }))
+  // Pilihan penulis: seluruh penulis ber-akun WP — filternya kini berjalan
+  // server-side atas seluruh rubrik (/api/rubrik), jadi daftarnya tidak
+  // boleh dibatasi siapa yang kebetulan muncul di lembar 100 terbaru.
+  const authors = semuaPenulis
+    .filter((a) => FE_AUTHOR_DENGAN_WP.has(a.slug))
+    .map((a) => ({ slug: a.slug, name: a.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   // Breadcrumb: Beranda › [induk] › [rubrik ini] — tanpa ekor /halaman/{n}
@@ -159,6 +162,7 @@ export default async function CategoryPage({
                   subcategories={subcategories}
                   authors={authors}
                   categoryLabel={categoryName(key)}
+                  rubrikKey={key}
                 />
               </Suspense>
             )}

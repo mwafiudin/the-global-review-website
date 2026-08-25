@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react";
 import type { Article } from "@/lib/types";
@@ -36,11 +36,14 @@ export function CategoryBrowser({
   subcategories,
   authors,
   categoryLabel,
+  rubrikKey,
 }: {
   articles: Article[];
   subcategories: SubCat[];
   authors: { slug: string; name: string }[];
   categoryLabel: string;
+  /** Jalur rubrik FE (mis. "internasional") untuk kueri /api/rubrik. */
+  rubrikKey: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -116,18 +119,74 @@ export function CategoryBrowser({
     });
   const reset = () => router.replace(jalur, { scroll: false });
 
-  const filtered = useMemo(() => {
+  /**
+   * Filter/urut yang butuh cakupan SELURUH rubrik dijalankan server lewat
+   * /api/rubrik — daftar yang diterima komponen ini hanya satu lembar 100
+   * artikel terbaru, dan menyaring lembar itu pernah dijual sebagai filter
+   * se-rubrik ("Terlama" = tertua dari 100 terbaru; penulis lama = "tidak
+   * ada hasil"). Satu-satunya yang murni lokal adalah urutan "waktu baca"
+   * tanpa filter lain: WordPress tidak bisa mengurutkannya.
+   */
+  const serverMode = Boolean(sub || author || range !== "all" || sort === "oldest");
+  const lembar = Math.floor(((page - 1) * PAGE_SIZE) / 100) + 1;
+  const qsRubrik = serverMode
+    ? new URLSearchParams({
+        rubrik: rubrikKey,
+        ...(sub ? { sub } : {}),
+        ...(author ? { penulis: author } : {}),
+        ...(range !== "all"
+          ? { waktu: range === "month" ? "bulan" : "tahun" }
+          : {}),
+        ...(sort === "oldest" ? { urut: "lama" } : {}),
+        ...(lembar > 1 ? { lembar: String(lembar) } : {}),
+      }).toString()
+    : "";
+
+  const [remote, setRemote] = useState<{
+    qs: string;
+    list: Article[];
+    total: number;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!qsRubrik) return;
+    let batal = false;
+    fetch(`/api/rubrik?${qsRubrik}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!batal && d && Array.isArray(d.list)) {
+          setRemote({ qs: qsRubrik, list: d.list, total: d.total ?? d.list.length });
+        }
+      })
+      .catch(() => {
+        // WP tak terjangkau: tampilan sementara (filter lembar lokal) tetap.
+      });
+    return () => {
+      batal = true;
+    };
+  }, [qsRubrik]);
+
+  // Tampilan SEMENTARA selagi /api/rubrik berjalan (dan cadangan bila
+  // gagal): filter yang sama diterapkan pada lembar lokal.
+  const localFiltered = useMemo(() => {
     let out = articles;
     if (sub) out = out.filter((a) => inCategory(a, sub));
     if (author) out = out.filter((a) => a.author === author);
     if (range !== "all") {
-      const now = new Date();
+      // Bulan/tahun menurut jam Jakarta — new Date() polos membuat render
+      // server (UTC) dan hidrasi klien berbeda daftar di sekitar pergantian
+      // bulan/tahun.
+      const [thn, bln] = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Jakarta",
+        year: "numeric",
+        month: "2-digit",
+      })
+        .format(new Date())
+        .split("-")
+        .map(Number);
       out = out.filter((a) => {
-        const d = new Date(a.date + "T00:00:00");
-        return range === "year"
-          ? d.getFullYear() === now.getFullYear()
-          : d.getFullYear() === now.getFullYear() &&
-              d.getMonth() === now.getMonth();
+        const [y, m] = a.date.split("-").map(Number);
+        return range === "year" ? y === thn : y === thn && m === bln;
       });
     }
     const sorted = [...out];
@@ -138,12 +197,24 @@ export function CategoryBrowser({
     return sorted;
   }, [articles, sub, author, range, sort]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const aktif = serverMode && remote && remote.qs === qsRubrik ? remote : null;
+  const filtered = useMemo(() => {
+    if (!aktif) return localFiltered;
+    // "Waktu baca" dikombinasikan dengan filter lain: urutkan di dalam
+    // lembar hasil server (100 artikel) — WP tidak mengenal metrik ini.
+    if (sort !== "reading") return aktif.list;
+    return [...aktif.list].sort((a, b) => readingMinutes(a) - readingMinutes(b));
+  }, [aktif, localFiltered, sort]);
+
+  const totalCount = aktif ? aktif.total : filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
   const current = Math.min(page, totalPages);
-  const pageItems = filtered.slice(
-    (current - 1) * PAGE_SIZE,
-    current * PAGE_SIZE
-  );
+  // Mode server: `filtered` adalah lembar 100 ke-{lembar}; offset halaman
+  // dihitung di dalam lembar itu.
+  const awalHalaman = aktif
+    ? ((current - 1) * PAGE_SIZE) % 100
+    : (current - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(awalHalaman, awalHalaman + PAGE_SIZE);
   const hasFilter = Boolean(sub || author) || range !== "all";
 
   const selectClass =
@@ -188,7 +259,7 @@ export function CategoryBrowser({
       {/* Toolbar: hitungan + filter penulis/waktu + urutkan */}
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
         <p className="text-sm text-meta">
-          <span className="font-semibold text-ink">{filtered.length}</span>{" "}
+          <span className="font-semibold text-ink">{totalCount}</span>{" "}
           <span>{t("artikel")}</span>
         </p>
         <div className="flex flex-wrap items-center gap-2">
@@ -231,7 +302,7 @@ export function CategoryBrowser({
       </div>
 
       {/* Daftar */}
-      {filtered.length === 0 ? (
+      {totalCount === 0 ? (
         <div className="rounded-xl border border-dashed border-line px-6 py-16 text-center">
           <p className="font-display text-lg font-bold text-ink">
             {t("Tidak ada artikel yang cocok")}
