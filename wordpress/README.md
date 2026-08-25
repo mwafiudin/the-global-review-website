@@ -133,7 +133,7 @@ unggah media. Saat waktunya tiba:
 3. Simpan hasilnya sebagai variabel lingkungan, **jangan** di dalam kode:
 
    ```
-   WP_API_URL=https://theglobal-review.com/wp-json
+   WP_API_URL=https://cms.theglobal-review.com/wp-json
    WP_APP_USER=<nama-pengguna>
    WP_APP_PASSWORD=<sandi-aplikasi>
    ```
@@ -358,6 +358,36 @@ mengunci **seluruh** penyimpanan, termasuk menurunkannya ke draf. Yang
 terkena persis 16 arsip yang justru perlu disunting. Sekarang tulisan yang
 sudah tayang hanya diberi peringatan, tidak dikunci.
 
+### Gambar unggulan tahan-401 (v3.3.0)
+
+REST menyembunyikan lampiran yang `post_parent`-nya bukan pos publik dari
+pembaca anonim: `/media/{id}` menjawab **401 rest_forbidden**, `?include=`
+menghilangkannya diam-diam, `_embed` menyematkan objek galat. Gambar
+unggulan yang diunggah saat menyunting draf lain berinduk pada draf itu —
+situs mengira posnya tak bergambar dan memakai gambar pengganti, padahal
+wp-admin menampilkan gambarnya baik-baik saja (insiden 25 Agu 2026: 15
+artikel tayang; redaksi sempat menambal dengan mengunggah ulang berkas yang
+sama sebagai lampiran baru).
+
+v3.3.0 mengekspos dua field baca-saja pada `wp/v2/posts` yang dihitung di
+sisi PHP (tidak tunduk izin baca REST): **`tgr_gambar`** (URL gambar
+unggulan, ukuran `large`) dan **`tgr_sampul_gambar`** (URL sampul buku dari
+meta `tgr_buku_sampul`, ukuran penuh). Frontend membaca keduanya lebih dulu;
+jalur `_embedded`/batch `/media` tinggal cadangan. Rapikan datanya dengan
+`cli/05-perbaiki-induk-media.sh` (tinjau dulu, `APPLY=1` untuk eksekusi).
+
+v3.3.0 juga meluruskan kontrak Sorotan Judul dengan frontend: pencocokan
+kini melipat kutip keriting/dash/ellipsis hasil `wptexturize` (frasa yang
+tersalin dari situs tetap diterima), dan judul tulisan tayang yang diubah
+lewat Sunting Cepat sampai frasanya hilang membuat metanya **dikosongkan +
+notice** — bukan dibiarkan basi memamerkan sorotan yang tidak lagi dirender.
+
+Catatan terpisah soal cache gambar: optimizer `next/image` di Vercel tidak
+punya API invalidasi (TTL ≥4 jam, kuncinya URL sumber). Mengganti isi
+berkas **tanpa mengganti nama file** (plugin "replace media" dsb.) bisa
+menyisakan gambar lama selama itu; penyunting gambar bawaan WordPress aman
+karena selalu menghasilkan nama berkas baru (`-e1234567890`).
+
 ---
 
 ## Memotret layar wp-admin untuk panduan redaksi
@@ -424,7 +454,7 @@ Sekali sesi ±30 menit:
 
    ```php
    define( 'TGR_REVALIDATE_SECRET', '<hasil openssl rand -hex 32>' );
-   define( 'TGR_REVALIDATE_URL', 'https://the-global-review-website.vercel.app/api/revalidate' );
+   define( 'TGR_REVALIDATE_URL', 'https://theglobal-review.com/api/revalidate' );
    ```
 
    Opsional, untuk formulir kontak (sejak v3.0): tambahkan juga
@@ -456,6 +486,14 @@ Kegagalan kirim tidak diulang — frontend memasang ISR berkala sebagai
 jaring pengaman, jadi webhook yang hilang tersusul paling lama satu jendela
 revalidasi. Uji ujung-ke-ujung: sunting judul satu tulisan → halaman Vercel
 berubah ≤30 detik → log fungsi `/api/revalidate` di dasbor Vercel mencatat 200.
+
+Sejak v1.2.0 webhook juga menyala untuk perubahan yang dulu lolos:
+**gambar unggulan diganti tanpa menyimpan pos** (meta `_thumbnail_id`
+ditulis lewat AJAX kotak Gambar Andalan / WP-CLI / REST), **lampiran
+disunting** (crop/putar/ganti berkas → pos induknya disegarkan),
+**kategori ditata** (`type: category` → cache peta rubrik), dan **profil
+penulis berubah** (`type: user`). Kiriman ganda dalam satu request
+di-dedup, jadi satu klik Perbarui tetap satu webhook.
 
 ### Alihan sementara beranda (tgr-alih-sementara.php)
 

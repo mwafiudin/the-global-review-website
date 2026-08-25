@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.2.0
+ * Version:      3.3.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -335,6 +335,75 @@ add_action(
 				'auth_callback'     => function () {
 					return current_user_can( 'edit_posts' );
 				},
+			)
+		);
+	}
+);
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * Gambar unggulan tahan-401 (tgr_gambar, tgr_sampul_gambar).
+ *
+ * REST menyembunyikan lampiran yang post_parent-nya bukan pos publik dari
+ * pembaca anonim: /media/{id} menjawab 401 rest_forbidden, ?include=
+ * menghilangkannya diam-diam, dan _embed menyematkan objek galat. Gambar
+ * unggulan yang dulu diunggah saat menyunting draf lain (induknya draf itu,
+ * bukan pos yang tayang) ikut tersembunyi — frontend mengira posnya tak
+ * bergambar dan memakai gambar pengganti.
+ *
+ * URL-nya dihitung di sini, di sisi PHP yang tidak tunduk pada izin baca
+ * REST. Tidak ada yang bocor: berkas uploads memang publik lewat URL-nya,
+ * dan yang diekspos hanya alamat gambar milik pos yang sudah terbaca.
+ * Field terdaftar ikut terseleksi lewat _fields dan baru dihitung bila
+ * diminta, jadi respons yang tidak memintanya tidak menanggung biayanya.
+ * ═══════════════════════════════════════════════════════════════════════ */
+
+/** URL sebuah lampiran pada ukuran tertentu; null bila tidak ada. */
+function tgr_url_gambar( $lampiran_id, $ukuran = 'large' ) {
+	if ( ! $lampiran_id ) {
+		return null;
+	}
+	$url = wp_get_attachment_image_url( $lampiran_id, $ukuran );
+	if ( ! $url ) {
+		$url = wp_get_attachment_url( $lampiran_id );
+	}
+	return $url ? $url : null;
+}
+
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_field(
+			'post',
+			'tgr_gambar',
+			array(
+				'get_callback' => function ( $pos ) {
+					return tgr_url_gambar( get_post_thumbnail_id( $pos['id'] ) );
+				},
+				'schema'       => array(
+					'description' => 'URL gambar unggulan (ukuran large), dihitung sisi PHP sehingga tetap terisi walau lampirannya tak terbaca REST anonim.',
+					'type'        => array( 'string', 'null' ),
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
+			)
+		);
+
+		// Sampul Bedah Buku (meta tgr_buku_sampul) — kelas masalah yang sama:
+		// sampul yang dipilih dari perpustakaan media bisa saja berinduk pada
+		// pos non-publik dan lenyap dari batch /media?include= frontend.
+		register_rest_field(
+			'post',
+			'tgr_sampul_gambar',
+			array(
+				'get_callback' => function ( $pos ) {
+					return tgr_url_gambar( absint( get_post_meta( $pos['id'], 'tgr_buku_sampul', true ) ), 'full' );
+				},
+				'schema'       => array(
+					'description' => 'URL sampul buku (ukuran penuh) dari meta tgr_buku_sampul, dihitung sisi PHP.',
+					'type'        => array( 'string', 'null' ),
+					'context'     => array( 'view', 'edit' ),
+					'readonly'    => true,
+				),
 			)
 		);
 	}
@@ -1053,10 +1122,16 @@ add_action(
 		// satu huruf besar saja, judul dirender polos tanpa keluhan apa pun.
 		// Beda kapitalisasi diperbaiki di sini — itu salah ketik yang paling
 		// sering terjadi, dan menolaknya cuma memindahkan tebak-tebakan ke
-		// redaksi.
+		// redaksi. Beda tanda baca hasil wptexturize (kutip keriting yang
+		// tersalin dari situs) dimaafkan lewat pelipatan — frontend melipat
+		// dengan cara yang sama, jadi frasa apa adanya tetap cocok di sana.
 		if ( '' !== $frasa && false === strpos( $judul, $frasa ) ) {
 			$posisi = stripos( $judul, $frasa );
-			$frasa  = false === $posisi ? '' : substr( $judul, $posisi, strlen( $frasa ) );
+			if ( false !== $posisi ) {
+				$frasa = substr( $judul, $posisi, strlen( $frasa ) );
+			} elseif ( false === strpos( tgr_sorotan_lipat( $judul ), tgr_sorotan_lipat( $frasa ) ) ) {
+				$frasa = '';
+			}
 		}
 		update_post_meta( $post_id, 'tgr_sorotan', $frasa );
 	}
@@ -1080,6 +1155,41 @@ add_action(
  * Sebelumnya hanya pintu pertama yang dijaga, sehingga pintu-pintu lain bisa
  * menerbitkan tulisan tanpa sorotan tanpa keluhan apa pun.
  */
+/**
+ * Lipat variasi wptexturize (kutip keriting, dash panjang, ellipsis) plus
+ * kapitalisasi. Judul yang DIRENDER REST sudah melewati the_title/wptexturize
+ * sedangkan frasa sorotan tersimpan mentah — tanpa pelipatan, frasa yang
+ * tersalin dari situs ("Poros ‘Maritim’") tak akan pernah cocok dengan judul
+ * mentah di basis data, dan sebaliknya. Cermin normalizeForMatch() frontend.
+ */
+function tgr_sorotan_lipat( $teks ) {
+	// strtolower byte-wise aman untuk UTF-8: byte multibyte tidak tersentuh.
+	return strtolower(
+		strtr(
+			(string) $teks,
+			array(
+				'“' => '"',
+				'”' => '"',
+				'„' => '"',
+				'«' => '"',
+				'»' => '"',
+				'‘' => "'",
+				'’' => "'",
+				'‚' => "'",
+				'–' => '-',
+				'—' => '-',
+				'…' => '...',
+			)
+		)
+	);
+}
+
+/** Frasa masih ditemukan di judul? (beda kapital & tanda baca dimaafkan) */
+function tgr_sorotan_cocok( $judul, $frasa ) {
+	return false !== stripos( (string) $judul, $frasa )
+		|| false !== strpos( tgr_sorotan_lipat( $judul ), tgr_sorotan_lipat( $frasa ) );
+}
+
 function tgr_sorotan_berlaku( $post_id, $judul ) {
 	$frasa = '';
 	if ( isset( $_POST['tgr_sorotan'], $_POST['tgr_meta_nonce'] )
@@ -1089,8 +1199,8 @@ function tgr_sorotan_berlaku( $post_id, $judul ) {
 		$frasa = (string) get_post_meta( $post_id, 'tgr_sorotan', true );
 	}
 	// Selaras penambal simpan: frasa yang tak ditemukan di judul (walau beda
-	// kapital) akan berakhir kosong — dianggap belum diisi.
-	return ( '' !== $frasa && false !== stripos( (string) $judul, $frasa ) ) ? $frasa : '';
+	// kapital/tanda baca) akan berakhir kosong — dianggap belum diisi.
+	return ( '' !== $frasa && tgr_sorotan_cocok( $judul, $frasa ) ) ? $frasa : '';
 }
 
 /** Tandai agar peringatan merah muncul pada permintaan halaman berikutnya. */
@@ -1176,6 +1286,57 @@ add_action(
 	},
 	10,
 	3
+);
+
+/**
+ * Judul tulisan tayang diubah sampai frasanya tak ditemukan lagi — lewat
+ * Sunting Cepat / Sunting Massal yang tidak membawa field sorotan sama
+ * sekali. Tanpa penjaga ini metanya dibiarkan basi: kolom "Sorotan" di
+ * wp-admin terus memamerkan frasa yang di situs sudah tidak dirender
+ * (pencocokan gagal → judul polos), dan tidak ada yang tahu keduanya
+ * berbeda. Dikosongkan + diberi tahu, selaras perilaku kotak sorotan
+ * ("kotak yang kembali kosong berarti frasanya belum cocok").
+ */
+add_action(
+	'post_updated',
+	function ( $post_id, $post_after, $post_before ) {
+		if ( wp_is_post_revision( $post_after ) || wp_is_post_autosave( $post_after ) ) {
+			return;
+		}
+		if ( 'post' !== $post_after->post_type || 'publish' !== $post_after->post_status ) {
+			return;
+		}
+		if ( $post_after->post_title === $post_before->post_title ) {
+			return;
+		}
+		$frasa = (string) get_post_meta( $post_id, 'tgr_sorotan', true );
+		if ( '' === $frasa || tgr_sorotan_cocok( $post_after->post_title, $frasa ) ) {
+			return;
+		}
+		// Simpan penuh dari form klasik menulis ulang meta setelah hook ini
+		// (save_post_post) — pengosongan ini hanya menang saat field-nya
+		// memang tidak ikut terkirim.
+		update_post_meta( $post_id, 'tgr_sorotan', '' );
+		set_transient( 'tgr_sorotan_hangus_' . get_current_user_id(), $frasa, MINUTE_IN_SECONDS );
+	},
+	10,
+	3
+);
+
+add_action(
+	'admin_notices',
+	function () {
+		$kunci = 'tgr_sorotan_hangus_' . get_current_user_id();
+		$frasa = get_transient( $kunci );
+		if ( ! $frasa ) {
+			return;
+		}
+		delete_transient( $kunci );
+		printf(
+			'<div class="notice notice-warning is-dismissible"><p><strong>Sorotan Judul dikosongkan.</strong> Frasa &ldquo;%s&rdquo; tidak lagi ditemukan di judul baru &mdash; isi ulang kotak Sorotan Judul bila judulnya masih perlu penanda.</p></div>',
+			esc_html( $frasa )
+		);
+	}
 );
 
 add_action(

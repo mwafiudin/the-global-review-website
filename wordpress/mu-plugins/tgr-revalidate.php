@@ -2,10 +2,12 @@
 /**
  * Plugin Name:  TGR Headless — Revalidasi Frontend
  * Description:  Memberi tahu frontend Next.js (Vercel) setiap kali tulisan
- *               diterbitkan, disunting, atau dihapus, lewat webhook
- *               /api/revalidate — perubahan di wp-admin langsung tampil
- *               tanpa deploy ulang.
- * Version:      1.1.0
+ *               diterbitkan, disunting, atau dihapus — juga saat gambar
+ *               unggulan diganti, media disunting, kategori ditata, atau
+ *               profil penulis berubah — lewat webhook /api/revalidate,
+ *               sehingga perubahan di wp-admin langsung tampil tanpa
+ *               deploy ulang.
+ * Version:      1.2.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ bersama tgr-headless.php.
@@ -14,7 +16,7 @@
  * "That's all, stop editing!":
  *
  *     define( 'TGR_REVALIDATE_SECRET', '<hasil openssl rand -hex 32>' );
- *     define( 'TGR_REVALIDATE_URL', 'https://the-global-review-website.vercel.app/api/revalidate' );
+ *     define( 'TGR_REVALIDATE_URL', 'https://theglobal-review.com/api/revalidate' );
  *
  * Tanpa TGR_REVALIDATE_SECRET plugin diam saja (tidak fatal), jadi berkas
  * ini aman diunggah lebih dulu sebelum wp-config disunting. Kegagalan
@@ -55,21 +57,29 @@ function tgr_revalidate_url() {
  * Kirim webhook. Blocking dengan timeout singkat (±0,3 dtk tambahan saat
  * redaksi menekan simpan) supaya hasilnya bisa dicatat dan ditampilkan
  * sebagai notice — non-blocking berarti buta terhadap kegagalan.
+ *
+ * Dedup per request: satu simpanan bisa menyentuh beberapa hook sekaligus
+ * (transition_post_status + meta _thumbnail_id + edit lampiran). Tanpa
+ * dedup, satu klik Perbarui berarti dua-tiga kiriman blocking beruntun dan
+ * layar admin ikut menunggu semuanya.
  */
-function tgr_revalidate_send( $post, $status_new, $status_old, $slug_override = '' ) {
+function tgr_revalidate_kirim( $type, $slug, $status_new, $status_old, $modified ) {
 	if ( ! defined( 'TGR_REVALIDATE_SECRET' ) || ! TGR_REVALIDATE_SECRET ) {
 		return;
 	}
 	if ( '' === tgr_revalidate_url() ) {
 		return;
 	}
-
-	// Saat dipindah ke tong sampah WordPress bisa menambah akhiran
-	// __trashed pada slug; buang agar cache halaman aslinya yang gugur.
-	$slug = str_replace( '__trashed', '', $slug_override ? $slug_override : $post->post_name );
 	if ( '' === $slug ) {
 		return;
 	}
+
+	static $sudah = array();
+	$kunci = $type . '|' . $slug;
+	if ( isset( $sudah[ $kunci ] ) ) {
+		return;
+	}
+	$sudah[ $kunci ] = true;
 
 	$response = wp_remote_post(
 		tgr_revalidate_url(),
@@ -81,11 +91,11 @@ function tgr_revalidate_send( $post, $status_new, $status_old, $slug_override = 
 			),
 			'body'    => wp_json_encode(
 				array(
-					'type'       => $post->post_type,
+					'type'       => $type,
 					'slug'       => $slug,
 					'status_new' => $status_new,
 					'status_old' => $status_old,
-					'modified'   => $post->post_modified_gmt,
+					'modified'   => $modified,
 				)
 			),
 		)
@@ -105,6 +115,14 @@ function tgr_revalidate_send( $post, $status_new, $status_old, $slug_override = 
 		),
 		15 * MINUTE_IN_SECONDS
 	);
+}
+
+/** Varian untuk objek pos — jalur yang dipakai hampir semua hook di bawah. */
+function tgr_revalidate_send( $post, $status_new, $status_old, $slug_override = '' ) {
+	// Saat dipindah ke tong sampah WordPress bisa menambah akhiran
+	// __trashed pada slug; buang agar cache halaman aslinya yang gugur.
+	$slug = str_replace( '__trashed', '', $slug_override ? $slug_override : $post->post_name );
+	tgr_revalidate_kirim( $post->post_type, $slug, $status_new, $status_old, $post->post_modified_gmt );
 }
 
 /**
@@ -174,6 +192,89 @@ add_action(
 	},
 	10,
 	3
+);
+
+/**
+ * Gambar unggulan diganti TANPA menyimpan pos: kotak Gambar Andalan editor
+ * klasik menulis meta _thumbnail_id seketika lewat AJAX (set-post-thumbnail),
+ * begitu pula WP-CLI dan penulisan meta lewat REST — tidak satu pun melewati
+ * wp_insert_post, jadi transition_post_status tidak pernah menyala dan
+ * gambar lama bertahan sampai jendela ISR berikutnya.
+ */
+function tgr_revalidate_meta_gambar( $meta_id, $object_id, $meta_key ) {
+	if ( '_thumbnail_id' !== $meta_key ) {
+		return;
+	}
+	$post = get_post( $object_id );
+	if ( ! $post || ! in_array( $post->post_type, tgr_revalidate_post_types(), true ) ) {
+		return;
+	}
+	if ( 'publish' !== $post->post_status ) {
+		return;
+	}
+	tgr_revalidate_send( $post, 'publish', 'publish' );
+}
+add_action( 'updated_post_meta', 'tgr_revalidate_meta_gambar', 10, 3 );
+add_action( 'added_post_meta', 'tgr_revalidate_meta_gambar', 10, 3 );
+add_action( 'deleted_post_meta', 'tgr_revalidate_meta_gambar', 10, 3 );
+
+/**
+ * Lampiran disunting (crop/putar di penyunting gambar, teks alternatif,
+ * ganti berkas): tipe attachment tidak masuk daftar tipe di atas, jadi
+ * tanpa hook ini pos induknya tetap menyajikan turunan lama. Hanya induk
+ * langsung yang terjangkau — pos lain yang memakai lampiran ini sebagai
+ * gambar unggulan tanpa menjadi induknya tertangkap saat penetapannya
+ * (hook meta di atas) dan oleh skrip 05-perbaiki-induk-media.sh yang
+ * merapikan induk lampiran.
+ */
+function tgr_revalidate_lampiran( $post_id ) {
+	$lampiran = get_post( $post_id );
+	if ( ! $lampiran || 'attachment' !== $lampiran->post_type || ! $lampiran->post_parent ) {
+		return;
+	}
+	$induk = get_post( $lampiran->post_parent );
+	if ( ! $induk || ! in_array( $induk->post_type, tgr_revalidate_post_types(), true ) ) {
+		return;
+	}
+	if ( 'publish' !== $induk->post_status ) {
+		return;
+	}
+	tgr_revalidate_send( $induk, 'publish', 'publish' );
+}
+add_action( 'attachment_updated', 'tgr_revalidate_lampiran', 10, 1 );
+add_action( 'edit_attachment', 'tgr_revalidate_lampiran', 10, 1 );
+
+/**
+ * Kategori ditata (nama/slug/induk diganti, dibuat, dihapus): rubrik tiap
+ * artikel dihitung dari peta kategori yang di-cache sehari penuh di
+ * frontend (tag wp:categories) — satu-satunya jalur menggugurkannya lebih
+ * cepat adalah webhook ini.
+ */
+function tgr_revalidate_term( $term_id, $tt_id, $taxonomy ) {
+	if ( 'category' !== $taxonomy ) {
+		return;
+	}
+	$term = get_term( $term_id, 'category' );
+	$slug = ( $term && ! is_wp_error( $term ) ) ? $term->slug : 'kategori';
+	tgr_revalidate_kirim( 'category', $slug, 'updated', 'updated', gmdate( 'Y-m-d H:i:s' ) );
+}
+add_action( 'created_term', 'tgr_revalidate_term', 10, 3 );
+add_action( 'edited_term', 'tgr_revalidate_term', 10, 3 );
+add_action( 'delete_term', 'tgr_revalidate_term', 10, 3 );
+
+/**
+ * Profil penulis berubah (slug user dipakai memetakan tulisan ke profil
+ * penulis situs; cache-nya juga sehari penuh, tag wp:users).
+ */
+add_action(
+	'profile_update',
+	function ( $user_id ) {
+		$user = get_userdata( $user_id );
+		if ( ! $user ) {
+			return;
+		}
+		tgr_revalidate_kirim( 'user', $user->user_nicename, 'updated', 'updated', gmdate( 'Y-m-d H:i:s' ) );
+	}
 );
 
 /** Notice kecil di layar edit: status kiriman webhook terakhir. */

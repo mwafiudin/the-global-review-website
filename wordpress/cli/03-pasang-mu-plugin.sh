@@ -16,16 +16,20 @@ HOST="${HOST:?setel HOST, mis. HOST=tgr}"
 WP_PATH="${WP_PATH:?setel WP_PATH, mis. WP_PATH=/var/www/theglobal-review.com}"
 SITUS="${SITUS:-https://theglobal-review.com}"
 
-SUMBER="$(cd "$(dirname "$0")/.." && pwd)/mu-plugins/tgr-headless.php"
+SUMBER_DIR="$(cd "$(dirname "$0")/.." && pwd)/mu-plugins"
 
 echo "==> Memastikan direktori mu-plugins ada"
 ssh "$HOST" "mkdir -p '$WP_PATH/wp-content/mu-plugins'"
 
-echo "==> Menyalin tgr-headless.php"
-scp "$SUMBER" "$HOST:$WP_PATH/wp-content/mu-plugins/tgr-headless.php"
+# Kedua mu-plugin dipasang bersama — tgr-revalidate.php dulu hanya punya
+# jalur unggah manual (File Manager) dan mudah tertinggal versi.
+for BERKAS in tgr-headless.php tgr-revalidate.php; do
+	echo "==> Menyalin $BERKAS"
+	scp "$SUMBER_DIR/$BERKAS" "$HOST:$WP_PATH/wp-content/mu-plugins/$BERKAS"
 
-echo "==> Memeriksa sintaks PHP di server"
-ssh "$HOST" "php -l '$WP_PATH/wp-content/mu-plugins/tgr-headless.php'"
+	echo "==> Memeriksa sintaks PHP di server"
+	ssh "$HOST" "php -l '$WP_PATH/wp-content/mu-plugins/$BERKAS'"
+done
 
 echo "==> Menyegarkan permalink (agar rute CPT baru dikenali)"
 ssh "$HOST" "cd '$WP_PATH' && wp rewrite flush && wp cache flush"
