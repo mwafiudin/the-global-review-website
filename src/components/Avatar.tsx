@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 
 /** Ambil inisial dari nama (maks 2 huruf). */
 function initials(name: string): string {

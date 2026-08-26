@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";

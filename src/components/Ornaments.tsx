@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 
 /** Pembatas ornamental: hairline dengan kompas emas di tengah. */
 export function CompassDivider({ className = "" }: { className?: string }) {

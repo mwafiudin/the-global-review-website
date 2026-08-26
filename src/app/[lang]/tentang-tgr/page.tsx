@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import { PageHeader } from "@/components/PageHeader";
 import { EndMark } from "@/components/Ornaments";
 import { Sidebar } from "@/components/Sidebar";

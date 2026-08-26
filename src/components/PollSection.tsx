@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import { toPollViews, wpActivePolls } from "@/lib/wp/polls";
 import { getT } from "@/lib/i18n-server";
 import { SectionHeading } from "./SectionHeading";

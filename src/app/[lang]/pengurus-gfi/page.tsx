@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import { PageHeader } from "@/components/PageHeader";
 import { CompassDivider } from "@/components/Ornaments";
 import { pengurusGfiCopy } from "@/data/pages/pengurus-gfi";

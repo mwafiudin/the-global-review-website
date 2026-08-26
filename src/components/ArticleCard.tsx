@@ -4,7 +4,7 @@
 // (diimpor CategoryBrowser & TabbedSection), dan useLang menyelesaikan
 // label kategori + tanggal + "menit baca" untuk semua varian kartu
 // sekaligus. HTML hasil SSR tidak berubah.
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { Article } from "@/lib/types";
 import { useLang } from "@/lib/i18n";

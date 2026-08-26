@@ -388,6 +388,15 @@ berkas **tanpa mengganti nama file** (plugin "replace media" dsb.) bisa
 menyisakan gambar lama selama itu; penyunting gambar bawaan WordPress aman
 karena selalu menghasilkan nama berkas baru (`-e1234567890`).
 
+Optimizer yang sama juga punya **kuota bulanan** (paket Hobby). 26 Agu 2026
+kuotanya habis — semua transform baru dijawab `402` dan gambar segar tampil
+rusak, sementara yang ter-cache tetap jalan (gejalanya: beda antar browser).
+Sejak itu semua pemakaian gambar frontend lewat
+`src/components/ImageWithFallback.tsx`: optimizer bawaan dulu, gagal →
+proxy gratis wsrv.nl (resize + CDN tetap dapat), gagal lagi → berkas asli
+tanpa optimasi. Call site baru wajib impor dari komponen itu, bukan
+langsung `next/image`, supaya otomatis kebagian jalur cadangan.
+
 ---
 
 ## Memotret layar wp-admin untuk panduan redaksi

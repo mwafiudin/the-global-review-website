@@ -1,4 +1,4 @@
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import Link from "next/link";
 import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { getT } from "@/lib/i18n-server";

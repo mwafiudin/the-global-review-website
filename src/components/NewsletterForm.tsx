@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import Image from "@/components/ImageWithFallback";
 import { useLang } from "@/lib/i18n";
 
 /** Garis bujur-lintang globe: motif "pemandu" selain kompas. */
