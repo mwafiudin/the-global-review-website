@@ -173,7 +173,7 @@ export default async function ArticlePage({
             )}
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-meta">
-                {t("Penulis")}
+                {t("Editor")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold text-ink">
                 {author.name}

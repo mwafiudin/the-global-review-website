@@ -133,6 +133,10 @@ export const EN: Record<string, string> = {
   "Tentang The Global Review": "About The Global Review",
   // Halaman artikel
   "menit baca": "min read",
+  // Kotak byline artikel memakai "Editor": naskah kerap datang dari
+  // penulis lain dan yang tercantum adalah editor yang menerbitkannya.
+  // "Penulis" tetap dipakai halaman bedah buku untuk penulis bukunya.
+  Editor: "Editor",
   Penulis: "Author",
   Sebelumnya: "Previous",
   Selanjutnya: "Next",
@@ -142,8 +146,12 @@ export const EN: Record<string, string> = {
   "Artikel terkait": "Related articles",
   Bagikan: "Share",
   "Salin tautan": "Copy link",
-  "Bagikan ke WhatsApp": "Share to WhatsApp",
+  "Bagikan ke Facebook": "Share to Facebook",
+  "Bagikan ke Telegram": "Share to Telegram",
   "Bagikan ke X": "Share to X",
+  "Bagikan ke Instagram": "Share to Instagram",
+  "Instagram tidak menerima tautan langsung — tautan disalin agar bisa ditempel":
+    "Instagram accepts no direct links — the link is copied so you can paste it",
   // Arsip rubrik & paginasi
   artikel: "articles",
   "Semua penulis": "All authors",
