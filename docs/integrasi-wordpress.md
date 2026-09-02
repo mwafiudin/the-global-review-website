@@ -7,6 +7,47 @@ Disusun setelah pemeriksaan langsung terhadap situs produksi, Agustus 2026.
 
 ---
 
+## Status implementasi — 2 September 2026 (audit terverifikasi)
+
+**Peralihan sudah terjadi.** `theglobal-review.com` kini dilayani Vercel
+(header `server: Vercel`, `x-powered-by: Next.js`); WordPress duduk di
+`cms.theglobal-review.com` sebagai backend headless. Ini menjawab
+pertanyaan terbuka §6 no. 6, dan menuntaskan langkah 6–7 pada §5.
+
+Seluruh angka di bawah dipungut langsung dari REST API produksi hari ini,
+bukan dari catatan — entri 20 Agustus di bawah sudah usang dan menyesatkan
+(ia masih menunggu unggahan v3.0 yang nyatanya sudah lama terlampaui).
+
+| Yang diperiksa | Temuan |
+|---|---|
+| mu-plugin | **v3.3.0 aktif** — `wp/v2/posts` mengekspos `tgr_gambar`, dan namespace `tgr/v1` menyediakan `/contact`, `/subscribe`, `/vote` |
+| Tulisan tayang | 893 (dari 5.678; pengarsipan `WP_ARCHIVE_AFTER=2022-12-31` sudah dijalankan) |
+| Gambar unggulan | **0 dari 793 kosong** — cacat induk lampiran yang melatari v3.3.0 sudah bersih |
+| Kategori | 34, **seluruhnya dikenali** peta `WP_TO_FE`; tak ada rubrik kode tanpa kategori WP. §3.1 selesai |
+| Laman | 12 · Podcast 9 · Pengurus & Redaksi 13 · Media 7.038 · Pengguna 4 |
+| Album | **0** — `/gallery` menampilkan "Belum ada album." |
+| Jajak pendapat | **0** — seksi beranda menyembunyikan diri |
+
+**Yang tersisa bukan lagi pekerjaan integrasi, melainkan pengisian konten:**
+album galeri dan jajak pendapat menunggu redaksi membuatnya di wp-admin.
+Keduanya sengaja kosong sejak data contoh dicabut (lihat entri 20 Agustus),
+jadi nol di sini berarti "belum diisi", bukan "putus".
+
+⚠️ **`wordpress/mu-plugins/tgr-alih-sementara.php` sudah kedaluwarsa.**
+Tujuannya masih `the-global-review-website.vercel.app`, bukan domain
+kanonik. Produksi menjawab 200 di `cms.` (bukan 302), jadi tampaknya sudah
+dicabut dari server — tetapi berkasnya masih di repo. Bila suatu saat
+terunggah lagi, beranda CMS akan melempar pengunjung ke domain vercel.app
+dan memecah sinyal SEO. Perlu dihapus atau ditandai pensiun.
+
+**Belum bisa dijalankan dari sini:** seluruh perkakas `wordpress/rest/`
+(termasuk `periksa-kesehatan.mjs` yang murni baca) menuntut
+`WP_APP_USER`/`WP_APP_PASSWORD` saat impor `wp.mjs`. Audit di atas
+karenanya memakai REST publik langsung. Untuk potret kesehatan berkala dan
+operasi tulis, Application Password perlu diisikan ke `.env.local`.
+
+---
+
 ## Status implementasi — 20 Agustus 2026
 
 **Formulir kontak kini sungguhan.** Sebelumnya tombol Kirim di
