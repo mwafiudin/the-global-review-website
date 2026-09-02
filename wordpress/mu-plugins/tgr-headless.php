@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.3.0
+ * Version:      3.4.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -280,6 +280,9 @@ function tgr_register_book_meta() {
 		'tgr_buku_podcast'         => 'string',
 		// "1" pada satu-satunya buku yang tampil di kartu promo sidebar.
 		'tgr_buku_unggulan'        => 'string',
+		// "1" untuk buku karya pengkaji GFI — mengisi halaman Pustaka GFI.
+		// Berbeda dari 'unggulan': boleh dicentang pada banyak buku sekaligus.
+		'tgr_buku_karya_gfi'       => 'string',
 	);
 
 	foreach ( $fields as $key => $type ) {
@@ -1028,6 +1031,22 @@ function tgr_kotak_buku( $post ) {
 				</td>
 			</tr>
 			<tr>
+				<th scope="row">Karya GFI</th>
+				<td>
+					<label>
+						<input type="checkbox" name="tgr_buku_karya_gfi" value="1"
+							<?php checked( '1', tgr_meta( $post->ID, 'tgr_buku_karya_gfi' ) ); ?>>
+						Tampilkan di halaman &ldquo;Pustaka GFI&rdquo;
+					</label>
+					<p class="description">
+						Buku yang ditulis atau disusun pengkaji GFI. Boleh dicentang pada
+						beberapa buku sekaligus &mdash; tidak seperti Buku pilihan sidebar.
+						Penerbitnya tidak harus GFI; yang tercantum di kartu tetap penerbit
+						sebenarnya dari field di atas.
+					</p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row">Sampul buku</th>
 				<td>
 					<input type="hidden" id="tgr_buku_sampul" name="tgr_buku_sampul" value="<?php echo esc_attr( $sampul ); ?>">
@@ -1114,6 +1133,13 @@ add_action(
 				update_post_meta( $id_lain, 'tgr_buku_unggulan', '' );
 			}
 		}
+
+		// Karya GFI: centang bebas, tanpa efek ke buku lain.
+		update_post_meta(
+			$post_id,
+			'tgr_buku_karya_gfi',
+			isset( $_POST['tgr_buku_karya_gfi'] ) ? '1' : ''
+		);
 
 		$frasa = tgr_kiriman_teks( 'tgr_sorotan' );
 		$judul = get_post_field( 'post_title', $post_id );

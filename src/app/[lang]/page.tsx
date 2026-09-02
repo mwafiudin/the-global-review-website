@@ -8,6 +8,7 @@ import {
   TitleWithHighlight,
 } from "@/components/ArticleCard";
 import { BrandBand } from "@/components/BrandBand";
+import { PustakaBand } from "@/components/PustakaBand";
 import { WorldDotMap } from "@/components/WorldDotMap";
 import { NewsletterForm } from "@/components/NewsletterForm";
 import { PollSection } from "@/components/PollSection";
@@ -234,6 +235,9 @@ export default async function HomePage() {
 
       {/* Pengenal brand: jeda di tengah halaman */}
       <BrandBand />
+
+      {/* Karya sendiri, menyusul klaim "lembaga pengkajian" di band atas */}
+      <PustakaBand />
 
       {/* Jajak pendapat (carousel) */}
       <PollSection />

@@ -109,6 +109,7 @@ export const lainnyaGroups: { label: string; items: NavItem[] }[] = [
     label: "Kanal",
     items: [
       { label: "Bedah Buku", href: "/bedah-buku" },
+      { label: "Pustaka GFI", href: "/pustaka-gfi" },
       { label: "Podcast", href: "/podcast" },
       { label: "Galeri", href: "/gallery" },
     ],

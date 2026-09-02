@@ -29,6 +29,7 @@ export const EN: Record<string, string> = {
   Media: "Media",
   // Kanal
   "Bedah Buku": "Book Reviews",
+  "Pustaka GFI": "GFI Library",
   Podcast: "Podcast",
   Galeri: "Gallery",
   // Kawasan
@@ -247,6 +248,15 @@ export const EN: Record<string, string> = {
   "Baca ulasan lengkap": "Read the full review",
   "Koleksi Lainnya": "More from the Collection",
   "Baca ulasan": "Read review",
+  // Pustaka GFI — katalog karya sendiri, bukan daftar ulasan
+  "Buku yang ditulis dan disusun para pengkaji Global Future Institute.":
+    "Books written and compiled by Global Future Institute researchers.",
+  "Karya para pengkaji kami.": "Work by our researchers.",
+  "Halaman ini memuat karya sendiri. Ulasan buku dari penerbit lain ada di":
+    "This page holds our own work. Reviews of books from other publishers are in",
+  "Belum ada buku yang ditandai": "No books marked yet",
+  "Buku tampil di sini setelah ditandai Karya GFI pada Identitas Buku di wp-admin.":
+    "Books appear here once marked Karya GFI under Identitas Buku in wp-admin.",
   Ulasan: "Review",
   "Tonton diskusinya": "Watch the discussion",
   bersama: "with",
