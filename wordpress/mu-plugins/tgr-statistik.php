@@ -2,10 +2,10 @@
 /**
  * Plugin Name:  TGR Headless — Klien Statistik
  * Description:  Klien baca untuk Google Search Console (traffic pencarian)
- *               dan PageSpeed Insights (data lapangan Chrome + skor
- *               Lighthouse). Menyediakan fungsi pengambil data saja;
- *               halaman tampilannya menyusul di tahap berikutnya.
- * Version:      1.1.0
+ *               dan Chrome UX Report (Core Web Vitals pengguna sungguhan).
+ *               Menyediakan fungsi pengambil data saja; halaman tampilannya
+ *               menyusul di tahap berikutnya.
+ * Version:      2.0.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -26,7 +26,7 @@
  * properti Domain, bentuknya menjadi 'sc-domain:theglobal-review.com'.
  * Salah bentuk menghasilkan HTTP 403 yang bunyinya seolah soal izin,
  * padahal hanya alamat properti yang tidak dikenali.
- *     define( 'TGR_PSI_KEY',     '<kunci Google Cloud untuk PageSpeed Insights>' );
+ *     define( 'TGR_PSI_KEY',     '<kunci Google Cloud>' );
  *
  * Berkas JSON service account diletakkan DI LUAR public_html supaya tidak
  * pernah bisa diunduh lewat peramban, bahkan bila PHP suatu saat berhenti
@@ -49,17 +49,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 const TGR_STAT_TIMEOUT_GSC = 15;
 
 /**
- * PSI menjalankan Lighthouse sungguhan di sisi Google — 10-30 detik itu
- * normal, bukan tanda gangguan. Karena itu ia TIDAK boleh dipanggil saat
- * halaman dimuat; tahap berikutnya menjadwalkannya lewat cron.
+ * CrUX hanya MEMBACA data yang sudah dikumpulkan Chrome — biasanya di bawah
+ * satu detik. Ini pengganti PageSpeed Insights, yang menjalankan Lighthouse
+ * secara langsung tiap dipanggil (10-40 detik) dan karena itu selalu dibunuh
+ * max_execution_time hosting ini sebelum sempat menjawab. Tidak ada nilai
+ * timeout yang bisa memperbaiki hal itu; sumbernyalah yang harus diganti.
  *
- * 45 detik, bukan 60: max_execution_time di hosting bersama lazimnya 30-60
- * detik, dan batas HTTP yang MELEBIHI batas eksekusi PHP berakibat skrip
- * dibunuh di tengah jalan — halaman terpotong tanpa pesan galat sama sekali
- * karena display_errors mati. Lebih baik permintaannya menyerah sendiri dan
- * mengembalikan WP_Error yang bisa dibaca.
+ * Yang hilang bersama PSI hanya skor Lighthouse — hasil simulasi lab. Data
+ * lapangan di bawah ini justru sumber yang sama yang dibaca PSI, dan itu
+ * yang dipakai Google untuk peringkat.
  */
-const TGR_STAT_TIMEOUT_PSI = 45;
+const TGR_STAT_TIMEOUT_CRUX = 15;
 
 /**
  * Token OAuth Google berlaku 60 menit; disimpan 55 agar tak dipakai basi.
@@ -75,9 +75,24 @@ function tgr_stat_gsc_siap() {
 	return defined( 'TGR_GSC_SA_JSON' ) && defined( 'TGR_GSC_SITE' );
 }
 
-/** Apakah konfigurasi PageSpeed Insights lengkap. */
-function tgr_stat_psi_siap() {
-	return defined( 'TGR_PSI_KEY' ) && TGR_PSI_KEY;
+/**
+ * Kunci Google Cloud. TGR_PSI_KEY dipertahankan sebagai nama lama supaya
+ * pergantian PSI -> CrUX tidak menuntut penyuntingan wp-config lagi; kunci
+ * yang sama berlaku untuk kedua API.
+ */
+function tgr_stat_kunci_google() {
+	if ( defined( 'TGR_GOOGLE_API_KEY' ) && TGR_GOOGLE_API_KEY ) {
+		return TGR_GOOGLE_API_KEY;
+	}
+	if ( defined( 'TGR_PSI_KEY' ) && TGR_PSI_KEY ) {
+		return TGR_PSI_KEY;
+	}
+	return '';
+}
+
+/** Apakah konfigurasi Chrome UX Report lengkap. */
+function tgr_stat_crux_siap() {
+	return '' !== tgr_stat_kunci_google();
 }
 
 /* ── Search Console ────────────────────────────────────────────────── */
@@ -285,47 +300,66 @@ function tgr_stat_gsc_kueri( array $args = array() ) {
 	return isset( $isi['rows'] ) ? $isi['rows'] : array();
 }
 
-/* ── PageSpeed Insights ────────────────────────────────────────────── */
+/* ── Chrome UX Report ──────────────────────────────────────────────── */
 
 /**
- * Data performa satu URL: lapangan (CrUX) dan lab (Lighthouse) sekaligus.
+ * Ambang Core Web Vitals resmi, dipakai menerjemahkan angka p75 menjadi
+ * status. CrUX tidak mengirim label seperti PSI ("FAST"/"AVERAGE"/"SLOW"),
+ * hanya angka — jadi penilaiannya dilakukan di sini, memakai ambang yang
+ * sama yang dipakai Google.
  *
- * Satu panggilan memberi keduanya, dan itu alasan memilih PSI ketimbang
- * CrUX API terpisah: data lapangan lebih jujur tetapi bisa kosong bila
- * sampelnya kurang, sedangkan skor lab selalu ada. Halaman statistik jadi
- * tidak pernah benar-benar hampa.
+ * Format: metrik => array( batas_baik, batas_buruk ).
+ */
+function tgr_stat_ambang() {
+	return array(
+		'lcp'  => array( 2500, 4000 ),
+		'inp'  => array( 200, 500 ),
+		'cls'  => array( 0.1, 0.25 ),
+		'fcp'  => array( 1800, 3000 ),
+		'ttfb' => array( 800, 1800 ),
+	);
+}
+
+/** Nama metrik CrUX => kunci ringkas yang dipakai frontend. */
+function tgr_stat_peta_metrik() {
+	return array(
+		'largest_contentful_paint'       => 'lcp',
+		'interaction_to_next_paint'      => 'inp',
+		'cumulative_layout_shift'        => 'cls',
+		'first_contentful_paint'         => 'fcp',
+		'experimental_time_to_first_byte' => 'ttfb',
+	);
+}
+
+/**
+ * Core Web Vitals pengguna Chrome sungguhan, 28 hari terakhir.
  *
- * @param string $url      URL yang diukur; kosong berarti beranda situs.
- * @param string $strategi 'mobile' atau 'desktop'.
+ * @param string $origin      Asal situs; kosong berarti situs ini.
+ * @param string $form_factor 'PHONE' atau 'DESKTOP'.
  * @return array|WP_Error
  */
-function tgr_stat_psi( $url = '', $strategi = 'mobile' ) {
-	if ( ! tgr_stat_psi_siap() ) {
-		return new WP_Error( 'tgr_stat_psi_belum_disetel', 'TGR_PSI_KEY belum didefinisikan di wp-config.php.' );
+function tgr_stat_crux( $origin = '', $form_factor = 'PHONE' ) {
+	$kunci = tgr_stat_kunci_google();
+	if ( '' === $kunci ) {
+		return new WP_Error( 'tgr_stat_crux_belum_disetel', 'TGR_PSI_KEY / TGR_GOOGLE_API_KEY belum didefinisikan di wp-config.php.' );
 	}
 
-	$endpoint = add_query_arg(
+	// Origin, bukan URL: data tingkat halaman jauh lebih sering kosong karena
+	// tiap URL perlu ambang sampelnya sendiri, sedangkan origin menghimpun
+	// seluruh halaman menjadi satu.
+	$jawaban = wp_remote_post(
+		'https://chromeuxreport.googleapis.com/v1/records:queryRecord?key=' . rawurlencode( $kunci ),
 		array(
-			'url'      => rawurlencode( $url ? $url : home_url( '/' ) ),
-			'key'      => rawurlencode( TGR_PSI_KEY ),
-			'strategy' => 'desktop' === $strategi ? 'desktop' : 'mobile',
-		),
-		'https://www.googleapis.com/pagespeedonline/v5/runPagespeed'
+			'timeout' => TGR_STAT_TIMEOUT_CRUX,
+			'headers' => array( 'Content-Type' => 'application/json' ),
+			'body'    => wp_json_encode(
+				array(
+					'origin'     => $origin ? $origin : untrailingslashit( home_url() ),
+					'formFactor' => 'DESKTOP' === $form_factor ? 'DESKTOP' : 'PHONE',
+				)
+			),
+		)
 	);
-	// category berulang tidak bisa lewat add_query_arg (kunci yang sama
-	// saling menimpa), jadi ditempel manual.
-	$endpoint .= '&category=performance&category=accessibility&category=best-practices&category=seo';
-
-	// Beri ruang lebih dari batas HTTP di atas, supaya yang menyerah lebih
-	// dulu adalah permintaannya (menghasilkan WP_Error yang terbaca), bukan
-	// PHP-nya (menghasilkan halaman terpotong tanpa jejak). Banyak hosting
-	// melarang set_time_limit; kegagalannya tidak apa-apa karena batas HTTP
-	// sudah dipilih agar tetap masuk akal pada 60 detik.
-	if ( function_exists( 'set_time_limit' ) ) {
-		@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-	}
-
-	$jawaban = wp_remote_get( $endpoint, array( 'timeout' => TGR_STAT_TIMEOUT_PSI ) );
 
 	if ( is_wp_error( $jawaban ) ) {
 		return $jawaban;
@@ -334,52 +368,72 @@ function tgr_stat_psi( $url = '', $strategi = 'mobile' ) {
 	$kode = wp_remote_retrieve_response_code( $jawaban );
 	$isi  = json_decode( (string) wp_remote_retrieve_body( $jawaban ), true );
 
-	if ( 200 !== $kode || ! is_array( $isi ) ) {
+	// 404 berarti origin ini belum punya sampel yang cukup. Itu keadaan sah,
+	// bukan kegagalan — halaman menampilkannya sebagai "belum cukup data".
+	if ( 404 === $kode ) {
+		return array(
+			'diambil'    => gmdate( 'c' ),
+			'formFactor' => $form_factor,
+			'periode'    => null,
+			'cukupData'  => false,
+			'metrik'     => array(),
+		);
+	}
+
+	if ( 200 !== $kode || ! isset( $isi['record']['metrics'] ) ) {
 		return new WP_Error(
-			'tgr_stat_psi_galat',
+			'tgr_stat_crux_galat',
 			sprintf(
-				'PageSpeed Insights menolak (HTTP %d): %s',
+				'Chrome UX Report menolak (HTTP %d): %s',
 				$kode,
 				isset( $isi['error']['message'] ) ? $isi['error']['message'] : 'tanpa keterangan'
 			)
 		);
 	}
 
-	$lapangan = isset( $isi['loadingExperience']['metrics'] ) ? $isi['loadingExperience']['metrics'] : array();
-	$lab      = isset( $isi['lighthouseResult']['categories'] ) ? $isi['lighthouseResult']['categories'] : array();
+	$mentah  = $isi['record']['metrics'];
+	$ambang  = tgr_stat_ambang();
+	$metrik  = array();
 
-	$ambil_lapangan = static function ( $kunci ) use ( $lapangan ) {
-		// N/A adalah jawaban sah: metrik yang sampelnya belum cukup memang
-		// tidak dikirim. null diteruskan apa adanya supaya halaman bisa
-		// menuliskan "belum cukup data" alih-alih memajang angka nol.
-		return isset( $lapangan[ $kunci ]['percentile'] )
-			? array(
-				'nilai'  => $lapangan[ $kunci ]['percentile'],
-				'status' => isset( $lapangan[ $kunci ]['category'] ) ? $lapangan[ $kunci ]['category'] : null,
-			)
-			: null;
-	};
+	foreach ( tgr_stat_peta_metrik() as $nama_crux => $kunci_ringkas ) {
+		if ( ! isset( $mentah[ $nama_crux ]['percentiles']['p75'] ) ) {
+			// Metrik yang sampelnya belum cukup memang tidak dikirim. null
+			// diteruskan apa adanya: nol akan terbaca sebagai "sempurna",
+			// padahal artinya "belum diketahui".
+			$metrik[ $kunci_ringkas ] = null;
+			continue;
+		}
 
-	$skor = static function ( $kunci ) use ( $lab ) {
-		return isset( $lab[ $kunci ]['score'] ) ? (int) round( $lab[ $kunci ]['score'] * 100 ) : null;
-	};
+		// CLS dikirim sebagai string ("0.05"); sisanya angka milidetik.
+		$nilai = (float) $mentah[ $nama_crux ]['percentiles']['p75'];
+		list( $baik, $buruk ) = $ambang[ $kunci_ringkas ];
+
+		if ( $nilai <= $baik ) {
+			$status = 'baik';
+		} elseif ( $nilai <= $buruk ) {
+			$status = 'perlu-perbaikan';
+		} else {
+			$status = 'buruk';
+		}
+
+		$metrik[ $kunci_ringkas ] = array(
+			'nilai'  => $nilai,
+			'status' => $status,
+		);
+	}
+
+	$periode = null;
+	if ( isset( $isi['record']['collectionPeriod']['lastDate'] ) ) {
+		$akhir   = $isi['record']['collectionPeriod']['lastDate'];
+		$periode = sprintf( '%04d-%02d-%02d', $akhir['year'], $akhir['month'], $akhir['day'] );
+	}
 
 	return array(
-		'diambil'  => gmdate( 'c' ),
-		'strategi' => $strategi,
-		'lapangan' => array(
-			'lcp'  => $ambil_lapangan( 'LARGEST_CONTENTFUL_PAINT_MS' ),
-			'inp'  => $ambil_lapangan( 'INTERACTION_TO_NEXT_PAINT' ),
-			'cls'  => $ambil_lapangan( 'CUMULATIVE_LAYOUT_SHIFT_SCORE' ),
-			'fcp'  => $ambil_lapangan( 'FIRST_CONTENTFUL_PAINT_MS' ),
-			'ttfb' => $ambil_lapangan( 'EXPERIMENTAL_TIME_TO_FIRST_BYTE' ),
-		),
-		'lab'      => array(
-			'performance'    => $skor( 'performance' ),
-			'accessibility'  => $skor( 'accessibility' ),
-			'best_practices' => $skor( 'best-practices' ),
-			'seo'            => $skor( 'seo' ),
-		),
+		'diambil'    => gmdate( 'c' ),
+		'formFactor' => $form_factor,
+		'periode'    => $periode,
+		'cukupData'  => true,
+		'metrik'     => $metrik,
 	);
 }
 
@@ -397,7 +451,7 @@ function tgr_stat_psi( $url = '', $strategi = 'mobile' ) {
 add_action(
 	'admin_menu',
 	function () {
-		if ( ! tgr_stat_gsc_siap() && ! tgr_stat_psi_siap() ) {
+		if ( ! tgr_stat_gsc_siap() && ! tgr_stat_crux_siap() ) {
 			return; // Belum disetel: tidak perlu memajang menu yang pasti gagal.
 		}
 
@@ -448,14 +502,14 @@ function tgr_stat_layar_uji() {
 	echo '<div class="wrap"><h1>Uji Statistik</h1>';
 	echo '<p>Menjalankan kedua klien sekali dan menampilkan hasil mentahnya. Dipakai untuk memastikan kredensial benar sebelum halaman statistik dibangun.</p>';
 
-	// PSI memanggil Lighthouse sungguhan dan bisa memakan puluhan detik;
-	// tombol memastikan itu tidak terjadi diam-diam tiap kali menu dibuka.
+	// Tombol, bukan otomatis saat menu dibuka: uji ini memanggil dua API luar
+	// dan tidak perlu berjalan setiap kali seseorang lewat.
 	if ( ! isset( $_GET['jalankan'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		printf(
 			'<p><a href="%s" class="button button-primary">Jalankan uji</a></p>',
 			esc_url( admin_url( 'tools.php?page=tgr-uji-statistik&jalankan=1' ) )
 		);
-		echo '<p><em>PageSpeed Insights menjalankan Lighthouse langsung; sekali uji bisa memakan 10&ndash;30 detik.</em></p></div>';
+		echo '</div>';
 		return;
 	}
 
@@ -468,18 +522,15 @@ function tgr_stat_layar_uji() {
 		echo '<h2>Search Console</h2><div class="notice notice-warning inline"><p>TGR_GSC_SA_JSON / TGR_GSC_SITE belum didefinisikan.</p></div>';
 	}
 
-	if ( tgr_stat_psi_siap() ) {
-		// Judul dicetak DULU, baru panggilannya. Bila PHP tetap mati di tengah
-		// (batas eksekusi hosting terlalu ketat), halaman berhenti tepat di
-		// bawah judul ini — penyebabnya kelihatan. Pada v1.0.0 blok ini hilang
-		// tanpa jejak dan tampak seperti kode yang tidak pernah dijalankan.
-		echo '<h2>PageSpeed Insights — beranda, mobile</h2>';
-		echo '<p class="description">Menjalankan Lighthouse di sisi Google; 10&ndash;30 detik.</p>';
+	if ( tgr_stat_crux_siap() ) {
+		// Judul tetap dicetak lebih dulu: kebiasaan yang terbukti berguna saat
+		// PSI mati diam-diam di v1.0.0 dan seluruh bloknya lenyap tanpa jejak.
+		echo '<h2>Chrome UX Report — origin, mobile</h2>';
 		flush();
 
-		tgr_stat_cetak_isi( tgr_stat_psi() );
+		tgr_stat_cetak_isi( tgr_stat_crux() );
 	} else {
-		echo '<h2>PageSpeed Insights</h2><div class="notice notice-warning inline"><p>TGR_PSI_KEY belum didefinisikan.</p></div>';
+		echo '<h2>Chrome UX Report</h2><div class="notice notice-warning inline"><p>TGR_PSI_KEY belum didefinisikan.</p></div>';
 	}
 
 	echo '</div>';

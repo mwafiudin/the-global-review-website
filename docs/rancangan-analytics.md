@@ -14,7 +14,7 @@ dari pengukuran langsung — bukan dari ingatan.
 | **Pembaca halaman** | Redaksi — penulis dan editor yang ingin tahu tulisan mana yang dibaca |
 | **Rumahnya** | wp-admin, sebagai menu tersendiri |
 | **Traffic** | Google Search Console API |
-| **Performa** | PageSpeed Insights API (memuat data lapangan CrUX + skor lab sekaligus) |
+| **Performa** | Chrome UX Report API (Core Web Vitals pengguna Chrome sungguhan) |
 | **Biaya** | **Nol.** Tidak ada langganan, tidak ada kuota berbayar |
 | **Skrip pelacak di situs** | **Tidak ada** |
 | **Status** | Tahap 1 & 2 **selesai** (3 September 2026); tahap 3–5 belum |
@@ -97,22 +97,25 @@ bukan cacat selama dilabeli jujur: di halaman nanti ia harus tertulis
 **"Klik dari pencarian Google"**, bukan "Total pembaca". Salah label di sini
 membuat redaksi menyimpulkan pertumbuhan yang keliru.
 
-### PageSpeed Insights API — sisi performa
+### Chrome UX Report API — sisi performa
 
-Satu panggilan mengembalikan **dua jenis data sekaligus**, dan itu alasan
-memilihnya ketimbang memanggil CrUX API terpisah:
+LCP, INP, CLS, FCP, dan TTFB dari pengguna Chrome sungguhan, 28 hari
+bergulir. Gratis dengan kunci Google Cloud. Panggilannya sekadar membaca
+data yang sudah ada — biasanya di bawah satu detik.
 
-| Jenis | Isi | Ketersediaan |
-|---|---|---|
-| **Data lapangan (CrUX)** | LCP, INP, CLS, FCP, TTFB dari pengguna Chrome sungguhan, 28 hari terakhir | Hanya bila trafik cukup |
-| **Data lab (Lighthouse)** | Skor Performance, Accessibility, Best Practices, SEO | **Selalu ada**, tanpa syarat trafik |
+**PageSpeed Insights sempat dipilih lebih dulu dan gagal di produksi.**
+Alasan memilihnya masuk akal di atas kertas: satu panggilan memberi data
+lapangan DAN skor Lighthouse, sehingga halaman tak pernah hampa saat data
+lapangan tipis. Kenyataannya PSI menjalankan Lighthouse **secara langsung**
+tiap dipanggil (10–40 detik), dan `max_execution_time` hosting ini
+membunuh PHP sebelum ia menjawab — halaman terpotong tanpa pesan galat.
 
-Kombinasi ini penting: data lapangan lebih jujur tapi bisa kosong; data lab
-selalu tersedia sehingga halaman tidak pernah benar-benar hampa.
+Yang hilang dengan berpindah ke CrUX hanya **skor Lighthouse**, yaitu hasil
+simulasi lab. Data lapangannya identik: CrUX justru sumber yang dibaca PSI
+untuk bagian itu, dan itulah yang dipakai Google untuk peringkat.
 
-Gratis dengan kunci Google Cloud. Tanpa kunci pun bisa, tapi kuota anonimnya
-dibagi seluruh dunia dan **terbukti habis** saat dicoba menyusun dokumen ini
-— jadi kunci wajib.
+Bila skor Lighthouse suatu saat diinginkan, ia bisa ditambahkan lewat
+**cron cPanel sungguhan** — PHP CLI di sana umumnya tanpa batas waktu.
 
 ## 5. Kondisi terukur, 3 September 2026
 
@@ -221,7 +224,7 @@ membuka lima menit menemukan bahan keputusan.
 |---|---|---|---|
 | ~~**1. Kredensial**~~ | **SELESAI.** Properti terverifikasi lewat berkas HTML di `public/` (URL prefix `https://theglobal-review.com/` — situs Vercel, bukan WordPress). Service account + kunci PSI dibuat; JSON di `/home/theglob/secret/`, di luar `public_html` dan sudah diuji tak terjangkau dari luar | — | Konstanta di `wp-config.php`, tidak pernah masuk repo |
 | ~~**2. Klien API**~~ | **SELESAI.** `wordpress/mu-plugins/tgr-statistik.php` v1.0.0 — klien GSC (JWT RS256 via `openssl_sign`, token di-cache 55 menit) dan PSI, plus layar Perkakas → Uji Statistik. Terpasang di produksi, uji berhasil | — | Berkas terpisah dari `tgr-headless.php` agar bisa dicabut sendiri |
-| **3. Cron + cache** | Ambil sekali sehari, simpan hasilnya sebagai opsi WordPress | ±2 jam | **Wajib.** PSI menjalankan Lighthouse langsung — 10–30 detik per panggilan, mustahil dipanggil saat halaman dimuat |
+| **3. Cron + cache** | Ambil sekali sehari, simpan hasilnya sebagai opsi WordPress | ±2 jam | Menghindari dua panggilan API tiap kali menu dibuka. **Catatan koreksi:** rancangan awal menyebut cron sebagai jalan keluar dari batas waktu PSI — itu keliru, WP-Cron berjalan lewat permintaan loopback dengan batas PHP yang sama. Yang menyelesaikannya adalah berpindah ke CrUX |
 | **4. Halaman wp-admin** | Menu, tata letak, format angka, penanda tren | ±1 hari | Bagian terbesar |
 | **5. Kondisi galat** | API mati, kredensial kedaluwarsa, data lapangan kosong | ±2 jam | Halaman harus berkata **"data tidak tersedia"**, bukan menampilkan nol — nol terbaca sebagai "tidak ada pembaca" |
 
