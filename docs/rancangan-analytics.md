@@ -17,7 +17,7 @@ dari pengukuran langsung — bukan dari ingatan.
 | **Performa** | PageSpeed Insights API (memuat data lapangan CrUX + skor lab sekaligus) |
 | **Biaya** | **Nol.** Tidak ada langganan, tidak ada kuota berbayar |
 | **Skrip pelacak di situs** | **Tidak ada** |
-| **Status** | Rancangan; tidak ada kode yang disentuh |
+| **Status** | Tahap 1 & 2 **selesai** (3 September 2026); tahap 3–5 belum |
 
 Dua hal yang membuat rancangan ini tidak berbiaya sekaligus tidak berisiko
 jebol kuota: keduanya membaca data yang **sudah dikumpulkan pihak lain**.
@@ -219,8 +219,8 @@ membuka lima menit menemukan bahan keputusan.
 
 | Tahap | Isi | Perkiraan | Catatan |
 |---|---|---|---|
-| **1. Kredensial** | Verifikasi properti GSC; buat service account dan tambahkan sebagai pengguna properti; kunci Google Cloud untuk PSI. Simpan sebagai konstanta di `wp-config.php` | ±1 jam | Tidak pernah masuk repo |
-| **2. Klien API** | Dua klien HTTP di mu-plugin: GSC (OAuth service account, perlu JWT) dan PSI (kunci sederhana) | ±4 jam | GSC yang lebih rumit karena butuh penandatanganan JWT |
+| ~~**1. Kredensial**~~ | **SELESAI.** Properti terverifikasi lewat berkas HTML di `public/` (URL prefix `https://theglobal-review.com/` — situs Vercel, bukan WordPress). Service account + kunci PSI dibuat; JSON di `/home/theglob/secret/`, di luar `public_html` dan sudah diuji tak terjangkau dari luar | — | Konstanta di `wp-config.php`, tidak pernah masuk repo |
+| ~~**2. Klien API**~~ | **SELESAI.** `wordpress/mu-plugins/tgr-statistik.php` v1.0.0 — klien GSC (JWT RS256 via `openssl_sign`, token di-cache 55 menit) dan PSI, plus layar Perkakas → Uji Statistik. Terpasang di produksi, uji berhasil | — | Berkas terpisah dari `tgr-headless.php` agar bisa dicabut sendiri |
 | **3. Cron + cache** | Ambil sekali sehari, simpan hasilnya sebagai opsi WordPress | ±2 jam | **Wajib.** PSI menjalankan Lighthouse langsung — 10–30 detik per panggilan, mustahil dipanggil saat halaman dimuat |
 | **4. Halaman wp-admin** | Menu, tata letak, format angka, penanda tren | ±1 hari | Bagian terbesar |
 | **5. Kondisi galat** | API mati, kredensial kedaluwarsa, data lapangan kosong | ±2 jam | Halaman harus berkata **"data tidak tersedia"**, bukan menampilkan nol — nol terbaca sebagai "tidak ada pembaca" |
