@@ -306,8 +306,16 @@ halaman ini kehilangan gunanya. Jangan dikembalikan ke istilah harfiah
 tanpa mempertimbangkan siapa pembacanya.
 
 **Tiap metrik diberi tooltip penjelasan** berbahasa awam beserta ambangnya,
-lewat atribut `title` bawaan peramban — tanpa JavaScript, sejalan dengan
-grafik SVG. FCP dan TTFB dinyatakan terus terang sebagai metrik pendukung
+dengan penanda "i" yang selalu terlihat di samping judulnya.
+
+Atribut `title` bawaan peramban sempat dipakai dan **gagal di pemakaian
+nyata**: ia menuntut kursor diam sekitar sedetik, tidak bereaksi saat
+diklik, dan tidak pernah muncul di layar sentuh — penjelasan yang memang
+dimaksudkan dibaca tidak boleh bergantung padanya. Gantinya tooltip CSS
+yang tampil seketika, ikut terbuka lewat `:focus-within` sehingga layar
+sentuh dan papan ketik terlayani, dan tetap tanpa JavaScript. Penanda yang
+selalu terlihat itu sendiri penting: tooltip tak bertanda sama saja dengan
+tidak ada. FCP dan TTFB dinyatakan terus terang sebagai metrik pendukung
 yang tidak masuk penilaian resmi Google; keduanya tetap ditampilkan sejajar
 atas permintaan redaksi, tetapi pembacanya tahu bobotnya berbeda.
 
