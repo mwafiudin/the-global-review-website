@@ -5,7 +5,13 @@
  *               dan Chrome UX Report (Core Web Vitals pengguna sungguhan).
  *               Menyediakan klien baca, cron harian, dan halaman Statistik
  *               di wp-admin untuk redaksi.
- * Version:      3.1.0
+ *
+ * Layar diagnostik "Peralatan > Uji Statistik" dihapus di v3.2.0 setelah
+ * tugasnya selesai: ia dipakai memverifikasi kredensial sebelum halaman
+ * sungguhan ada, dan menyisakannya berarti memajang tombol yang memanggil
+ * dua API luar tanpa alasan. Riwayatnya ada di git bila suatu saat
+ * diagnostik semacam itu diperlukan lagi.
+ * Version:      3.2.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -463,105 +469,6 @@ function tgr_stat_crux( $origin = '', $form_factor = 'PHONE' ) {
 		'cukupData'  => true,
 		'metrik'     => $metrik,
 	);
-}
-
-/* ── Layar uji ─────────────────────────────────────────────────────── */
-
-/**
- * Halaman Perkakas → Uji Statistik.
- *
- * Klien di atas tidak punya pemanggil sampai tahap berikutnya, dan kode
- * yang tak pernah dijalankan adalah kode yang belum terbukti. Layar ini
- * membuat tahap ini bisa diverifikasi sendiri begitu kredensial terpasang:
- * ia menjalankan kedua klien dan menampilkan hasil ATAU pesan galat
- * lengkapnya. Dihapus atau dibiarkan setelah halaman sungguhan jadi.
- */
-add_action(
-	'admin_menu',
-	function () {
-		if ( ! tgr_stat_gsc_siap() && ! tgr_stat_crux_siap() ) {
-			return; // Belum disetel: tidak perlu memajang menu yang pasti gagal.
-		}
-
-		add_management_page(
-			'Uji Statistik',
-			'Uji Statistik',
-			'manage_options',
-			'tgr-uji-statistik',
-			'tgr_stat_layar_uji'
-		);
-	}
-);
-
-/** Cetak satu blok hasil lengkap dengan judulnya. */
-function tgr_stat_cetak_hasil( $judul, $hasil ) {
-	echo '<h2>' . esc_html( $judul ) . '</h2>';
-	tgr_stat_cetak_isi( $hasil );
-}
-
-/** Isi satu blok hasil: galat merah, atau data dalam <pre>. */
-function tgr_stat_cetak_isi( $hasil ) {
-	if ( is_wp_error( $hasil ) ) {
-		printf(
-			'<div class="notice notice-error inline"><p><strong>%s</strong><br>%s</p></div>',
-			esc_html( $hasil->get_error_code() ),
-			esc_html( $hasil->get_error_message() )
-		);
-		return;
-	}
-
-	if ( is_array( $hasil ) && ! $hasil ) {
-		echo '<div class="notice notice-warning inline"><p>Berhasil terhubung, tetapi tidak ada baris data untuk rentang ini.</p></div>';
-		return;
-	}
-
-	echo '<div class="notice notice-success inline"><p>Berhasil.</p></div>';
-	echo '<pre style="max-height:340px;overflow:auto;background:#fff;border:1px solid #dcdcde;padding:12px;">';
-	echo esc_html( (string) wp_json_encode( $hasil, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ) );
-	echo '</pre>';
-}
-
-/** Isi layar Perkakas → Uji Statistik. */
-function tgr_stat_layar_uji() {
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_die( 'Akses ditolak.' );
-	}
-
-	echo '<div class="wrap"><h1>Uji Statistik</h1>';
-	echo '<p>Menjalankan kedua klien sekali dan menampilkan hasil mentahnya. Dipakai untuk memastikan kredensial benar sebelum halaman statistik dibangun.</p>';
-
-	// Tombol, bukan otomatis saat menu dibuka: uji ini memanggil dua API luar
-	// dan tidak perlu berjalan setiap kali seseorang lewat.
-	if ( ! isset( $_GET['jalankan'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		printf(
-			'<p><a href="%s" class="button button-primary">Jalankan uji</a></p>',
-			esc_url( admin_url( 'tools.php?page=tgr-uji-statistik&jalankan=1' ) )
-		);
-		echo '</div>';
-		return;
-	}
-
-	if ( tgr_stat_gsc_siap() ) {
-		tgr_stat_cetak_hasil(
-			'Search Console — 10 kueri teratas',
-			tgr_stat_gsc_kueri( array( 'batas' => 10 ) )
-		);
-	} else {
-		echo '<h2>Search Console</h2><div class="notice notice-warning inline"><p>TGR_GSC_SA_JSON / TGR_GSC_SITE belum didefinisikan.</p></div>';
-	}
-
-	if ( tgr_stat_crux_siap() ) {
-		// Judul tetap dicetak lebih dulu: kebiasaan yang terbukti berguna saat
-		// PSI mati diam-diam di v1.0.0 dan seluruh bloknya lenyap tanpa jejak.
-		echo '<h2>Chrome UX Report — origin, mobile</h2>';
-		flush();
-
-		tgr_stat_cetak_isi( tgr_stat_crux() );
-	} else {
-		echo '<h2>Chrome UX Report</h2><div class="notice notice-warning inline"><p>TGR_PSI_KEY belum didefinisikan.</p></div>';
-	}
-
-	echo '</div>';
 }
 
 /* ── Pengumpulan & cache (tahap 3) ─────────────────────────────────── */
