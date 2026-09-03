@@ -17,7 +17,7 @@ dari pengukuran langsung — bukan dari ingatan.
 | **Performa** | Chrome UX Report API (Core Web Vitals pengguna Chrome sungguhan) |
 | **Biaya** | **Nol.** Tidak ada langganan, tidak ada kuota berbayar |
 | **Skrip pelacak di situs** | **Tidak ada** |
-| **Status** | Tahap 1 & 2 **selesai dan terverifikasi di produksi** (3 September 2026); tahap 3–5 belum |
+| **Status** | **Selesai dan berjalan di produksi** (3 September 2026). Tahap 1–4 terpasang; tahap 5 sebagian ikut |
 
 Dua hal yang membuat rancangan ini tidak berbiaya sekaligus tidak berisiko
 jebol kuota: keduanya membaca data yang **sudah dikumpulkan pihak lain**.
@@ -151,7 +151,15 @@ klien di `tgr-statistik.php` menanyakan origin, bukan URL.
 
 Tiga bacaan penting dari angka ini:
 
-**Satu-satunya metrik yang gagal adalah LCP.** INP dan CLS sudah "baik";
+**Temuan pertama dari halaman yang sudah jalan (28 hari sampai 31 Agustus):**
+795 klik dari 75.018 impresi, CTR 1,1%, posisi rata-rata 8,5. Tabel peluang
+judul menemukan lima kueri berimpresi tinggi dengan CTR di bawah 0,25% —
+`api naga digital` (8.289), tiga kueri seputar "IQ monyet/simpanse" (3.289
+gabungan), dan `anwar tjokroaminoto` (505). Totalnya **±12.100 impresi, 16%
+dari seluruh kemunculan TGR di Google, nyaris tanpa klik.** Posisinya sudah
+5–8, jadi pekerjaannya menyunting judul, bukan menulis ulang.
+
+**Satu-satunya metrik performa yang gagal adalah LCP.** INP dan CLS sudah "baik";
 LCP 2.736 ms melewati ambang 2.500 ms. Karena penilaian Core Web Vitals
 menuntut ketiganya lulus, **LCP sendirian yang menahan nilai keseluruhan**
 — dan itu berarti ada satu sasaran perbaikan yang jelas, bukan pekerjaan
@@ -231,9 +239,9 @@ membuka lima menit menemukan bahan keputusan.
 |---|---|---|---|
 | ~~**1. Kredensial**~~ | **SELESAI.** Properti terverifikasi lewat berkas HTML di `public/` (URL prefix `https://theglobal-review.com/` — situs Vercel, bukan WordPress). Service account + kunci PSI dibuat; JSON di `/home/theglob/secret/`, di luar `public_html` dan sudah diuji tak terjangkau dari luar | — | Konstanta di `wp-config.php`, tidak pernah masuk repo |
 | ~~**2. Klien API**~~ | **SELESAI.** `wordpress/mu-plugins/tgr-statistik.php` v1.0.0 — klien GSC (JWT RS256 via `openssl_sign`, token di-cache 55 menit) dan PSI, plus layar Perkakas → Uji Statistik. Terpasang di produksi, uji berhasil | — | Berkas terpisah dari `tgr-headless.php` agar bisa dicabut sendiri |
-| **3. Cron + cache** | Ambil sekali sehari, simpan hasilnya sebagai opsi WordPress | ±2 jam | Menghindari dua panggilan API tiap kali menu dibuka. **Catatan koreksi:** rancangan awal menyebut cron sebagai jalan keluar dari batas waktu PSI — itu keliru, WP-Cron berjalan lewat permintaan loopback dengan batas PHP yang sama. Yang menyelesaikannya adalah berpindah ke CrUX |
-| **4. Halaman wp-admin** | Menu, tata letak, format angka, penanda tren | ±1 hari | Bagian terbesar |
-| **5. Kondisi galat** | API mati, kredensial kedaluwarsa, data lapangan kosong | ±2 jam | Halaman harus berkata **"data tidak tersedia"**, bukan menampilkan nol — nol terbaca sebagai "tidak ada pembaca" |
+| ~~**3. Cron + cache**~~ | **SELESAI.** Empat kueri GSC + satu CrUX, disimpan sebagai opsi non-autoload, disegarkan cron harian | — | **Catatan koreksi:** rancangan awal menyebut cron sebagai jalan keluar dari batas waktu PSI — itu keliru, WP-Cron berjalan lewat permintaan loopback dengan batas PHP yang sama. Yang menyelesaikannya adalah berpindah ke CrUX |
+| ~~**4. Halaman wp-admin**~~ | **SELESAI.** Menu Statistik (kapabilitas `edit_posts`): empat kartu bertren, halaman terpopuler, kueri teratas, peluang perbaikan judul, lima Core Web Vitals berlencana | — | Angka diformat gaya Indonesia secara eksplisit; `number_format_i18n()` mengembalikan konvensi Inggris di pemasangan ini |
+| **5. Kondisi galat** | Sebagian sudah: kegagalan per bagian, data lama dipertahankan bila seluruh pengambilan gagal, metrik tanpa sampel tampil "belum cukup data" bukan nol | — | Tersisa: pemberitahuan bila cron berhenti berjalan berhari-hari |
 
 Total kasar: **2–3 hari kerja.**
 
