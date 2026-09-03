@@ -62,6 +62,13 @@ export function SiteFooter() {
               napas yang dibakukan ke dalam asetnya, bukan diatur lewat CSS,
               supaya keping ini tetap proporsional di mana pun ia dipakai.
 
+              self-start wajib di mobile: pembungkusnya flex-col, dan
+              align-items bawaan flexbox adalah stretch — gambar ber-w-auto
+              ikut melar selebar layar. Segel SVG sebelumnya kebal karena
+              lebarnya dipatok w-16; begitu diganti gambar berlebar otomatis,
+              cacatnya muncul. sm:self-auto mengembalikan perataan tengah
+              yang diatur pembungkusnya begitu tata letaknya jadi baris.
+
               Konsekuensinya wordmark mengecil: tinggi huruf kapitalnya hanya
               6% dari tinggi isi, jadi pada keping 104px ia berada di ambang
               terbaca. Ia memang berperan sebagai bagian dari lambang, bukan
@@ -72,7 +79,7 @@ export function SiteFooter() {
             alt="Logo Global Future Institute"
             width={930}
             height={805}
-            className="h-[104px] w-auto shrink-0 rounded-xl"
+            className="h-[88px] w-auto shrink-0 self-start rounded-xl sm:self-auto"
           />
           <div className="max-w-2xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b14a]">
