@@ -5,7 +5,7 @@
  *               dan Chrome UX Report (Core Web Vitals pengguna sungguhan).
  *               Menyediakan fungsi pengambil data saja; halaman tampilannya
  *               menyusul di tahap berikutnya.
- * Version:      2.0.0
+ * Version:      2.1.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -88,6 +88,32 @@ function tgr_stat_kunci_google() {
 		return TGR_PSI_KEY;
 	}
 	return '';
+}
+
+/**
+ * Origin situs PUBLIK — bukan home_url().
+ *
+ * Plugin ini berjalan di WordPress, jadi home_url() mengembalikan
+ * https://cms.theglobal-review.com: backend headless yang halamannya
+ * noindex dan nyaris tak pernah dibuka manusia. CrUX menjawab 404 untuk
+ * origin itu, dan 404-nya terbaca sebagai "belum cukup data" — menyesatkan,
+ * karena situs publiknya justru punya sampel berlimpah.
+ *
+ * TGR_GSC_SITE dipakai ulang karena ia sudah menyimpan alamat situs publik
+ * dan pasti terdefinisi bila statistik dipakai sama sekali.
+ */
+function tgr_stat_origin_publik() {
+	if ( defined( 'TGR_GSC_SITE' ) && TGR_GSC_SITE ) {
+		$situs = TGR_GSC_SITE;
+		// Properti Search Console berjenis Domain ditulis "sc-domain:contoh.com";
+		// CrUX menuntut origin lengkap berskema.
+		if ( 0 === strpos( $situs, 'sc-domain:' ) ) {
+			return 'https://' . substr( $situs, strlen( 'sc-domain:' ) );
+		}
+		return untrailingslashit( $situs );
+	}
+
+	return untrailingslashit( home_url() );
 }
 
 /** Apakah konfigurasi Chrome UX Report lengkap. */
@@ -354,7 +380,7 @@ function tgr_stat_crux( $origin = '', $form_factor = 'PHONE' ) {
 			'headers' => array( 'Content-Type' => 'application/json' ),
 			'body'    => wp_json_encode(
 				array(
-					'origin'     => $origin ? $origin : untrailingslashit( home_url() ),
+					'origin'     => $origin ? $origin : tgr_stat_origin_publik(),
 					'formFactor' => 'DESKTOP' === $form_factor ? 'DESKTOP' : 'PHONE',
 				)
 			),
@@ -373,6 +399,7 @@ function tgr_stat_crux( $origin = '', $form_factor = 'PHONE' ) {
 	if ( 404 === $kode ) {
 		return array(
 			'diambil'    => gmdate( 'c' ),
+			'origin'     => $origin ? $origin : tgr_stat_origin_publik(),
 			'formFactor' => $form_factor,
 			'periode'    => null,
 			'cukupData'  => false,
@@ -430,6 +457,7 @@ function tgr_stat_crux( $origin = '', $form_factor = 'PHONE' ) {
 
 	return array(
 		'diambil'    => gmdate( 'c' ),
+		'origin'     => $origin ? $origin : tgr_stat_origin_publik(),
 		'formFactor' => $form_factor,
 		'periode'    => $periode,
 		'cukupData'  => true,
