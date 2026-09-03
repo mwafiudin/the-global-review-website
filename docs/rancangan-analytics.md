@@ -17,7 +17,7 @@ dari pengukuran langsung — bukan dari ingatan.
 | **Performa** | Chrome UX Report API (Core Web Vitals pengguna Chrome sungguhan) |
 | **Biaya** | **Nol.** Tidak ada langganan, tidak ada kuota berbayar |
 | **Skrip pelacak di situs** | **Tidak ada** |
-| **Status** | **Selesai seluruhnya** (3 September 2026). Tahap 1–5 terpasang dan berjalan di produksi |
+| **Status** | **Selesai seluruhnya** (3 September 2026), lalu diperluas: grafik, filter rentang, pembandingan periode, riwayat performa |
 
 Dua hal yang membuat rancangan ini tidak berbiaya sekaligus tidak berisiko
 jebol kuota: keduanya membaca data yang **sudah dikumpulkan pihak lain**.
@@ -261,18 +261,51 @@ keuntungan besar: karena kedua sumber membaca data yang sudah dikumpulkan
 Google, **riwayatnya sudah ada sejak sekarang**. Tidak ada urgensi memasang
 sesuatu hari ini supaya datanya tidak hilang.
 
-## 9. Riwayat jangka panjang
+## 9. Riwayat jangka panjang — tidak perlu diarsipkan
 
-GSC menyimpan ±16 bulan, jadi sisi traffic tidak perlu diarsipkan sendiri —
-berbeda dari rancangan sebelumnya yang berbasis Vercel dengan jendela 1
-bulan.
+Dikonfirmasi saat implementasi, dan hasilnya membatalkan rencana arsip
+bulanan yang sempat dirancang:
 
-Sisi performa lebih pendek: data lapangan CrUX hanya 28 hari bergulir, dan
-skor Lighthouse bersifat sesaat. Bila tren performa ingin dilacak
-berbulan-bulan, hasil harian dari cron tahap 3 tinggal disimpan menumpuk,
-bukan ditimpa — biayanya nyaris nol bila diputuskan sejak awal. CrUX juga
-menyediakan endpoint riwayat mingguan; cakupannya perlu dikonfirmasi saat
-implementasi.
+| Sumber | Riwayat | Cara |
+|---|---|---|
+| Search Console | **16 bulan** | Kueri rentang tanggal apa pun, sesuai permintaan |
+| CrUX History API | **40 minggu** (±10 bulan), titik mingguan | `records:queryHistoryRecord`, kunci dan kuota sama |
+
+Google sudah menyimpan keduanya, jadi menabung snapshot sendiri hanya akan
+menduplikasi data yang bisa diminta kapan saja. Filter tanggal cukup
+mengubah parameter kueri.
+
+**Deret harian diambil sekali untuk 365 hari**, lalu seluruh total, tren,
+grafik, dan pembandingan periode diturunkan darinya di PHP. Tanpa itu, tiap
+tombol rentang dan tiap pembandingan berarti panggilan API sendiri — dan
+halaman berfilter akan memanggil Google setiap kali seseorang menekan
+tombol.
+
+## 10. Perluasan (3 September 2026)
+
+**Grafik SVG digambar di PHP**, tanpa pustaka dan tanpa JavaScript.
+Halaman ini diunggah manual lewat File Manager tanpa proses build, dan
+skrip CDN di wp-admin berarti halaman rusak setiap kali CDN tak
+terjangkau. Tooltip dicukupi elemen `<title>` bawaan SVG yang dirender
+peramban sebagai tooltip asli. Garis diputus pada nilai kosong, bukan
+disambung — minggu tanpa sampel bukan nol, dan menyambungnya mengarang
+data.
+
+**Filter rentang** 7 / 28 / 90 hari / 12 bulan, dengan pembandingan
+terhadap periode sebelumnya atau tahun lalu. Keduanya nol panggilan API
+karena diturunkan dari deret harian.
+
+**Jadwal pengambilan Senin, Kamis, Sabtu.** Pola hari tetap, bukan interval
+bergulir: interval mengambang begitu satu jalannya terlewat. WP-Cron
+menjadwalkan dengan interval dan bukan hari, jadi acaranya didaftarkan
+harian lalu disaring — satu tik yang pulang awal jauh lebih murah dirawat
+daripada tiga jadwal mingguan yang harus dijaga selaras.
+
+Konsekuensinya angka terlama bisa ±6 hari di belakang kenyataan (3 hari
+jeda GSC + 3 hari jarak terjauh antar pengambilan), dan **ambang peringatan
+data basi dinaikkan dari 3 ke 7 hari** — pada 3 hari ia akan menyala terus
+tanpa ada yang rusak, dan alarm yang selalu berbunyi sama saja dengan tidak
+ada.
 
 ## 10. Risiko dan yang belum pasti
 
