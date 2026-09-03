@@ -3,9 +3,9 @@
  * Plugin Name:  TGR Headless — Klien Statistik
  * Description:  Klien baca untuk Google Search Console (traffic pencarian)
  *               dan Chrome UX Report (Core Web Vitals pengguna sungguhan).
- *               Menyediakan fungsi pengambil data saja; halaman tampilannya
- *               menyusul di tahap berikutnya.
- * Version:      2.1.0
+ *               Menyediakan klien baca, cron harian, dan halaman Statistik
+ *               di wp-admin untuk redaksi.
+ * Version:      3.0.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -559,6 +559,497 @@ function tgr_stat_layar_uji() {
 		tgr_stat_cetak_isi( tgr_stat_crux() );
 	} else {
 		echo '<h2>Chrome UX Report</h2><div class="notice notice-warning inline"><p>TGR_PSI_KEY belum didefinisikan.</p></div>';
+	}
+
+	echo '</div>';
+}
+
+/* ── Pengumpulan & cache (tahap 3) ─────────────────────────────────── */
+
+/** Nama opsi penyimpan hasil. Tidak di-autoload: isinya besar. */
+const TGR_STAT_OPSI = 'tgr_stat_data';
+
+/** Jendela laporan, dalam hari. */
+const TGR_STAT_JENDELA = 28;
+
+/**
+ * Rentang tanggal laporan.
+ *
+ * Berakhir 3 hari lalu, bukan hari ini: data Search Console tertinggal
+ * 2-3 hari, dan memasukkan hari-hari yang belum lengkap membuat tren
+ * selalu tampak menukik di ujungnya.
+ *
+ * @return array{mulai:string,sampai:string,mulai_lalu:string,sampai_lalu:string}
+ */
+function tgr_stat_rentang() {
+	$sampai = strtotime( '-3 days' );
+	$mulai  = strtotime( '-' . ( TGR_STAT_JENDELA - 1 ) . ' days', $sampai );
+
+	// Periode pembanding: sama panjang, tepat sebelum periode berjalan.
+	$sampai_lalu = strtotime( '-1 day', $mulai );
+	$mulai_lalu  = strtotime( '-' . ( TGR_STAT_JENDELA - 1 ) . ' days', $sampai_lalu );
+
+	return array(
+		'mulai'       => gmdate( 'Y-m-d', $mulai ),
+		'sampai'      => gmdate( 'Y-m-d', $sampai ),
+		'mulai_lalu'  => gmdate( 'Y-m-d', $mulai_lalu ),
+		'sampai_lalu' => gmdate( 'Y-m-d', $sampai_lalu ),
+	);
+}
+
+/** Jumlahkan klik & impresi satu kumpulan baris jadi satu ringkasan. */
+function tgr_stat_ringkas( $baris ) {
+	$klik    = 0;
+	$impresi = 0;
+	$posisi  = 0.0;
+
+	foreach ( (array) $baris as $b ) {
+		$klik    += isset( $b['clicks'] ) ? (int) $b['clicks'] : 0;
+		$impresi += isset( $b['impressions'] ) ? (int) $b['impressions'] : 0;
+		$posisi  += isset( $b['position'] ) ? (float) $b['position'] : 0.0;
+	}
+
+	$n = max( 1, count( (array) $baris ) );
+
+	return array(
+		'klik'    => $klik,
+		'impresi' => $impresi,
+		// CTR dihitung ulang dari total, bukan dirata-rata dari CTR per baris:
+		// merata-ratakan persentase memberi bobot sama pada kueri berimpresi 5
+		// dan berimpresi 8.000, dan hasilnya tidak berarti apa-apa.
+		'ctr'     => $impresi > 0 ? $klik / $impresi : 0.0,
+		'posisi'  => $posisi / $n,
+	);
+}
+
+/**
+ * Kueri berimpresi tinggi tapi jarang diklik.
+ *
+ * Metrik paling actionable di halaman ini: TGR sudah muncul di hasil
+ * pencarian, hanya judulnya yang tidak menarik klik. Perbaikannya menyunting
+ * judul, bukan menulis artikel baru.
+ *
+ * Ambang 100 impresi menyaring ekor panjang yang datanya terlalu tipis untuk
+ * disimpulkan; CTR di bawah 2% jauh di bawah wajar untuk posisi 10 besar.
+ */
+function tgr_stat_peluang_judul( $kueri, $batas = 5 ) {
+	$kandidat = array();
+
+	foreach ( (array) $kueri as $k ) {
+		$impresi = isset( $k['impressions'] ) ? (int) $k['impressions'] : 0;
+		$ctr     = isset( $k['ctr'] ) ? (float) $k['ctr'] : 0.0;
+
+		if ( $impresi >= 100 && $ctr < 0.02 ) {
+			$kandidat[] = $k;
+		}
+	}
+
+	usort(
+		$kandidat,
+		static function ( $a, $b ) {
+			return $b['impressions'] <=> $a['impressions'];
+		}
+	);
+
+	return array_slice( $kandidat, 0, $batas );
+}
+
+/**
+ * Ambil seluruh data dari kedua API dan susun jadi satu struktur siap pakai.
+ *
+ * Kegagalan sebagian TIDAK menggugurkan keseluruhan: tiap bagian menyimpan
+ * galatnya sendiri, sehingga Search Console yang mati tidak ikut menghapus
+ * angka performa yang baik-baik saja — dan sebaliknya.
+ *
+ * @return array
+ */
+function tgr_stat_kumpulkan() {
+	$r    = tgr_stat_rentang();
+	$data = array(
+		'diperbarui' => time(),
+		'rentang'    => $r,
+		'galat'      => array(),
+	);
+
+	if ( tgr_stat_gsc_siap() ) {
+		$total = tgr_stat_gsc_kueri(
+			array(
+				'mulai'   => $r['mulai'],
+				'sampai'  => $r['sampai'],
+				'dimensi' => array( 'date' ),
+				'batas'   => TGR_STAT_JENDELA,
+			)
+		);
+		$lalu  = tgr_stat_gsc_kueri(
+			array(
+				'mulai'   => $r['mulai_lalu'],
+				'sampai'  => $r['sampai_lalu'],
+				'dimensi' => array( 'date' ),
+				'batas'   => TGR_STAT_JENDELA,
+			)
+		);
+		// 100 baris, bukan 10: daftar yang tampil memang pendek, tetapi
+		// peluang judul disaring DARI daftar ini — menyaring sepuluh baris
+		// teratas hampir tidak pernah menemukan apa pun.
+		$kueri   = tgr_stat_gsc_kueri(
+			array(
+				'mulai'   => $r['mulai'],
+				'sampai'  => $r['sampai'],
+				'dimensi' => array( 'query' ),
+				'batas'   => 100,
+			)
+		);
+		$halaman = tgr_stat_gsc_kueri(
+			array(
+				'mulai'   => $r['mulai'],
+				'sampai'  => $r['sampai'],
+				'dimensi' => array( 'page' ),
+				'batas'   => 10,
+			)
+		);
+
+		foreach ( array( 'total' => $total, 'lalu' => $lalu, 'kueri' => $kueri, 'halaman' => $halaman ) as $nama => $hasil ) {
+			if ( is_wp_error( $hasil ) ) {
+				$data['galat'][ 'gsc_' . $nama ] = $hasil->get_error_message();
+			}
+		}
+
+		$data['sekarang'] = is_wp_error( $total ) ? null : tgr_stat_ringkas( $total );
+		$data['lalu']     = is_wp_error( $lalu ) ? null : tgr_stat_ringkas( $lalu );
+		$data['harian']   = is_wp_error( $total ) ? array() : $total;
+		$data['kueri']    = is_wp_error( $kueri ) ? array() : array_slice( $kueri, 0, 10 );
+		$data['halaman']  = is_wp_error( $halaman ) ? array() : $halaman;
+		$data['peluang']  = is_wp_error( $kueri ) ? array() : tgr_stat_peluang_judul( $kueri );
+	}
+
+	if ( tgr_stat_crux_siap() ) {
+		$crux = tgr_stat_crux();
+		if ( is_wp_error( $crux ) ) {
+			$data['galat']['crux'] = $crux->get_error_message();
+			$data['performa']      = null;
+		} else {
+			$data['performa'] = $crux;
+		}
+	}
+
+	return $data;
+}
+
+/**
+ * Segarkan cache. Data lama dipertahankan bila pengambilan baru gagal
+ * seluruhnya — angka basi masih lebih berguna daripada halaman kosong,
+ * asalkan waktu pembaruannya terlihat.
+ */
+function tgr_stat_segarkan() {
+	$baru = tgr_stat_kumpulkan();
+
+	$ada_isi = ! empty( $baru['sekarang'] ) || ! empty( $baru['performa'] );
+	if ( ! $ada_isi ) {
+		$lama = get_option( TGR_STAT_OPSI );
+		if ( is_array( $lama ) ) {
+			$lama['galat']       = $baru['galat'];
+			$lama['gagal_pada']  = time();
+			update_option( TGR_STAT_OPSI, $lama, false );
+			return $lama;
+		}
+	}
+
+	update_option( TGR_STAT_OPSI, $baru, false );
+	return $baru;
+}
+
+add_action( 'tgr_stat_cron', 'tgr_stat_segarkan' );
+
+/**
+ * Jadwalkan sekali sehari. Dipasang di 'init' dan bukan saat aktivasi
+ * karena mu-plugin tidak punya hook aktivasi — ia selalu aktif.
+ */
+add_action(
+	'init',
+	function () {
+		if ( ! tgr_stat_gsc_siap() && ! tgr_stat_crux_siap() ) {
+			return;
+		}
+		if ( ! wp_next_scheduled( 'tgr_stat_cron' ) ) {
+			wp_schedule_event( time() + HOUR_IN_SECONDS, 'daily', 'tgr_stat_cron' );
+		}
+	}
+);
+
+/* ── Halaman Statistik (tahap 4) ───────────────────────────────────── */
+
+/** Angka utuh bergaya Indonesia: 12.400. */
+function tgr_stat_angka( $n ) {
+	return number_format_i18n( (float) $n );
+}
+
+/** Selisih terhadap periode sebelumnya, sebagai penanda naik/turun. */
+function tgr_stat_tren( $kini, $dulu, $satuan = 'persen', $terbalik = false ) {
+	if ( null === $dulu || 0.0 === (float) $dulu ) {
+		return '';
+	}
+
+	if ( 'poin' === $satuan ) {
+		$delta = ( (float) $kini - (float) $dulu ) * 100;
+		$teks  = sprintf( '%+.1f poin', $delta );
+	} elseif ( 'posisi' === $satuan ) {
+		$delta = (float) $kini - (float) $dulu;
+		$teks  = sprintf( '%+.1f', $delta );
+	} else {
+		$delta = ( ( (float) $kini - (float) $dulu ) / (float) $dulu ) * 100;
+		$teks  = sprintf( '%+.0f%%', $delta );
+	}
+
+	if ( abs( $delta ) < 0.05 ) {
+		return '<span style="color:#646970;">tetap</span>';
+	}
+
+	// $terbalik untuk metrik yang mengecil berarti membaik — posisi
+	// pencarian 3 lebih baik daripada 8.
+	$naik  = $terbalik ? $delta < 0 : $delta > 0;
+	$warna = $naik ? '#00734c' : '#b32d2e';
+
+	return sprintf( '<span style="color:%s;">%s</span>', esc_attr( $warna ), esc_html( $teks ) );
+}
+
+/** Satu kartu angka besar. */
+function tgr_stat_kartu( $judul, $nilai, $tren = '', $catatan = '' ) {
+	?>
+	<div style="flex:1 1 190px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:16px 18px;">
+		<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#646970;">
+			<?php echo esc_html( $judul ); ?>
+		</div>
+		<div style="font-size:28px;font-weight:600;line-height:1.2;margin-top:6px;color:#1d2327;">
+			<?php echo esc_html( $nilai ); ?>
+		</div>
+		<div style="font-size:12px;margin-top:4px;min-height:18px;">
+			<?php
+			echo wp_kses( $tren, array( 'span' => array( 'style' => array() ) ) );
+			if ( $catatan ) {
+				echo ' <span style="color:#646970;">' . esc_html( $catatan ) . '</span>';
+			}
+			?>
+		</div>
+	</div>
+	<?php
+}
+
+/** Lencana status Core Web Vitals. */
+function tgr_stat_lencana( $status ) {
+	$peta = array(
+		'baik'            => array( 'Baik', '#00734c', '#edfaef' ),
+		'perlu-perbaikan' => array( 'Perlu perbaikan', '#8a6116', '#fcf5e6' ),
+		'buruk'           => array( 'Buruk', '#b32d2e', '#fcf0f1' ),
+	);
+	$g = isset( $peta[ $status ] ) ? $peta[ $status ] : array( 'Belum cukup data', '#646970', '#f0f0f1' );
+
+	printf(
+		'<span style="display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;color:%s;background:%s;">%s</span>',
+		esc_attr( $g[1] ),
+		esc_attr( $g[2] ),
+		esc_html( $g[0] )
+	);
+}
+
+add_action(
+	'admin_menu',
+	function () {
+		if ( ! tgr_stat_gsc_siap() && ! tgr_stat_crux_siap() ) {
+			return;
+		}
+
+		add_menu_page(
+			'Statistik',
+			'Statistik',
+			// edit_posts, bukan manage_options: halaman ini memang untuk
+			// redaksi, dan menguncinya ke administrator meniadakan tujuannya.
+			'edit_posts',
+			'tgr-statistik',
+			'tgr_stat_halaman',
+			'dashicons-chart-bar',
+			3
+		);
+	}
+);
+
+/** Halaman Statistik. */
+function tgr_stat_halaman() {
+	if ( ! current_user_can( 'edit_posts' ) ) {
+		wp_die( 'Akses ditolak.' );
+	}
+
+	// Penyegaran manual: hanya bagi yang boleh, dan hanya lewat nonce —
+	// tanpa itu satu tautan di email bisa memaksa panggilan API berulang.
+	if ( isset( $_GET['segarkan'] ) && check_admin_referer( 'tgr_stat_segarkan' ) ) {
+		tgr_stat_segarkan();
+		echo '<div class="notice notice-success is-dismissible"><p>Data disegarkan.</p></div>';
+	}
+
+	$data = get_option( TGR_STAT_OPSI );
+
+	echo '<div class="wrap"><h1 style="margin-bottom:4px;">Statistik</h1>';
+
+	if ( ! is_array( $data ) || empty( $data['diperbarui'] ) ) {
+		printf(
+			'<p>Belum ada data. <a href="%s" class="button button-primary">Ambil sekarang</a></p>',
+			esc_url( wp_nonce_url( admin_url( 'admin.php?page=tgr-statistik&segarkan=1' ), 'tgr_stat_segarkan' ) )
+		);
+		echo '<p class="description">Selanjutnya data diperbarui otomatis sekali sehari.</p></div>';
+		return;
+	}
+
+	$r = $data['rentang'];
+	printf(
+		'<p class="description" style="margin-top:0;">%s &ndash; %s &middot; diperbarui %s &middot; <a href="%s">perbarui sekarang</a></p>',
+		esc_html( $r['mulai'] ),
+		esc_html( $r['sampai'] ),
+		esc_html( human_time_diff( $data['diperbarui'] ) . ' lalu' ),
+		esc_url( wp_nonce_url( admin_url( 'admin.php?page=tgr-statistik&segarkan=1' ), 'tgr_stat_segarkan' ) )
+	);
+
+	if ( ! empty( $data['galat'] ) ) {
+		echo '<div class="notice notice-warning inline"><p><strong>Sebagian data tidak terambil:</strong><br>';
+		foreach ( $data['galat'] as $bagian => $pesan ) {
+			echo esc_html( $bagian . ' — ' . $pesan ) . '<br>';
+		}
+		echo '</p></div>';
+	}
+
+	/* Kartu angka */
+	$kini = isset( $data['sekarang'] ) ? $data['sekarang'] : null;
+	$lalu = isset( $data['lalu'] ) ? $data['lalu'] : null;
+
+	if ( $kini ) {
+		echo '<div style="display:flex;flex-wrap:wrap;gap:14px;margin:18px 0 8px;">';
+		tgr_stat_kartu(
+			'Klik dari pencarian',
+			tgr_stat_angka( $kini['klik'] ),
+			tgr_stat_tren( $kini['klik'], $lalu ? $lalu['klik'] : null )
+		);
+		tgr_stat_kartu(
+			'Impresi',
+			tgr_stat_angka( $kini['impresi'] ),
+			tgr_stat_tren( $kini['impresi'], $lalu ? $lalu['impresi'] : null )
+		);
+		tgr_stat_kartu(
+			'CTR',
+			number_format_i18n( $kini['ctr'] * 100, 1 ) . '%',
+			tgr_stat_tren( $kini['ctr'], $lalu ? $lalu['ctr'] : null, 'poin' )
+		);
+		tgr_stat_kartu(
+			'Posisi rata-rata',
+			number_format_i18n( $kini['posisi'], 1 ),
+			tgr_stat_tren( $kini['posisi'], $lalu ? $lalu['posisi'] : null, 'posisi', true )
+		);
+		echo '</div>';
+		echo '<p class="description" style="margin-top:0;">Angka di atas adalah <strong>klik dari pencarian Google</strong> &mdash; bukan total pembaca. Kunjungan langsung, dari Facebook, dan dari WhatsApp tidak terlihat di sini.</p>';
+	}
+
+	/* Dua kolom: halaman & kueri */
+	echo '<div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:22px;">';
+
+	echo '<div style="flex:1 1 420px;">';
+	echo '<h2 style="font-size:14px;">Halaman paling banyak diklik</h2>';
+	if ( ! empty( $data['halaman'] ) ) {
+		echo '<table class="widefat striped"><tbody>';
+		foreach ( $data['halaman'] as $h ) {
+			$url = isset( $h['keys'][0] ) ? $h['keys'][0] : '';
+			printf(
+				'<tr><td><a href="%s" target="_blank" rel="noopener">%s</a></td><td style="width:70px;text-align:right;">%s</td></tr>',
+				esc_url( $url ),
+				esc_html( wp_trim_words( urldecode( ltrim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' ) ), 12, '…' ) ?: $url ),
+				esc_html( tgr_stat_angka( $h['clicks'] ) )
+			);
+		}
+		echo '</tbody></table>';
+	} else {
+		echo '<p class="description">Belum ada data.</p>';
+	}
+	echo '</div>';
+
+	echo '<div style="flex:1 1 420px;">';
+	echo '<h2 style="font-size:14px;">Kueri pencarian teratas</h2>';
+	if ( ! empty( $data['kueri'] ) ) {
+		echo '<table class="widefat striped"><tbody>';
+		foreach ( $data['kueri'] as $k ) {
+			printf(
+				'<tr><td>%s</td><td style="width:150px;text-align:right;color:#646970;">%s klik &middot; %s%%</td></tr>',
+				esc_html( isset( $k['keys'][0] ) ? $k['keys'][0] : '' ),
+				esc_html( tgr_stat_angka( $k['clicks'] ) ),
+				esc_html( number_format_i18n( $k['ctr'] * 100, 1 ) )
+			);
+		}
+		echo '</tbody></table>';
+	} else {
+		echo '<p class="description">Belum ada data.</p>';
+	}
+	echo '</div>';
+
+	echo '</div>';
+
+	/* Peluang judul */
+	echo '<h2 style="font-size:14px;margin-top:26px;">Perlu perbaikan judul</h2>';
+	echo '<p class="description" style="margin-top:0;">Kueri yang sudah sering memunculkan TGR di hasil pencarian, tetapi jarang diklik. Yang perlu diperbaiki judulnya, bukan ditulis ulang artikelnya.</p>';
+	if ( ! empty( $data['peluang'] ) ) {
+		echo '<table class="widefat striped"><thead><tr><th>Kueri</th><th style="width:110px;text-align:right;">Impresi</th><th style="width:90px;text-align:right;">CTR</th><th style="width:90px;text-align:right;">Posisi</th></tr></thead><tbody>';
+		foreach ( $data['peluang'] as $p ) {
+			printf(
+				'<tr><td>%s</td><td style="text-align:right;">%s</td><td style="text-align:right;color:#b32d2e;">%s%%</td><td style="text-align:right;color:#646970;">%s</td></tr>',
+				esc_html( isset( $p['keys'][0] ) ? $p['keys'][0] : '' ),
+				esc_html( tgr_stat_angka( $p['impressions'] ) ),
+				esc_html( number_format_i18n( $p['ctr'] * 100, 2 ) ),
+				esc_html( number_format_i18n( $p['position'], 1 ) )
+			);
+		}
+		echo '</tbody></table>';
+	} else {
+		echo '<p class="description">Tidak ada kueri yang memenuhi kriteria &mdash; itu kabar baik.</p>';
+	}
+
+	/* Performa */
+	echo '<h2 style="font-size:14px;margin-top:26px;">Performa</h2>';
+	$perf = isset( $data['performa'] ) ? $data['performa'] : null;
+
+	if ( $perf && ! empty( $perf['cukupData'] ) ) {
+		printf(
+			'<p class="description" style="margin-top:0;">Pengalaman pengguna Chrome sungguhan, 28 hari sampai %s.</p>',
+			esc_html( (string) $perf['periode'] )
+		);
+		$label = array(
+			'lcp'  => array( 'LCP', 'Kecepatan muat', 'ms' ),
+			'inp'  => array( 'INP', 'Respons interaksi', 'ms' ),
+			'cls'  => array( 'CLS', 'Kestabilan tata letak', '' ),
+			'fcp'  => array( 'FCP', 'Tampil pertama', 'ms' ),
+			'ttfb' => array( 'TTFB', 'Jawaban server', 'ms' ),
+		);
+		echo '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;">';
+		foreach ( $label as $kunci => $l ) {
+			$m = isset( $perf['metrik'][ $kunci ] ) ? $perf['metrik'][ $kunci ] : null;
+			echo '<div style="flex:1 1 170px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:14px 16px;">';
+			printf(
+				'<div style="font-size:11px;font-weight:600;color:#646970;">%s <span style="font-weight:400;">%s</span></div>',
+				esc_html( $l[0] ),
+				esc_html( $l[1] )
+			);
+			if ( $m ) {
+				// CLS pecahan dibulatkan dua desimal: nilai mentahnya membawa
+				// derau floating point (0,05000000000000000277…).
+				$nilai = 'ms' === $l[2]
+					? tgr_stat_angka( round( $m['nilai'] ) ) . ' ms'
+					: number_format_i18n( $m['nilai'], 2 );
+				printf( '<div style="font-size:22px;font-weight:600;margin:4px 0 6px;">%s</div>', esc_html( $nilai ) );
+				tgr_stat_lencana( $m['status'] );
+			} else {
+				echo '<div style="font-size:22px;font-weight:600;margin:4px 0 6px;color:#a7aaad;">&mdash;</div>';
+				tgr_stat_lencana( '' );
+			}
+			echo '</div>';
+		}
+		echo '</div>';
+	} elseif ( $perf ) {
+		echo '<p class="description">Belum cukup sampel pengguna Chrome untuk origin ini.</p>';
+	} else {
+		echo '<p class="description">Data performa tidak tersedia.</p>';
 	}
 
 	echo '</div>';
