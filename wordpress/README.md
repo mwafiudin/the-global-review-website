@@ -1,15 +1,16 @@
 # Sisi WordPress
 
-Berkas untuk dijalankan/dipasang di WordPress produksi TGR
-(<https://theglobal-review.com>). Frontend Next.js membacanya lewat REST API.
+Berkas untuk dijalankan/dipasang di WordPress produksi TGR, sejak peralihan
+domain 24 Agustus 2026 berada di <https://cms.theglobal-review.com>
+(`theglobal-review.com` kini dilayani Vercel). Frontend Next.js membacanya
+lewat REST API.
 
 ```
 wordpress/
 ├── mu-plugins/
 │   ├── tgr-headless.php     # CPT (Podcast, Album, Poll, Pesan Masuk, Pengurus &
 │   │                        #   Redaksi) + field Bedah Buku + isi halaman statis
-│   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
-│   └── tgr-alih-sementara.php  # SEMENTARA: beranda lama → situs baru (302)
+│   └── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
 ├── rest/                    # perkakas yang benar-benar dipakai (lihat catatan SSH)
 │   ├── wp.mjs               # klien REST + Application Password, semafor & jeda
 │   ├── arsipkan-lama.mjs    # pindahkan tulisan lama ke Tong Sampah
@@ -40,8 +41,9 @@ untuk benar-benar menulis, dan semuanya aman dijalankan ulang.
 | Aspek | Temuan |
 |---|---|
 | Panel | **cPanel** — port 2083 menjawab, port Plesk (8443/8880) tertutup |
+| Alamat panel | `https://cpanel.theglobal-review.com` (atau `https://cms.theglobal-review.com:2083`). **Bukan lagi `theglobal-review.com:2083`** — apex itu kini menunjuk Vercel, yang tidak melayani port tersebut: hasilnya timeout, bukan galat, jadi mudah disangka server mati |
 | WHM | Port 2087 menjawab |
-| IP server | 172.236.131.177 |
+| IP server | 172.236.131.177 (Linode/Akamai, Singapura) |
 | SSH | **Belum terbuka.** Port 22, 2200, 2222, 2022, 22222, 65002 seluruhnya tertutup/terfilter |
 
 Artinya SSH perlu **diaktifkan lebih dulu oleh Webiihost** — pada banyak layanan
@@ -445,7 +447,7 @@ cukup menambah satu entri di sana.
 SSH belum terbuka, tapi kedua mu-plugin bisa dipasang lewat peramban.
 Sekali sesi ±30 menit:
 
-1. Masuk cPanel: `https://theglobal-review.com:2083`.
+1. Masuk cPanel: `https://cpanel.theglobal-review.com`.
 2. Temukan akar WordPress. Bila ada **WP Toolkit**, buka — daftar instalasi
    menampilkan path lengkapnya (sekalian menjawab pertanyaan #5 ke Webiihost).
    Tanpa itu: **File Manager → public_html**, pastikan ada `wp-config.php`
@@ -504,29 +506,28 @@ disunting** (crop/putar/ganti berkas → pos induknya disegarkan),
 penulis berubah** (`type: user`). Kiriman ganda dalam satu request
 di-dedup, jadi satu klik Perbarui tetap satu webhook.
 
-### Alihan sementara beranda (tgr-alih-sementara.php)
+### Alihan sementara beranda — PENSIUN (tgr-alih-sementara.php)
 
-Pengunjung `theglobal-review.com` diantar ke situs baru, **hanya dari
-halaman depan** dan dengan status **302 (sementara)** — mesin pencari
-diberi tahu agar tetap mengindeks alamat aslinya, bukan alamat
-`*.vercel.app` yang nanti dibuang saat peralihan domain sesungguhnya
-(lihat [`docs/peralihan-domain.md`](../docs/peralihan-domain.md)).
+Selama masa transisi, mu-plugin ini mengantar pengunjung
+`theglobal-review.com` ke situs baru: hanya dari halaman depan, berstatus
+302, dengan pengecualian pengguna yang sedang masuk dan `?beranda-lama`.
 
-**Jangan memakai cPanel → Redirects untuk ini.** Form itu bekerja per
-direktori di `.htaccess`; sekali *Wild Card Redirect* dicentang, `/wp-json`,
-`/wp-admin`, dan `/wp-content/uploads` ikut teralihkan — dan ketiganya
-justru yang dipakai situs baru untuk hidup.
+**Sudah dihapus dari repo (2 September 2026).** Peralihan domain tuntas 24
+Agustus: apex kini dilayani Vercel dan WordPress pindah ke
+`cms.theglobal-review.com`, jadi tugasnya selesai. Server dipastikan tidak
+lagi memuatnya — beranda `cms.` menjawab 200, bukan 302.
 
-| | |
-|---|---|
-| Yang teralihkan | `https://theglobal-review.com/` saja |
-| Tetap di WordPress | artikel, rubrik, halaman, feed, `/wp-json`, `/wp-admin`, media |
-| Pengecualian | pengguna yang sedang masuk, dan `?beranda-lama` |
-| Mengembalikan | hapus berkasnya dari `mu-plugins/` — tidak ada jejak lain |
+Berkasnya tidak disimpan sebagai arsip karena justru berbahaya bila
+tertinggal: begitu terunggah lagi, ia akan mengalihkan beranda **cms** ke
+`*.vercel.app` — memecah sinyal SEO ke domain yang seharusnya sudah
+ditinggalkan. Riwayat lengkapnya ada di git dan di
+[`docs/peralihan-domain.md`](../docs/peralihan-domain.md).
 
-Berkas ini memang berumur pendek: hapus pada tahap 2 runbook peralihan
-domain, saat WordPress pindah ke `cms.theglobal-review.com` — bila
-dibiarkan, ia ikut mengalihkan beranda cms ke `*.vercel.app`.
+**Pelajaran yang tetap berlaku — jangan memakai cPanel → Redirects untuk
+alihan semacam ini.** Form itu bekerja per direktori di `.htaccess`; sekali
+*Wild Card Redirect* dicentang, `/wp-json`, `/wp-admin`, dan
+`/wp-content/uploads` ikut teralihkan — dan ketiganya justru yang dipakai
+situs baru untuk hidup.
 
 ---
 

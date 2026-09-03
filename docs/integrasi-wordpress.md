@@ -33,12 +33,18 @@ album galeri dan jajak pendapat menunggu redaksi membuatnya di wp-admin.
 Keduanya sengaja kosong sejak data contoh dicabut (lihat entri 20 Agustus),
 jadi nol di sini berarti "belum diisi", bukan "putus".
 
-⚠️ **`wordpress/mu-plugins/tgr-alih-sementara.php` sudah kedaluwarsa.**
-Tujuannya masih `the-global-review-website.vercel.app`, bukan domain
-kanonik. Produksi menjawab 200 di `cms.` (bukan 302), jadi tampaknya sudah
-dicabut dari server — tetapi berkasnya masih di repo. Bila suatu saat
-terunggah lagi, beranda CMS akan melempar pengunjung ke domain vercel.app
-dan memecah sinyal SEO. Perlu dihapus atau ditandai pensiun.
+✅ **`tgr-alih-sementara.php` sudah dipensiunkan** (2 September 2026).
+Tujuannya masih menunjuk `the-global-review-website.vercel.app`, bukan
+domain kanonik; server sudah tidak memuatnya (beranda `cms.` menjawab 200,
+bukan 302), tetapi berkasnya masih tertinggal di repo dan akan memecah
+sinyal SEO bila terunggah lagi. Berkas dihapus, seksi README-nya diubah
+jadi catatan pensiun.
+
+✅ **Alamat cPanel di README diperbaiki.** Panduan pemasangan mu-plugin
+masih menyuruh masuk lewat `https://theglobal-review.com:2083`, yang mati
+sejak apex pindah ke Vercel — dan matinya berupa timeout, bukan galat,
+sehingga mudah disangka servernya bermasalah. Kini
+`https://cpanel.theglobal-review.com`.
 
 **Belum bisa dijalankan dari sini:** seluruh perkakas `wordpress/rest/`
 (termasuk `periksa-kesehatan.mjs` yang murni baca) menuntut
