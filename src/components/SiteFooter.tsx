@@ -58,15 +58,21 @@ export function SiteFooter() {
               putih menjaga warna brand persis seperti aslinya, tanpa perlu
               mewarnai ulang logo milik klien.
 
-              Tingginya 118px, bukan seukuran ikon: tinggi huruf kapital
-              wordmark hanya 6% dari tinggi logo, sehingga di bawah ±114px
-              teksnya berhenti terbaca dan hanya menyisakan noda tinta. */}
+              Isi logo hanya menempati 71% tinggi keping — sisanya ruang
+              napas yang dibakukan ke dalam asetnya, bukan diatur lewat CSS,
+              supaya keping ini tetap proporsional di mana pun ia dipakai.
+
+              Konsekuensinya wordmark mengecil: tinggi huruf kapitalnya hanya
+              6% dari tinggi isi, jadi pada keping 104px ia berada di ambang
+              terbaca. Ia memang berperan sebagai bagian dari lambang, bukan
+              teks yang dibaca — nama lembaganya tetap tertulis utuh di
+              sebelahnya. */}
           <Image
             src="/images/logo-global-future-institute.png"
             alt="Logo Global Future Institute"
-            width={804}
-            height={679}
-            className="h-[118px] w-auto shrink-0 rounded-xl"
+            width={930}
+            height={805}
+            className="h-[104px] w-auto shrink-0 rounded-xl"
           />
           <div className="max-w-2xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b14a]">
