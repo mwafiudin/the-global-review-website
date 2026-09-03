@@ -18,7 +18,14 @@
  * "That's all, stop editing!":
  *
  *     define( 'TGR_GSC_SA_JSON', '/home/USER/rahasia/gsc-service-account.json' );
- *     define( 'TGR_GSC_SITE',    'sc-domain:theglobal-review.com' );
+ *     define( 'TGR_GSC_SITE',    'https://theglobal-review.com/' );
+ *
+ * TGR_GSC_SITE harus PERSIS sama dengan bentuk properti di Search
+ * Console. Properti yang dipakai TGR berjenis URL prefix, jadi nilainya
+ * URL lengkap berikut garis miring penutup. Bila suatu saat diganti ke
+ * properti Domain, bentuknya menjadi 'sc-domain:theglobal-review.com'.
+ * Salah bentuk menghasilkan HTTP 403 yang bunyinya seolah soal izin,
+ * padahal hanya alamat properti yang tidak dikenali.
  *     define( 'TGR_PSI_KEY',     '<kunci Google Cloud untuk PageSpeed Insights>' );
  *
  * Berkas JSON service account diletakkan DI LUAR public_html supaya tidak
