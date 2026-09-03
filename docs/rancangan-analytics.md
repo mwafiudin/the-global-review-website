@@ -295,6 +295,22 @@ data.
 terhadap periode sebelumnya atau tahun lalu. Keduanya nol panggilan API
 karena diturunkan dari deret harian.
 
+**Istilah lencana sengaja menyimpang dari terjemahan harfiah Google.**
+Tingkat kuning ditulis **"Cukup"**, bukan "Perlu perbaikan"; tingkat merah
+**"Perlu perhatian"**, bukan "Buruk". Alasannya bukan kosmetik: halaman ini
+dibaca redaksi dan bisa ditunjukkan ke pemangku kepentingan GFI, dan
+"perlu perbaikan" pada nilai yang sebenarnya memadai terbaca sebagai
+tuduhan bahwa ada yang salah dikerjakan. Tingkat merah **tidak** ikut
+dilunakkan — melunakkannya berarti menyembunyikan masalah nyata, dan
+halaman ini kehilangan gunanya. Jangan dikembalikan ke istilah harfiah
+tanpa mempertimbangkan siapa pembacanya.
+
+**Tiap metrik diberi tooltip penjelasan** berbahasa awam beserta ambangnya,
+lewat atribut `title` bawaan peramban — tanpa JavaScript, sejalan dengan
+grafik SVG. FCP dan TTFB dinyatakan terus terang sebagai metrik pendukung
+yang tidak masuk penilaian resmi Google; keduanya tetap ditampilkan sejajar
+atas permintaan redaksi, tetapi pembacanya tahu bobotnya berbeda.
+
 **Jadwal pengambilan Senin, Kamis, Sabtu.** Pola hari tetap, bukan interval
 bergulir: interval mengambang begitu satu jalannya terlewat. WP-Cron
 menjadwalkan dengan interval dan bukan hari, jadi acaranya didaftarkan

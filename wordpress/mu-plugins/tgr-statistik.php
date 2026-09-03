@@ -12,7 +12,7 @@
  * sungguhan ada, dan menyisakannya berarti memajang tombol yang memanggil
  * dua API luar tanpa alasan. Riwayatnya ada di git bila suatu saat
  * diagnostik semacam itu diperlukan lagi.
- * Version:      4.0.0
+ * Version:      4.1.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -1122,12 +1122,20 @@ function tgr_stat_tren( $kini, $dulu, $satuan = 'persen', $terbalik = false ) {
 	return sprintf( '<span style="color:%s;">%s</span>', esc_attr( $warna ), esc_html( $teks ) );
 }
 
-/** Satu kartu angka besar. */
-function tgr_stat_kartu( $judul, $nilai, $tren = '' ) {
+/**
+ * Satu kartu angka besar.
+ *
+ * $jelas ditempel sebagai atribut title — tooltip bawaan peramban, tanpa
+ * JavaScript, sejalan dengan grafik SVG di atas. Judulnya diberi garis
+ * putus-putus dan kursor bantuan supaya keberadaan penjelasan itu terlihat;
+ * tooltip yang tak ada tandanya sama saja dengan tidak ada.
+ */
+function tgr_stat_kartu( $judul, $nilai, $tren = '', $jelas = '' ) {
 	?>
 	<div style="flex:1 1 190px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:16px 18px;">
-		<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#646970;">
-			<?php echo esc_html( $judul ); ?>
+		<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#646970;<?php echo $jelas ? 'cursor:help;' : ''; ?>"
+			<?php echo $jelas ? 'title="' . esc_attr( $jelas ) . '"' : ''; ?>>
+			<span style="<?php echo $jelas ? 'border-bottom:1px dotted #a7aaad;' : ''; ?>"><?php echo esc_html( $judul ); ?></span>
 		</div>
 		<div style="font-size:28px;font-weight:600;line-height:1.2;margin-top:6px;color:#1d2327;">
 			<?php echo esc_html( $nilai ); ?>
@@ -1139,12 +1147,23 @@ function tgr_stat_kartu( $judul, $nilai, $tren = '' ) {
 	<?php
 }
 
-/** Lencana status Core Web Vitals. */
+/**
+ * Lencana status.
+ *
+ * Istilahnya sengaja berbeda dari terjemahan harfiah Google ("Needs
+ * Improvement" / "Poor"). Tingkat kuning berarti nilainya memadai tetapi
+ * bukan yang terbaik — menyebutnya "perlu perbaikan" terbaca sebagai
+ * tuduhan bahwa ada yang salah dikerjakan, padahal tidak. "Cukup"
+ * menyatakan hal yang sama tanpa menuduh.
+ *
+ * Tingkat merah TIDAK dilunakkan: melunakkannya berarti menyembunyikan
+ * masalah yang nyata, dan halaman ini kehilangan gunanya.
+ */
 function tgr_stat_lencana( $status ) {
 	$peta = array(
 		'baik'            => array( 'Baik', '#00734c', '#edfaef' ),
-		'perlu-perbaikan' => array( 'Perlu perbaikan', '#8a6116', '#fcf5e6' ),
-		'buruk'           => array( 'Buruk', '#b32d2e', '#fcf0f1' ),
+		'perlu-perbaikan' => array( 'Cukup', '#8a6116', '#fcf5e6' ),
+		'buruk'           => array( 'Perlu perhatian', '#b32d2e', '#fcf0f1' ),
 	);
 	$g = isset( $peta[ $status ] ) ? $peta[ $status ] : array( 'Belum cukup data', '#646970', '#f0f0f1' );
 
@@ -1282,10 +1301,30 @@ function tgr_stat_halaman() {
 	$t_dulu = $dulu ? tgr_stat_ringkas_deret( array_values( $dulu ) ) : null;
 
 	echo '<div style="display:flex;flex-wrap:wrap;gap:14px;margin:14px 0 8px;">';
-	tgr_stat_kartu( 'Klik dari pencarian', tgr_stat_angka( $t_kini['klik'] ), tgr_stat_tren( $t_kini['klik'], $t_dulu ? $t_dulu['klik'] : null ) );
-	tgr_stat_kartu( 'Impresi', tgr_stat_angka( $t_kini['impresi'] ), tgr_stat_tren( $t_kini['impresi'], $t_dulu ? $t_dulu['impresi'] : null ) );
-	tgr_stat_kartu( 'CTR', tgr_stat_angka( $t_kini['ctr'] * 100, 1 ) . '%', tgr_stat_tren( $t_kini['ctr'], $t_dulu ? $t_dulu['ctr'] : null, 'poin' ) );
-	tgr_stat_kartu( 'Posisi rata-rata', tgr_stat_angka( $t_kini['posisi'], 1 ), tgr_stat_tren( $t_kini['posisi'], $t_dulu ? $t_dulu['posisi'] : null, 'posisi', true ) );
+	tgr_stat_kartu(
+		'Klik dari pencarian',
+		tgr_stat_angka( $t_kini['klik'] ),
+		tgr_stat_tren( $t_kini['klik'], $t_dulu ? $t_dulu['klik'] : null ),
+		'Berapa kali orang mengklik tautan TGR di hasil pencarian Google lalu sampai ke situs ini.'
+	);
+	tgr_stat_kartu(
+		'Impresi',
+		tgr_stat_angka( $t_kini['impresi'] ),
+		tgr_stat_tren( $t_kini['impresi'], $t_dulu ? $t_dulu['impresi'] : null ),
+		'Berapa kali tautan TGR muncul di hasil pencarian — dilihat orang, entah diklik atau tidak.'
+	);
+	tgr_stat_kartu(
+		'CTR',
+		tgr_stat_angka( $t_kini['ctr'] * 100, 1 ) . '%',
+		tgr_stat_tren( $t_kini['ctr'], $t_dulu ? $t_dulu['ctr'] : null, 'poin' ),
+		'Dari setiap 100 kali TGR muncul di hasil pencarian, berapa yang benar-benar diklik. Naik biasanya berarti judulnya lebih menarik.'
+	);
+	tgr_stat_kartu(
+		'Posisi rata-rata',
+		tgr_stat_angka( $t_kini['posisi'], 1 ),
+		tgr_stat_tren( $t_kini['posisi'], $t_dulu ? $t_dulu['posisi'] : null, 'posisi', true ),
+		'Urutan rata-rata TGR di halaman hasil pencarian. Makin kecil makin baik: 1 berarti teratas, 10 berarti di dasar halaman pertama.'
+	);
 	echo '</div>';
 	echo '<p class="description" style="margin-top:0;">Angka di atas adalah <strong>klik dari pencarian Google</strong> &mdash; bukan total pembaca. Kunjungan langsung, dari Facebook, dan dari WhatsApp tidak terlihat di sini.</p>';
 
@@ -1394,19 +1433,50 @@ function tgr_stat_halaman() {
 			'<p class="description" style="margin-top:0;">Pengalaman pengguna Chrome sungguhan, 28 hari sampai %s.</p>',
 			esc_html( (string) $perf['periode'] )
 		);
+		// Penjelasan ditulis untuk pembaca yang tidak mengenal istilahnya:
+		// tanpa itu, kartu-kartu ini hanya deretan singkatan yang menakuti.
+		// Ambangnya ikut disebut supaya angkanya bisa dinilai sendiri, dan
+		// dua metrik terakhir dinyatakan terus terang sebagai pendukung —
+		// Google tidak memasukkannya ke penilaian resmi.
 		$label = array(
-			'lcp'  => array( 'LCP', 'Kecepatan muat', 'ms' ),
-			'inp'  => array( 'INP', 'Respons interaksi', 'ms' ),
-			'cls'  => array( 'CLS', 'Kestabilan tata letak', '' ),
-			'fcp'  => array( 'FCP', 'Tampil pertama', 'ms' ),
-			'ttfb' => array( 'TTFB', 'Jawaban server', 'ms' ),
+			'lcp'  => array(
+				'LCP',
+				'Kecepatan muat',
+				'ms',
+				'Waktu sampai bagian terbesar halaman — biasanya gambar utama — selesai tampil. Ini yang paling dirasakan pembaca sebagai "situsnya lambat". Ambang baik: di bawah 2.500 ms.',
+			),
+			'inp'  => array(
+				'INP',
+				'Respons interaksi',
+				'ms',
+				'Seberapa cepat halaman menanggapi saat diketuk atau diklik. Ambang baik: di bawah 200 ms.',
+			),
+			'cls'  => array(
+				'CLS',
+				'Kestabilan tata letak',
+				'',
+				'Seberapa sering isi halaman bergeser sendiri saat dimuat — penyebab pembaca salah menekan tautan. Ambang baik: di bawah 0,1.',
+			),
+			'fcp'  => array(
+				'FCP',
+				'Tampil pertama',
+				'ms',
+				'Waktu sampai apa pun mulai terlihat di layar. Metrik pendukung: tidak masuk penilaian resmi Google, hanya petunjuk awal. Ambang baik: di bawah 1.800 ms.',
+			),
+			'ttfb' => array(
+				'TTFB',
+				'Jawaban server',
+				'ms',
+				'Waktu server mulai menjawab permintaan, sebelum apa pun digambar. Metrik pendukung: tidak masuk penilaian resmi, tetapi ikut menyeret LCP bila tinggi. Ambang baik: di bawah 800 ms.',
+			),
 		);
 		echo '<div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;">';
 		foreach ( $label as $kunci => $l ) {
 			$m = isset( $perf['metrik'][ $kunci ] ) ? $perf['metrik'][ $kunci ] : null;
 			echo '<div style="flex:1 1 170px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:14px 16px;">';
 			printf(
-				'<div style="font-size:11px;font-weight:600;color:#646970;">%s <span style="font-weight:400;">%s</span></div>',
+				'<div style="font-size:11px;font-weight:600;color:#646970;cursor:help;" title="%s"><span style="border-bottom:1px dotted #a7aaad;">%s <span style="font-weight:400;">%s</span></span></div>',
+				esc_attr( $l[3] ),
 				esc_html( $l[0] ),
 				esc_html( $l[1] )
 			);
