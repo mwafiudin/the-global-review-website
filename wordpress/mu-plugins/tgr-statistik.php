@@ -11,7 +11,7 @@
  * sungguhan ada, dan menyisakannya berarti memajang tombol yang memanggil
  * dua API luar tanpa alasan. Riwayatnya ada di git bila suatu saat
  * diagnostik semacam itu diperlukan lagi.
- * Version:      3.2.0
+ * Version:      3.3.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -683,6 +683,70 @@ add_action(
 	}
 );
 
+/* ── Pemberitahuan data basi (tahap 5) ─────────────────────────────── */
+
+/**
+ * Batas usia data sebelum dianggap bermasalah, dalam detik.
+ *
+ * Tiga hari, bukan satu: cron harian yang terlewat sehari bisa terjadi
+ * wajar, tetapi tiga hari berarti ia benar-benar berhenti.
+ *
+ * Ditulis sebagai detik apa adanya, bukan 3 * DAY_IN_SECONDS — alasan yang
+ * sama dengan TGR_STAT_TOKEN_TTL di atas: const di lingkup berkas menuntut
+ * konstanta itu sudah terdefinisi saat mu-plugin dimuat.
+ */
+const TGR_STAT_BATAS_BASI = 259200;
+
+/** Usia data dalam detik; null bila belum pernah terisi. */
+function tgr_stat_usia() {
+	$data = get_option( TGR_STAT_OPSI );
+	if ( ! is_array( $data ) || empty( $data['diperbarui'] ) ) {
+		return null;
+	}
+	return time() - (int) $data['diperbarui'];
+}
+
+/**
+ * Peringatan di seluruh wp-admin saat data berhenti diperbarui.
+ *
+ * Kenapa ini perlu, dan bukan sekadar kehati-hatian berlebihan: WP-Cron
+ * tidak dijadwalkan sistem operasi — ia hanya menyala ketika ada permintaan
+ * masuk ke WordPress. Padahal instalasi ini headless dan nyaris tak pernah
+ * dikunjungi manusia; satu-satunya lalu lintas rutinnya adalah revalidasi
+ * dari Vercel. Bila itu berhenti, cron ikut diam, dan halaman Statistik
+ * akan memajang angka lama tanpa tanda apa pun bahwa ia sudah membeku.
+ *
+ * Angka basi yang tampak segar lebih berbahaya daripada halaman kosong,
+ * karena keputusan redaksi diambil di atasnya.
+ */
+add_action(
+	'admin_notices',
+	function () {
+		if ( ! current_user_can( 'edit_posts' ) ) {
+			return;
+		}
+		if ( ! tgr_stat_gsc_siap() && ! tgr_stat_crux_siap() ) {
+			return;
+		}
+
+		$usia = tgr_stat_usia();
+
+		// Belum pernah terisi sama sekali bukan "basi" — itu keadaan awal,
+		// dan halaman Statistik sudah menyediakan tombol pengambilnya.
+		if ( null === $usia || $usia < TGR_STAT_BATAS_BASI ) {
+			return;
+		}
+
+		printf(
+			'<div class="notice notice-warning"><p><strong>Statistik berhenti diperbarui.</strong> Data terakhir %s lalu. %s <a href="%s">Perbarui sekarang</a> &middot; <a href="%s">buka Statistik</a></p></div>',
+			esc_html( human_time_diff( time() - $usia ) ),
+			esc_html( 'Penjadwal WordPress hanya berjalan saat ada permintaan masuk; bila situs ini lama tak tersentuh, ia ikut diam.' ),
+			esc_url( wp_nonce_url( admin_url( 'admin.php?page=tgr-statistik&segarkan=1' ), 'tgr_stat_segarkan' ) ),
+			esc_url( admin_url( 'admin.php?page=tgr-statistik' ) )
+		);
+	}
+);
+
 /* ── Halaman Statistik (tahap 4) ───────────────────────────────────── */
 
 /**
@@ -814,14 +878,28 @@ function tgr_stat_halaman() {
 		return;
 	}
 
-	$r = $data['rentang'];
+	$r    = $data['rentang'];
+	$usia = time() - (int) $data['diperbarui'];
 	printf(
-		'<p class="description" style="margin-top:0;">%s &ndash; %s &middot; diperbarui %s &middot; <a href="%s">perbarui sekarang</a></p>',
+		'<p class="description" style="margin-top:0;">%s &ndash; %s &middot; diperbarui %s%s &middot; <a href="%s">perbarui sekarang</a></p>',
 		esc_html( $r['mulai'] ),
 		esc_html( $r['sampai'] ),
 		esc_html( human_time_diff( $data['diperbarui'] ) . ' lalu' ),
+		// Usia ditandai merah di tempat angkanya dibaca, bukan hanya di
+		// pemberitahuan global — pembaca yang datang langsung ke halaman ini
+		// harus tahu bahwa yang dilihatnya sudah lewat masa.
+		$usia >= TGR_STAT_BATAS_BASI ? ' <strong style="color:#b32d2e;">(sudah basi)</strong>' : '',
 		esc_url( wp_nonce_url( admin_url( 'admin.php?page=tgr-statistik&segarkan=1' ), 'tgr_stat_segarkan' ) )
 	);
+
+	// Percobaan terakhir gagal meski data lama masih ada: keadaan yang
+	// paling mudah luput, karena angkanya tetap tampil lengkap.
+	if ( ! empty( $data['gagal_pada'] ) ) {
+		printf(
+			'<div class="notice notice-warning inline"><p>Percobaan pembaruan terakhir gagal (%s lalu); angka di bawah berasal dari pengambilan sebelumnya.</p></div>',
+			esc_html( human_time_diff( (int) $data['gagal_pada'] ) )
+		);
+	}
 
 	if ( ! empty( $data['galat'] ) ) {
 		echo '<div class="notice notice-warning inline"><p><strong>Sebagian data tidak terambil:</strong><br>';

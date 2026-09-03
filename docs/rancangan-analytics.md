@@ -17,7 +17,7 @@ dari pengukuran langsung — bukan dari ingatan.
 | **Performa** | Chrome UX Report API (Core Web Vitals pengguna Chrome sungguhan) |
 | **Biaya** | **Nol.** Tidak ada langganan, tidak ada kuota berbayar |
 | **Skrip pelacak di situs** | **Tidak ada** |
-| **Status** | **Selesai dan berjalan di produksi** (3 September 2026). Tahap 1–4 terpasang; tahap 5 sebagian ikut |
+| **Status** | **Selesai seluruhnya** (3 September 2026). Tahap 1–5 terpasang dan berjalan di produksi |
 
 Dua hal yang membuat rancangan ini tidak berbiaya sekaligus tidak berisiko
 jebol kuota: keduanya membaca data yang **sudah dikumpulkan pihak lain**.
@@ -241,9 +241,20 @@ membuka lima menit menemukan bahan keputusan.
 | ~~**2. Klien API**~~ | **SELESAI.** `wordpress/mu-plugins/tgr-statistik.php` v1.0.0 — klien GSC (JWT RS256 via `openssl_sign`, token di-cache 55 menit) dan PSI, plus layar Perkakas → Uji Statistik. Terpasang di produksi, uji berhasil | — | Berkas terpisah dari `tgr-headless.php` agar bisa dicabut sendiri |
 | ~~**3. Cron + cache**~~ | **SELESAI.** Empat kueri GSC + satu CrUX, disimpan sebagai opsi non-autoload, disegarkan cron harian | — | **Catatan koreksi:** rancangan awal menyebut cron sebagai jalan keluar dari batas waktu PSI — itu keliru, WP-Cron berjalan lewat permintaan loopback dengan batas PHP yang sama. Yang menyelesaikannya adalah berpindah ke CrUX |
 | ~~**4. Halaman wp-admin**~~ | **SELESAI.** Menu Statistik (kapabilitas `edit_posts`): empat kartu bertren, halaman terpopuler, kueri teratas, peluang perbaikan judul, lima Core Web Vitals berlencana | — | Angka diformat gaya Indonesia secara eksplisit; `number_format_i18n()` mengembalikan konvensi Inggris di pemasangan ini |
-| **5. Kondisi galat** | Sebagian sudah: kegagalan per bagian, data lama dipertahankan bila seluruh pengambilan gagal, metrik tanpa sampel tampil "belum cukup data" bukan nol | — | Tersisa: pemberitahuan bila cron berhenti berjalan berhari-hari |
+| ~~**5. Kondisi galat**~~ | **SELESAI.** Kegagalan per bagian tidak menggugurkan bagian lain; data lama dipertahankan bila seluruh pengambilan gagal; metrik tanpa sampel tampil "belum cukup data" bukan nol; data lebih tua dari 3 hari memicu peringatan di seluruh wp-admin dan penanda merah di halamannya | — | WP-Cron hanya menyala saat ada permintaan masuk, sedangkan instalasi ini headless — lihat catatan di bawah |
 
-Total kasar: **2–3 hari kerja.**
+**Catatan penting soal penjadwal.** WP-Cron bukan cron sistem operasi: ia
+hanya menyala ketika ada permintaan masuk ke WordPress. Instalasi ini
+headless dan nyaris tak pernah dikunjungi manusia — satu-satunya lalu
+lintas rutinnya adalah revalidasi dari Vercel tiap beberapa menit, dan
+itulah yang selama ini menyalakannya.
+
+Ketergantungan itu tidak kentara dan tidak bersuara bila putus: halaman
+Statistik akan terus memajang angka lama seolah segar. Karena itu tahap 5
+tidak berhenti pada penanganan galat, melainkan menambahkan peringatan
+saat data lewat tiga hari. Bila peringatan itu suatu saat sering muncul,
+jalan keluarnya cron cPanel sungguhan yang memanggil `wp-cron.php` — tidak
+bergantung pada kunjungan sama sekali.
 
 Tidak ada tahap "pasang pengukuran" seperti rancangan sebelumnya, dan itu
 keuntungan besar: karena kedua sumber membaca data yang sudah dikumpulkan
