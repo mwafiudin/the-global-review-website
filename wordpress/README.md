@@ -10,7 +10,8 @@ wordpress/
 ├── mu-plugins/
 │   ├── tgr-headless.php     # CPT (Podcast, Album, Poll, Pesan Masuk, Pengurus &
 │   │                        #   Redaksi) + field Bedah Buku + isi halaman statis
-│   └── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
+│   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
+│   └── tgr-statistik.php    # klien baca Search Console + PageSpeed Insights
 ├── rest/                    # perkakas yang benar-benar dipakai (lihat catatan SSH)
 │   ├── wp.mjs               # klien REST + Application Password, semafor & jeda
 │   ├── arsipkan-lama.mjs    # pindahkan tulisan lama ke Tong Sampah
