@@ -17,7 +17,7 @@ dari pengukuran langsung — bukan dari ingatan.
 | **Performa** | Chrome UX Report API (Core Web Vitals pengguna Chrome sungguhan) |
 | **Biaya** | **Nol.** Tidak ada langganan, tidak ada kuota berbayar |
 | **Skrip pelacak di situs** | **Tidak ada** |
-| **Status** | Tahap 1 & 2 **selesai** (3 September 2026); tahap 3–5 belum |
+| **Status** | Tahap 1 & 2 **selesai dan terverifikasi di produksi** (3 September 2026); tahap 3–5 belum |
 
 Dua hal yang membuat rancangan ini tidak berbiaya sekaligus tidak berisiko
 jebol kuota: keduanya membaca data yang **sudah dikumpulkan pihak lain**.
@@ -121,16 +121,21 @@ Bila skor Lighthouse suatu saat diinginkan, ia bisa ditambahkan lewat
 
 Diukur lewat pagespeed.web.dev pada `https://theglobal-review.com/`, mobile.
 
-**Data lapangan (CrUX, 28 hari terakhir):**
+**Data lapangan (CrUX) — tingkat URL vs tingkat origin.** Perbedaan ini
+penting dan sempat menyesatkan:
 
-| Metrik | Nilai | Status |
+| Metrik | Beranda saja (pagespeed.web.dev) | **Seluruh origin** (API, periode berakhir 1 Sep) |
 |---|---|---|
-| Core Web Vitals Assessment | **Not Applicable** | LCP & INP belum cukup sampel |
-| LCP | N/A | — |
-| INP | N/A | — |
-| CLS | **0,05** | Baik |
-| FCP | 2,6 dtk | Perlu perbaikan |
-| TTFB | **1,8 dtk** | Buruk — lihat catatan di bawah |
+| LCP | N/A | **2.736 ms** — perlu perbaikan |
+| INP | N/A | **132 ms** — baik |
+| CLS | 0,05 — baik | 0,05 — baik |
+| FCP | 2,6 dtk | 2.322 ms — perlu perbaikan |
+| TTFB | 1,8 dtk | 1.439 ms — perlu perbaikan |
+
+Tingkat URL menuntut tiap halaman memenuhi ambang sampelnya sendiri,
+sehingga beranda saja belum cukup untuk LCP dan INP. Tingkat origin
+menghimpun seluruh halaman dan **lengkap kelima metriknya**. Karena itu
+klien di `tgr-statistik.php` menanyakan origin, bukan URL.
 
 **Data lab (Lighthouse, mobile):**
 
@@ -146,9 +151,11 @@ Diukur lewat pagespeed.web.dev pada `https://theglobal-review.com/`, mobile.
 
 Tiga bacaan penting dari angka ini:
 
-**Origin TGR sudah masuk dataset CrUX** ("Many samples"). Ini menjawab satu-
-satunya keraguan yang tersisa: API-nya akan mengembalikan data, rancangan
-ini bisa jalan.
+**Satu-satunya metrik yang gagal adalah LCP.** INP dan CLS sudah "baik";
+LCP 2.736 ms melewati ambang 2.500 ms. Karena penilaian Core Web Vitals
+menuntut ketiganya lulus, **LCP sendirian yang menahan nilai keseluruhan**
+— dan itu berarti ada satu sasaran perbaikan yang jelas, bukan pekerjaan
+menyeluruh yang kabur.
 
 **TTFB 1,8 detik janggal untuk situs statis di Vercel** — mestinya di bawah
 0,5 detik. Penjelasan paling masuk akal: jendela CrUX 28 hari masih memuat
