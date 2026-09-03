@@ -12,51 +12,6 @@ import { site } from "@/data/site";
 import { useLang } from "@/lib/i18n";
 import { Logo } from "./Logo";
 
-/** Segel monogram GFI — motif cincin + bintang kompas, senada logotype. */
-function GfiSeal({ className = "" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 100 100" fill="none" aria-hidden className={className}>
-      <circle cx="50" cy="50" r="47" stroke="#d9b14a" strokeWidth="1.4" />
-      <circle
-        cx="50"
-        cy="50"
-        r="40"
-        stroke="#d9b14a"
-        strokeWidth="0.7"
-        opacity="0.55"
-      />
-      {/* bintang kompas 4 titik di atas */}
-      <path
-        d="M50 20 L52 27 L50 25.5 L48 27 Z"
-        fill="#d9b14a"
-      />
-      <text
-        x="50"
-        y="57"
-        textAnchor="middle"
-        fontFamily="Cardo, Georgia, serif"
-        fontSize="27"
-        fontWeight="700"
-        letterSpacing="1.5"
-        fill="#d9b14a"
-      >
-        GFI
-      </text>
-      <text
-        x="50"
-        y="74"
-        textAnchor="middle"
-        fontFamily="Montserrat, sans-serif"
-        fontSize="6.5"
-        letterSpacing="2.5"
-        fill="#d9b14a"
-        opacity="0.85"
-      >
-        EST. 2007
-      </text>
-    </svg>
-  );
-}
 
 /** Tautan kelembagaan (induk) vs media — dipisah agar hierarki jelas. */
 const lembagaLinks = [
@@ -95,7 +50,24 @@ export function SiteFooter() {
       {/* Penekanan relasi: diterbitkan oleh GFI */}
       <div className="relative border-b border-white/10">
         <div className="mx-auto flex max-w-7xl flex-col gap-5 px-4 py-8 sm:flex-row sm:items-center lg:px-6">
-          <GfiSeal className="h-16 w-16 shrink-0" />
+          {/* Logo GFI yang asli, lengkap dengan wordmark-nya.
+
+              Ditempatkan di atas keping putih karena logonya biru-navy dan
+              wordmark-nya hitam, sedangkan footer ini berlatar navy — tanpa
+              keping itu separuh bentuk dan seluruh teksnya lenyap. Keping
+              putih menjaga warna brand persis seperti aslinya, tanpa perlu
+              mewarnai ulang logo milik klien.
+
+              Tingginya 118px, bukan seukuran ikon: tinggi huruf kapital
+              wordmark hanya 6% dari tinggi logo, sehingga di bawah ±114px
+              teksnya berhenti terbaca dan hanya menyisakan noda tinta. */}
+          <Image
+            src="/images/logo-global-future-institute.png"
+            alt="Logo Global Future Institute"
+            width={804}
+            height={679}
+            className="h-[118px] w-auto shrink-0 rounded-xl"
+          />
           <div className="max-w-2xl">
             <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9b14a]">
               {t("Diterbitkan oleh")}
