@@ -5,7 +5,7 @@
  *               dan Chrome UX Report (Core Web Vitals pengguna sungguhan).
  *               Menyediakan klien baca, cron harian, dan halaman Statistik
  *               di wp-admin untuk redaksi.
- * Version:      3.0.0
+ * Version:      3.1.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -778,9 +778,16 @@ add_action(
 
 /* ── Halaman Statistik (tahap 4) ───────────────────────────────────── */
 
-/** Angka utuh bergaya Indonesia: 12.400. */
-function tgr_stat_angka( $n ) {
-	return number_format_i18n( (float) $n );
+/**
+ * Angka bergaya Indonesia: 75.018 dan 8,5.
+ *
+ * number_format() eksplisit, bukan number_format_i18n(): di pemasangan ini
+ * fungsi itu mengembalikan konvensi Inggris (75,018 / 8.5) meski antarmuka
+ * berbahasa Indonesia, sehingga pemisah ribuan dan desimal justru tertukar
+ * artinya bagi pembacanya.
+ */
+function tgr_stat_angka( $n, $desimal = 0 ) {
+	return number_format( (float) $n, $desimal, ',', '.' );
 }
 
 /** Selisih terhadap periode sebelumnya, sebagai penanda naik/turun. */
@@ -800,7 +807,9 @@ function tgr_stat_tren( $kini, $dulu, $satuan = 'persen', $terbalik = false ) {
 		$teks  = sprintf( '%+.0f%%', $delta );
 	}
 
-	if ( abs( $delta ) < 0.05 ) {
+	// Ambang setengah satuan, bukan 0,05: selisih -0,4% dibulatkan menjadi
+	// "-0%" — tanda yang menyiratkan penurunan padahal angkanya nol.
+	if ( abs( $delta ) < 0.5 ) {
 		return '<span style="color:#646970;">tetap</span>';
 	}
 
@@ -933,12 +942,12 @@ function tgr_stat_halaman() {
 		);
 		tgr_stat_kartu(
 			'CTR',
-			number_format_i18n( $kini['ctr'] * 100, 1 ) . '%',
+			tgr_stat_angka( $kini['ctr'] * 100, 1 ) . '%',
 			tgr_stat_tren( $kini['ctr'], $lalu ? $lalu['ctr'] : null, 'poin' )
 		);
 		tgr_stat_kartu(
 			'Posisi rata-rata',
-			number_format_i18n( $kini['posisi'], 1 ),
+			tgr_stat_angka( $kini['posisi'], 1 ),
 			tgr_stat_tren( $kini['posisi'], $lalu ? $lalu['posisi'] : null, 'posisi', true )
 		);
 		echo '</div>';
@@ -954,10 +963,14 @@ function tgr_stat_halaman() {
 		echo '<table class="widefat striped"><tbody>';
 		foreach ( $data['halaman'] as $h ) {
 			$url = isset( $h['keys'][0] ) ? $h['keys'][0] : '';
+			$path  = trim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' );
+			// Path beranda kosong; tanpa ini ia tampil sebagai URL penuh dan
+			// menjadi satu-satunya baris yang berbeda bentuk dari yang lain.
+			$label = '' === $path ? 'Beranda' : wp_trim_words( urldecode( $path ), 12, '…' );
 			printf(
 				'<tr><td><a href="%s" target="_blank" rel="noopener">%s</a></td><td style="width:70px;text-align:right;">%s</td></tr>',
 				esc_url( $url ),
-				esc_html( wp_trim_words( urldecode( ltrim( (string) wp_parse_url( $url, PHP_URL_PATH ), '/' ) ), 12, '…' ) ?: $url ),
+				esc_html( $label ),
 				esc_html( tgr_stat_angka( $h['clicks'] ) )
 			);
 		}
@@ -976,7 +989,7 @@ function tgr_stat_halaman() {
 				'<tr><td>%s</td><td style="width:150px;text-align:right;color:#646970;">%s klik &middot; %s%%</td></tr>',
 				esc_html( isset( $k['keys'][0] ) ? $k['keys'][0] : '' ),
 				esc_html( tgr_stat_angka( $k['clicks'] ) ),
-				esc_html( number_format_i18n( $k['ctr'] * 100, 1 ) )
+				esc_html( tgr_stat_angka( $k['ctr'] * 100, 1 ) )
 			);
 		}
 		echo '</tbody></table>';
@@ -997,8 +1010,8 @@ function tgr_stat_halaman() {
 				'<tr><td>%s</td><td style="text-align:right;">%s</td><td style="text-align:right;color:#b32d2e;">%s%%</td><td style="text-align:right;color:#646970;">%s</td></tr>',
 				esc_html( isset( $p['keys'][0] ) ? $p['keys'][0] : '' ),
 				esc_html( tgr_stat_angka( $p['impressions'] ) ),
-				esc_html( number_format_i18n( $p['ctr'] * 100, 2 ) ),
-				esc_html( number_format_i18n( $p['position'], 1 ) )
+				esc_html( tgr_stat_angka( $p['ctr'] * 100, 2 ) ),
+				esc_html( tgr_stat_angka( $p['position'], 1 ) )
 			);
 		}
 		echo '</tbody></table>';
@@ -1036,7 +1049,7 @@ function tgr_stat_halaman() {
 				// derau floating point (0,05000000000000000277…).
 				$nilai = 'ms' === $l[2]
 					? tgr_stat_angka( round( $m['nilai'] ) ) . ' ms'
-					: number_format_i18n( $m['nilai'], 2 );
+					: tgr_stat_angka( $m['nilai'], 2 );
 				printf( '<div style="font-size:22px;font-weight:600;margin:4px 0 6px;">%s</div>', esc_html( $nilai ) );
 				tgr_stat_lencana( $m['status'] );
 			} else {
