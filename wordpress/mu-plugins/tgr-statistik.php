@@ -12,7 +12,7 @@
  * sungguhan ada, dan menyisakannya berarti memajang tombol yang memanggil
  * dua API luar tanpa alasan. Riwayatnya ada di git bila suatu saat
  * diagnostik semacam itu diperlukan lagi.
- * Version:      4.1.0
+ * Version:      4.2.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -1130,12 +1130,17 @@ function tgr_stat_tren( $kini, $dulu, $satuan = 'persen', $terbalik = false ) {
  * putus-putus dan kursor bantuan supaya keberadaan penjelasan itu terlihat;
  * tooltip yang tak ada tandanya sama saja dengan tidak ada.
  */
-function tgr_stat_kartu( $judul, $nilai, $tren = '', $jelas = '' ) {
+function tgr_stat_kartu( $judul, $nilai, $tren = '', $jelas = '', $kanan = false ) {
 	?>
 	<div style="flex:1 1 190px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:16px 18px;">
-		<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#646970;<?php echo $jelas ? 'cursor:help;' : ''; ?>"
-			<?php echo $jelas ? 'title="' . esc_attr( $jelas ) . '"' : ''; ?>>
-			<span style="<?php echo $jelas ? 'border-bottom:1px dotted #a7aaad;' : ''; ?>"><?php echo esc_html( $judul ); ?></span>
+		<div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#646970;display:flex;align-items:center;gap:5px;">
+			<?php echo esc_html( $judul ); ?>
+			<?php
+			echo wp_kses(
+				tgr_stat_tip( $jelas, $kanan ),
+				array( 'span' => array( 'class' => array(), 'tabindex' => array(), 'aria-hidden' => array() ) )
+			);
+			?>
 		</div>
 		<div style="font-size:28px;font-weight:600;line-height:1.2;margin-top:6px;color:#1d2327;">
 			<?php echo esc_html( $nilai ); ?>
@@ -1172,6 +1177,59 @@ function tgr_stat_lencana( $status ) {
 		esc_attr( $g[1] ),
 		esc_attr( $g[2] ),
 		esc_html( $g[0] )
+	);
+}
+
+/**
+ * Gaya tooltip, dicetak sekali di kepala halaman.
+ *
+ * Atribut `title` bawaan peramban sempat dipakai dan ternyata tidak
+ * memadai: ia menuntut kursor diam sekitar satu detik, tidak bereaksi saat
+ * diklik, dan sama sekali tidak muncul di layar sentuh. Tooltip CSS ini
+ * tampil seketika, dan `:focus-within` membuatnya ikut terbuka saat ditekan
+ * atau diakses lewat papan ketik — tetap tanpa satu baris JavaScript.
+ */
+function tgr_stat_gaya() {
+	?>
+	<style>
+		.tgr-tip { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+		.tgr-tip__i {
+			display: inline-flex; align-items: center; justify-content: center;
+			width: 14px; height: 14px; border-radius: 50%;
+			background: #dcdcde; color: #50575e;
+			font-size: 10px; font-weight: 700; font-style: normal;
+			line-height: 1; cursor: help; user-select: none;
+		}
+		.tgr-tip:hover .tgr-tip__i,
+		.tgr-tip:focus-within .tgr-tip__i { background: #2271b1; color: #fff; }
+		.tgr-tip__isi {
+			position: absolute; left: 0; top: calc(100% + 6px); z-index: 100;
+			width: 260px; padding: 9px 11px;
+			background: #1d2327; color: #f0f0f1;
+			font-size: 12px; font-weight: 400; line-height: 1.5;
+			text-transform: none; letter-spacing: 0;
+			border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.25);
+			opacity: 0; visibility: hidden; transition: opacity .12s;
+			pointer-events: none;
+		}
+		.tgr-tip:hover .tgr-tip__isi,
+		.tgr-tip:focus-within .tgr-tip__isi { opacity: 1; visibility: visible; }
+		/* Kartu terakhir di baris: gelembung dijangkarkan ke kanan agar tidak
+		   terpotong tepi layar. */
+		.tgr-tip--kanan .tgr-tip__isi { left: auto; right: 0; }
+	</style>
+	<?php
+}
+
+/** Penanda tooltip: bulatan i plus gelembung penjelasannya. */
+function tgr_stat_tip( $teks, $kanan = false ) {
+	if ( '' === $teks ) {
+		return '';
+	}
+	return sprintf(
+		'<span class="tgr-tip%s" tabindex="0"><span class="tgr-tip__i" aria-hidden="true">i</span><span class="tgr-tip__isi">%s</span></span>',
+		$kanan ? ' tgr-tip--kanan' : '',
+		esc_html( $teks )
 	);
 }
 
@@ -1215,6 +1273,7 @@ function tgr_stat_halaman() {
 
 	$data = get_option( TGR_STAT_OPSI );
 
+	tgr_stat_gaya();
 	echo '<div class="wrap"><h1 style="margin-bottom:4px;">Statistik</h1>';
 
 	if ( ! is_array( $data ) || empty( $data['diperbarui'] ) ) {
@@ -1323,7 +1382,8 @@ function tgr_stat_halaman() {
 		'Posisi rata-rata',
 		tgr_stat_angka( $t_kini['posisi'], 1 ),
 		tgr_stat_tren( $t_kini['posisi'], $t_dulu ? $t_dulu['posisi'] : null, 'posisi', true ),
-		'Urutan rata-rata TGR di halaman hasil pencarian. Makin kecil makin baik: 1 berarti teratas, 10 berarti di dasar halaman pertama.'
+		'Urutan rata-rata TGR di halaman hasil pencarian. Makin kecil makin baik: 1 berarti teratas, 10 berarti di dasar halaman pertama.',
+		true
 	);
 	echo '</div>';
 	echo '<p class="description" style="margin-top:0;">Angka di atas adalah <strong>klik dari pencarian Google</strong> &mdash; bukan total pembaca. Kunjungan langsung, dari Facebook, dan dari WhatsApp tidak terlihat di sini.</p>';
@@ -1475,10 +1535,14 @@ function tgr_stat_halaman() {
 			$m = isset( $perf['metrik'][ $kunci ] ) ? $perf['metrik'][ $kunci ] : null;
 			echo '<div style="flex:1 1 170px;background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:14px 16px;">';
 			printf(
-				'<div style="font-size:11px;font-weight:600;color:#646970;cursor:help;" title="%s"><span style="border-bottom:1px dotted #a7aaad;">%s <span style="font-weight:400;">%s</span></span></div>',
-				esc_attr( $l[3] ),
+				'<div style="font-size:11px;font-weight:600;color:#646970;display:flex;align-items:center;gap:5px;">%s <span style="font-weight:400;">%s</span>%s</div>',
 				esc_html( $l[0] ),
-				esc_html( $l[1] )
+				esc_html( $l[1] ),
+				wp_kses(
+					// ttfb kartu terakhir: gelembungnya dijangkarkan ke kanan.
+					tgr_stat_tip( $l[3], 'ttfb' === $kunci ),
+					array( 'span' => array( 'class' => array(), 'tabindex' => array(), 'aria-hidden' => array() ) )
+				)
 			);
 			if ( $m ) {
 				// CLS pecahan dibulatkan dua desimal: nilai mentahnya membawa
