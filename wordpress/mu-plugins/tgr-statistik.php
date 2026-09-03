@@ -5,7 +5,7 @@
  *               dan PageSpeed Insights (data lapangan Chrome + skor
  *               Lighthouse). Menyediakan fungsi pengambil data saja;
  *               halaman tampilannya menyusul di tahap berikutnya.
- * Version:      1.0.0
+ * Version:      1.1.0
  * Author:       Coderoach Studio
  *
  * SENGAJA berkas terpisah dari tgr-headless.php. Berkas itu menyimpan
@@ -52,8 +52,14 @@ const TGR_STAT_TIMEOUT_GSC = 15;
  * PSI menjalankan Lighthouse sungguhan di sisi Google — 10-30 detik itu
  * normal, bukan tanda gangguan. Karena itu ia TIDAK boleh dipanggil saat
  * halaman dimuat; tahap berikutnya menjadwalkannya lewat cron.
+ *
+ * 45 detik, bukan 60: max_execution_time di hosting bersama lazimnya 30-60
+ * detik, dan batas HTTP yang MELEBIHI batas eksekusi PHP berakibat skrip
+ * dibunuh di tengah jalan — halaman terpotong tanpa pesan galat sama sekali
+ * karena display_errors mati. Lebih baik permintaannya menyerah sendiri dan
+ * mengembalikan WP_Error yang bisa dibaca.
  */
-const TGR_STAT_TIMEOUT_PSI = 60;
+const TGR_STAT_TIMEOUT_PSI = 45;
 
 /**
  * Token OAuth Google berlaku 60 menit; disimpan 55 agar tak dipakai basi.
@@ -310,6 +316,15 @@ function tgr_stat_psi( $url = '', $strategi = 'mobile' ) {
 	// saling menimpa), jadi ditempel manual.
 	$endpoint .= '&category=performance&category=accessibility&category=best-practices&category=seo';
 
+	// Beri ruang lebih dari batas HTTP di atas, supaya yang menyerah lebih
+	// dulu adalah permintaannya (menghasilkan WP_Error yang terbaca), bukan
+	// PHP-nya (menghasilkan halaman terpotong tanpa jejak). Banyak hosting
+	// melarang set_time_limit; kegagalannya tidak apa-apa karena batas HTTP
+	// sudah dipilih agar tetap masuk akal pada 60 detik.
+	if ( function_exists( 'set_time_limit' ) ) {
+		@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+	}
+
 	$jawaban = wp_remote_get( $endpoint, array( 'timeout' => TGR_STAT_TIMEOUT_PSI ) );
 
 	if ( is_wp_error( $jawaban ) ) {
@@ -396,10 +411,14 @@ add_action(
 	}
 );
 
-/** Cetak satu blok hasil: galat merah, atau isi dalam <pre>. */
+/** Cetak satu blok hasil lengkap dengan judulnya. */
 function tgr_stat_cetak_hasil( $judul, $hasil ) {
 	echo '<h2>' . esc_html( $judul ) . '</h2>';
+	tgr_stat_cetak_isi( $hasil );
+}
 
+/** Isi satu blok hasil: galat merah, atau data dalam <pre>. */
+function tgr_stat_cetak_isi( $hasil ) {
 	if ( is_wp_error( $hasil ) ) {
 		printf(
 			'<div class="notice notice-error inline"><p><strong>%s</strong><br>%s</p></div>',
@@ -450,7 +469,15 @@ function tgr_stat_layar_uji() {
 	}
 
 	if ( tgr_stat_psi_siap() ) {
-		tgr_stat_cetak_hasil( 'PageSpeed Insights — beranda, mobile', tgr_stat_psi() );
+		// Judul dicetak DULU, baru panggilannya. Bila PHP tetap mati di tengah
+		// (batas eksekusi hosting terlalu ketat), halaman berhenti tepat di
+		// bawah judul ini — penyebabnya kelihatan. Pada v1.0.0 blok ini hilang
+		// tanpa jejak dan tampak seperti kode yang tidak pernah dijalankan.
+		echo '<h2>PageSpeed Insights — beranda, mobile</h2>';
+		echo '<p class="description">Menjalankan Lighthouse di sisi Google; 10&ndash;30 detik.</p>';
+		flush();
+
+		tgr_stat_cetak_isi( tgr_stat_psi() );
 	} else {
 		echo '<h2>PageSpeed Insights</h2><div class="notice notice-warning inline"><p>TGR_PSI_KEY belum didefinisikan.</p></div>';
 	}
