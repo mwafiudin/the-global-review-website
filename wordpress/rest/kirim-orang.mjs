@@ -107,7 +107,8 @@ if (!TERAPKAN) {
   process.exit(0);
 }
 
-const res = await fetch(`${BASE}/wp-json/tgr/v1/orang`, {
+// BASE sudah berujung /wp-json (lihat WP_API_URL) — jangan ditambahkan lagi.
+const res = await fetch(`${BASE}/tgr/v1/orang`, {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
