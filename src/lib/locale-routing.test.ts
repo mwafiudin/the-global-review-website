@@ -40,6 +40,26 @@ describe("planLocaleRouting", () => {
     });
   });
 
+  it("meloloskan kartu pratinjau bagikan tanpa pengalihan", () => {
+    // Next menyusun URL kartu dari segmen rute, jadi bentuk Indonesianya
+    // selalu berprefiks /id. Kalau ikut dialihkan, tiap crawler kena satu
+    // lompatan 308 cuma-cuma sebelum sampai ke gambarnya.
+    expect(planLocaleRouting("/id/anatomi-krisis/opengraph-image")).toEqual({
+      type: "next",
+    });
+    // Bentuk tanpa prefiks tetap di-rewrite seperti halaman lain: rute
+    // aslinya butuh segmen bahasa.
+    expect(planLocaleRouting("/anatomi-krisis/opengraph-image")).toEqual({
+      type: "rewrite",
+      pathname: "/id/anatomi-krisis/opengraph-image",
+    });
+    // Slug yang kebetulan berakhiran serupa bukan kartu.
+    expect(planLocaleRouting("/id/bukan-opengraph-image")).toEqual({
+      type: "redirect",
+      pathname: "/bukan-opengraph-image",
+    });
+  });
+
   it("hanya cocok pada batas segmen, bukan awalan string", () => {
     // Slug artikel yang kebetulan berawalan "en"/"id" bukan prefiks bahasa.
     expect(planLocaleRouting("/energi-baru")).toEqual({

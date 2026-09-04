@@ -34,6 +34,21 @@ export function planLocaleRouting(pathname: string): RouteDecision {
     return { type: "redirect", pathname: pathname.replace(/\/+$/, "") || "/" };
   }
   if (hasPrefix(pathname, "id")) {
+    // Kartu pratinjau bagikan lewat apa adanya, tidak ikut dialihkan. Next
+    // menyusun URL kartu sendiri dari segmen rute, jadi versi Indonesia
+    // selalu lahir berprefiks /id dan akan kena 308 di baris berikutnya.
+    // Crawler memang mengikuti pengalihan, tapi itu satu perjalanan
+    // bolak-balik cuma-cuma di jalur yang paling tidak sabar: WhatsApp
+    // menyerah duluan, lalu menyimpan kegagalannya di cache.
+    //
+    // Bentuk berprefiks dibiarkan, bukan URL kartu dipaksa tanpa prefiks
+    // lewat metadata, supaya sidik jari yang ditempelkan Next di URL tetap
+    // terpakai. Sidik itu berubah tiap kartunya berubah, dan itu satu-satunya
+    // yang menembus cache pratinjau — yang kita simpan permanen dan tidak
+    // punya tombol penyegar dari luar.
+    if (pathname.endsWith("/opengraph-image")) {
+      return { type: "next" };
+    }
     return { type: "redirect", pathname: pathname.slice(3) || "/" };
   }
   if (hasPrefix(pathname, "en")) {
