@@ -35,3 +35,73 @@ export function dwibahasa(lang: Lang, path: string): Metadata["alternates"] {
     },
   };
 }
+
+/**
+ * URL gambar untuk pratinjau bagikan.
+ *
+ * Dinormalkan ke 1200x630 JPEG lewat wsrv, bukan diteruskan apa adanya,
+ * karena tiga alasan:
+ *
+ * 1. Gambar unggulan WordPress rasionya bermacam-macam; platform sosial
+ *    memotongnya sendiri dengan hasil yang tak terduga — kepala orang
+ *    terpenggal, teks pada gambar hilang separuh. Memotongnya di sini
+ *    membuat hasilnya sama di semua tempat.
+ * 2. WhatsApp membatasi ukuran berkas pratinjau. Gambar asli beberapa MB
+ *    tidak dirender sama sekali, dan kegagalannya senyap.
+ * 3. Format dipaksa JPEG: dukungan WebP di crawler sosial masih tidak
+ *    merata, dan pratinjau yang gagal ter-cache lama di sisi mereka.
+ *
+ * Berkas lokal (gambar pengganti) TIDAK dilewatkan wsrv — ia sudah tersaji
+ * dari CDN Vercel, dan menambah lompatan ke pihak ketiga hanya menambah
+ * satu titik gagal pada jalur yang sudah andal.
+ */
+export function gambarBagikan(src: string, situs: string): string {
+  if (!src.startsWith("http")) return situs + src;
+  return (
+    "https://wsrv.nl/?url=" +
+    encodeURIComponent(src) +
+    "&w=1200&h=630&fit=cover&q=82&output=jpg"
+  );
+}
+
+/**
+ * openGraph + twitter untuk satu artikel.
+ *
+ * Tanpa ini, halaman artikel mewarisi openGraph dari layout secara utuh —
+ * termasuk judul dan gambarnya. Menyetel `title` di generateMetadata TIDAK
+ * cukup: Next hanya menurunkannya ke og:title bila induknya tidak
+ * mendefinisikan openGraph.title sendiri, dan di sini induknya
+ * mendefinisikannya. Gejalanya menyesatkan karena <title> halaman sudah
+ * benar, sehingga cacatnya hanya kelihatan saat tautannya dibagikan.
+ */
+export function ogArtikel(opsi: {
+  judul: string;
+  deskripsi: string;
+  gambar: string;
+  situs: string;
+  path: string;
+  lang: Lang;
+  tanggal?: string;
+  penulis?: string;
+}): Pick<Metadata, "openGraph" | "twitter"> {
+  const gambar = gambarBagikan(opsi.gambar, opsi.situs);
+
+  return {
+    openGraph: {
+      type: "article",
+      title: opsi.judul,
+      description: opsi.deskripsi,
+      url: localizeHref(opsi.path, opsi.lang),
+      locale: opsi.lang === "en" ? "en_US" : "id_ID",
+      publishedTime: opsi.tanggal,
+      authors: opsi.penulis ? [opsi.penulis] : undefined,
+      images: [{ url: gambar, width: 1200, height: 630, alt: opsi.judul }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: opsi.judul,
+      description: opsi.deskripsi,
+      images: [gambar],
+    },
+  };
+}
