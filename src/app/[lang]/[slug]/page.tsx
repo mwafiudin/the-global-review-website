@@ -70,8 +70,6 @@ export async function generateMetadata({
     ...ogArtikel({
       judul: article.title,
       deskripsi,
-      gambar: articleImage(article, 1200, 630),
-      situs: site.url,
       path: `/${slug}`,
       lang: bahasa,
       tanggal: article.date,

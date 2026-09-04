@@ -34,8 +34,6 @@ describe("ogArtikel", () => {
   const hasil = ogArtikel({
     judul: "Ekonomi Politik NU dan Pesantren",
     deskripsi: "Catatan pasca muktamar.",
-    gambar: "https://cms.theglobal-review.com/wp-content/uploads/foto.jpg",
-    situs: SITUS,
     path: "/ekonomi-politik-nu",
     lang: "id",
     tanggal: "2026-09-01",
@@ -55,19 +53,18 @@ describe("ogArtikel", () => {
     expect(og.authors).toEqual(["Rusman"]);
   });
 
-  it("memakai gambar artikel dari domain sendiri, tanpa dimensi karangan", () => {
-    const gambar = (hasil.openGraph?.images as Array<Record<string, unknown>>)[0];
-    expect(String(gambar.url)).toBe(`${SITUS}/wp-content/uploads/foto.jpg`);
-    // Dimensi TIDAK dideklarasikan: gambar unggulan TGR aslinya 640-780px
-    // dan ukurannya berbeda-beda, jadi angka tetap apa pun akan berbohong.
-    expect(gambar.width).toBeUndefined();
-    expect(gambar.height).toBeUndefined();
+  // opengraph-image.tsx menggambar kartunya sendiri dan Next memasang
+  // og:image serta twitter:image dari sana. Mengisi images di sini justru
+  // menimpa kartu itu dengan foto mentah — kegagalannya senyap, karena
+  // metadatanya tetap sah dan hanya gambarnya yang kembali seadanya.
+  it("tidak mengisi images agar kartu hasil render yang dipakai", () => {
+    expect(hasil.openGraph?.images).toBeUndefined();
+    expect(hasil.twitter?.images).toBeUndefined();
   });
 
   it("menautkan URL berbahasa untuk versi /en", () => {
     const en = ogArtikel({
-      judul: "x", deskripsi: "y", gambar: "/a.jpg", situs: SITUS,
-      path: "/artikel", lang: "en",
+      judul: "x", deskripsi: "y", path: "/artikel", lang: "en",
     });
     expect(en.openGraph?.url).toBe("/en/artikel");
     expect(en.openGraph?.locale).toBe("en_US");

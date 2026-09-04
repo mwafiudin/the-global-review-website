@@ -37,7 +37,7 @@ export function dwibahasa(lang: Lang, path: string): Metadata["alternates"] {
 }
 
 /**
- * URL gambar untuk pratinjau bagikan.
+ * URL gambar artikel untuk dipakai DI DALAM kartu pratinjau.
  *
  * Disajikan dari domain sendiri lewat rewrite /wp-content/uploads di
  * next.config, BUKAN lewat proxy wsrv seperti gambar di halaman.
@@ -54,8 +54,9 @@ export function dwibahasa(lang: Lang, path: string): Metadata["alternates"] {
  * memperlambat pengambilan. Dimensi sengaja tidak dideklarasikan supaya
  * crawler mengukurnya sendiri alih-alih diberi angka yang keliru.
  *
- * Pratinjau berkartu besar menuntut gambar yang cukup besar di sumbernya.
- * Itu pekerjaan redaksi: unggah gambar unggulan minimal 1200px lebarnya.
+ * Ukuran akhirnya ditentukan kartu (1200x630), jadi gambar sumber yang
+ * kecil pun tetap menghasilkan pratinjau berukuran penuh — foto sekadar
+ * mengisi panel kirinya.
  */
 export function gambarBagikan(src: string, situs: string): string {
   if (!src.startsWith("http")) return situs + src;
@@ -80,15 +81,11 @@ export function gambarBagikan(src: string, situs: string): string {
 export function ogArtikel(opsi: {
   judul: string;
   deskripsi: string;
-  gambar: string;
-  situs: string;
   path: string;
   lang: Lang;
   tanggal?: string;
   penulis?: string;
 }): Pick<Metadata, "openGraph" | "twitter"> {
-  const gambar = gambarBagikan(opsi.gambar, opsi.situs);
-
   return {
     openGraph: {
       type: "article",
@@ -98,13 +95,14 @@ export function ogArtikel(opsi: {
       locale: opsi.lang === "en" ? "en_US" : "id_ID",
       publishedTime: opsi.tanggal,
       authors: opsi.penulis ? [opsi.penulis] : undefined,
-      images: [{ url: gambar, alt: opsi.judul }],
+      // images SENGAJA tidak diisi: opengraph-image.tsx menggambar kartunya
+      // sendiri, dan Next memasang og:image serta twitter:image dari sana.
+      // Mengisinya di sini justru menimpa kartu itu dengan foto mentah.
     },
     twitter: {
       card: "summary_large_image",
       title: opsi.judul,
       description: opsi.deskripsi,
-      images: [gambar],
     },
   };
 }

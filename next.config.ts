@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Berkas font dibaca saat render kartu OG lewat fs, bukan diimpor, jadi
+  // penelusuran modul Next tidak melihatnya dan tidak ikut membundelnya —
+  // fungsinya akan gagal di produksi meski lolos di mesin lokal.
+  outputFileTracingIncludes: {
+    "/[lang]/[slug]": ["./src/app/fonts/**"],
+  },
   images: {
     // picsum.photos sudah dicabut: gambar pengganti kini aset lokal
     // (lib/articles.ts placeholderImage) — foto stok acak tampil seolah
