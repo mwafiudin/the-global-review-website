@@ -21,6 +21,8 @@ wordpress/
 │   ├── sorotan.mjs          # isi tgr_sorotan dari kosakata korpus judul
 │   ├── impor-buku.mjs       # pindahkan 4 ulasan Bedah Buku dari kode ke wp-admin
 │   ├── impor-orang.mjs      # pindahkan profil pengurus & masthead redaksi (+foto)
+│   ├── kirim-orang.mjs      # idem, lewat tgr/v1/orang — dipakai sejak host membuang
+│   │                        #   header Authorization dan Application Password mati
 │   ├── isi-halaman.mjs      # isi meta 4 halaman statis + tandai buku pilihan
 │   ├── periksa-kesehatan.mjs # potret kesehatan hanya-baca + mode --banding
 │   └── kesehatan-*.json     # hasil potret kesehatan (jejak audit, ikut di repo)
