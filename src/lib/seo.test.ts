@@ -5,28 +5,28 @@ import { gambarBagikan, ogArtikel } from "./seo";
 const SITUS = "https://theglobal-review.com";
 
 describe("gambarBagikan", () => {
-  it("menormalkan gambar jauh ke 1200x630 JPEG lewat wsrv", () => {
+  // Lewat wsrv, pratinjau WhatsApp kehilangan gambarnya: ukuran yang baru
+  // pertama diminta dibuat proxy dari nol, dan crawler tidak menunggu.
+  it("menyajikan gambar CMS dari domain sendiri, bukan proxy pihak ketiga", () => {
     const url = gambarBagikan(
       "https://cms.theglobal-review.com/wp-content/uploads/2026/09/foto.jpg",
       SITUS
     );
-    expect(url).toContain("wsrv.nl");
-    expect(url).toContain("w=1200");
-    // 4:3, bukan 1,91:1 — WhatsApp merender rasio selebar itu sebagai
-    // thumbnail kecil, dan WhatsApp jalur berbagi utama pembaca TGR.
-    expect(url).toContain("h=960");
-    expect(url).toContain("fit=cover");
-    // JPEG, bukan WebP: dukungan WebP di crawler sosial tidak merata, dan
-    // pratinjau yang gagal ter-cache lama di sisi mereka.
-    expect(url).toContain("output=jpg");
+    expect(url).toBe(`${SITUS}/wp-content/uploads/2026/09/foto.jpg`);
+    expect(url).not.toContain("wsrv");
   });
 
-  // Berkas lokal sudah tersaji dari CDN Vercel; melewatkannya ke pihak
-  // ketiga hanya menambah titik gagal pada jalur yang sudah andal.
   it("meneruskan berkas lokal apa adanya, hanya dijadikan absolut", () => {
     expect(gambarBagikan("/images/pengganti.jpg", SITUS)).toBe(
       `${SITUS}/images/pengganti.jpg`
     );
+  });
+
+  // Gambar dari host lain tidak punya jalur rewrite di next.config, jadi
+  // menulis ulangnya justru menghasilkan URL yang tidak ada.
+  it("membiarkan gambar dari host lain apa adanya", () => {
+    const luar = "https://i.ytimg.com/vi/abc/hqdefault.jpg";
+    expect(gambarBagikan(luar, SITUS)).toBe(luar);
   });
 });
 
@@ -55,13 +55,13 @@ describe("ogArtikel", () => {
     expect(og.authors).toEqual(["Rusman"]);
   });
 
-  it("memakai gambar artikel dengan dimensi yang dinyatakan", () => {
+  it("memakai gambar artikel dari domain sendiri, tanpa dimensi karangan", () => {
     const gambar = (hasil.openGraph?.images as Array<Record<string, unknown>>)[0];
-    expect(String(gambar.url)).toContain("wsrv.nl");
-    // Dimensi dinyatakan supaya platform sosial memesan ruangnya lebih dulu
-    // dan tidak menunda render pratinjau sampai gambarnya selesai diunduh.
-    expect(gambar.width).toBe(1200);
-    expect(gambar.height).toBe(960);
+    expect(String(gambar.url)).toBe(`${SITUS}/wp-content/uploads/foto.jpg`);
+    // Dimensi TIDAK dideklarasikan: gambar unggulan TGR aslinya 640-780px
+    // dan ukurannya berbeda-beda, jadi angka tetap apa pun akan berbohong.
+    expect(gambar.width).toBeUndefined();
+    expect(gambar.height).toBeUndefined();
   });
 
   it("menautkan URL berbahasa untuk versi /en", () => {

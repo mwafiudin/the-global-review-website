@@ -39,47 +39,32 @@ export function dwibahasa(lang: Lang, path: string): Metadata["alternates"] {
 /**
  * URL gambar untuk pratinjau bagikan.
  *
- * Dinormalkan ke 1200x630 JPEG lewat wsrv, bukan diteruskan apa adanya,
- * karena tiga alasan:
+ * Disajikan dari domain sendiri lewat rewrite /wp-content/uploads di
+ * next.config, BUKAN lewat proxy wsrv seperti gambar di halaman.
  *
- * 1. Gambar unggulan WordPress rasionya bermacam-macam; platform sosial
- *    memotongnya sendiri dengan hasil yang tak terduga — kepala orang
- *    terpenggal, teks pada gambar hilang separuh. Memotongnya di sini
- *    membuat hasilnya sama di semua tempat.
- * 2. WhatsApp membatasi ukuran berkas pratinjau. Gambar asli beberapa MB
- *    tidak dirender sama sekali, dan kegagalannya senyap.
- * 3. Format dipaksa JPEG: dukungan WebP di crawler sosial masih tidak
- *    merata, dan pratinjau yang gagal ter-cache lama di sisi mereka.
+ * Alasannya diperoleh dari percobaan langsung, bukan teori. Melalui wsrv,
+ * pratinjau WhatsApp kehilangan gambarnya sama sekali: ukuran yang baru
+ * pertama diminta harus dibuat proxy dari nol, dan crawler tidak menunggu
+ * selama itu. Gambar dari domain sendiri terkirim 0,17-0,29 detik dengan
+ * cache setahun, dan tidak bergantung pihak ketiga mana pun.
  *
- * Berkas lokal (gambar pengganti) TIDAK dilewatkan wsrv — ia sudah tersaji
- * dari CDN Vercel, dan menambah lompatan ke pihak ketiga hanya menambah
- * satu titik gagal pada jalur yang sudah andal.
+ * Ukurannya juga TIDAK dipaksa ke 1200x630. Gambar unggulan TGR aslinya
+ * hanya 640-780px (8 dari 8 artikel yang disampel), jadi membesarkannya
+ * tidak menambah satu piksel informasi pun — hanya memperbesar berkas dan
+ * memperlambat pengambilan. Dimensi sengaja tidak dideklarasikan supaya
+ * crawler mengukurnya sendiri alih-alih diberi angka yang keliru.
+ *
+ * Pratinjau berkartu besar menuntut gambar yang cukup besar di sumbernya.
+ * Itu pekerjaan redaksi: unggah gambar unggulan minimal 1200px lebarnya.
  */
-export const OG_LEBAR = 1200;
-
-/**
- * Tinggi 960, bukan 630 yang lazim dipakai sebagai ukuran Open Graph.
- *
- * Rasio 1,91:1 memang anjuran Facebook, tetapi WhatsApp merender pratinjau
- * berasio selebar itu sebagai thumbnail kecil di samping teks, bukan kartu
- * bergambar besar. Diuji pada perangkat redaksi: gambar brand lama
- * (1402x1122, rasio 1,25) tampil sebagai kartu besar, sedangkan 1200x630
- * pada artikel yang sama tampil kecil. Aplikasi, akun, dan tautan sama —
- * yang berbeda hanya rasionya.
- *
- * 4:3 dipilih karena WhatsApp jalur berbagi utama pembaca TGR di Indonesia.
- * Facebook dan X tetap merender besar pada rasio ini; keduanya memangkas
- * sendiri bila perlu, sedangkan WhatsApp tidak memberi pilihan.
- */
-export const OG_TINGGI = 960;
-
 export function gambarBagikan(src: string, situs: string): string {
   if (!src.startsWith("http")) return situs + src;
-  return (
-    "https://wsrv.nl/?url=" +
-    encodeURIComponent(src) +
-    `&w=${OG_LEBAR}&h=${OG_TINGGI}&fit=cover&q=82&output=jpg`
-  );
+
+  // cms.theglobal-review.com/wp-content/uploads/... -> domain sendiri.
+  const uploads = src.indexOf("/wp-content/uploads/");
+  if (uploads !== -1) return situs + src.slice(uploads);
+
+  return src;
 }
 
 /**
@@ -113,7 +98,7 @@ export function ogArtikel(opsi: {
       locale: opsi.lang === "en" ? "en_US" : "id_ID",
       publishedTime: opsi.tanggal,
       authors: opsi.penulis ? [opsi.penulis] : undefined,
-      images: [{ url: gambar, width: OG_LEBAR, height: OG_TINGGI, alt: opsi.judul }],
+      images: [{ url: gambar, alt: opsi.judul }],
     },
     twitter: {
       card: "summary_large_image",
