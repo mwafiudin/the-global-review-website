@@ -55,12 +55,30 @@ export function dwibahasa(lang: Lang, path: string): Metadata["alternates"] {
  * dari CDN Vercel, dan menambah lompatan ke pihak ketiga hanya menambah
  * satu titik gagal pada jalur yang sudah andal.
  */
+export const OG_LEBAR = 1200;
+
+/**
+ * Tinggi 960, bukan 630 yang lazim dipakai sebagai ukuran Open Graph.
+ *
+ * Rasio 1,91:1 memang anjuran Facebook, tetapi WhatsApp merender pratinjau
+ * berasio selebar itu sebagai thumbnail kecil di samping teks, bukan kartu
+ * bergambar besar. Diuji pada perangkat redaksi: gambar brand lama
+ * (1402x1122, rasio 1,25) tampil sebagai kartu besar, sedangkan 1200x630
+ * pada artikel yang sama tampil kecil. Aplikasi, akun, dan tautan sama —
+ * yang berbeda hanya rasionya.
+ *
+ * 4:3 dipilih karena WhatsApp jalur berbagi utama pembaca TGR di Indonesia.
+ * Facebook dan X tetap merender besar pada rasio ini; keduanya memangkas
+ * sendiri bila perlu, sedangkan WhatsApp tidak memberi pilihan.
+ */
+export const OG_TINGGI = 960;
+
 export function gambarBagikan(src: string, situs: string): string {
   if (!src.startsWith("http")) return situs + src;
   return (
     "https://wsrv.nl/?url=" +
     encodeURIComponent(src) +
-    "&w=1200&h=630&fit=cover&q=82&output=jpg"
+    `&w=${OG_LEBAR}&h=${OG_TINGGI}&fit=cover&q=82&output=jpg`
   );
 }
 
@@ -95,7 +113,7 @@ export function ogArtikel(opsi: {
       locale: opsi.lang === "en" ? "en_US" : "id_ID",
       publishedTime: opsi.tanggal,
       authors: opsi.penulis ? [opsi.penulis] : undefined,
-      images: [{ url: gambar, width: 1200, height: 630, alt: opsi.judul }],
+      images: [{ url: gambar, width: OG_LEBAR, height: OG_TINGGI, alt: opsi.judul }],
     },
     twitter: {
       card: "summary_large_image",

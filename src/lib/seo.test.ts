@@ -12,7 +12,9 @@ describe("gambarBagikan", () => {
     );
     expect(url).toContain("wsrv.nl");
     expect(url).toContain("w=1200");
-    expect(url).toContain("h=630");
+    // 4:3, bukan 1,91:1 — WhatsApp merender rasio selebar itu sebagai
+    // thumbnail kecil, dan WhatsApp jalur berbagi utama pembaca TGR.
+    expect(url).toContain("h=960");
     expect(url).toContain("fit=cover");
     // JPEG, bukan WebP: dukungan WebP di crawler sosial tidak merata, dan
     // pratinjau yang gagal ter-cache lama di sisi mereka.
@@ -59,7 +61,7 @@ describe("ogArtikel", () => {
     // Dimensi dinyatakan supaya platform sosial memesan ruangnya lebih dulu
     // dan tidak menunda render pratinjau sampai gambarnya selesai diunduh.
     expect(gambar.width).toBe(1200);
-    expect(gambar.height).toBe(630);
+    expect(gambar.height).toBe(960);
   });
 
   it("menautkan URL berbahasa untuk versi /en", () => {
