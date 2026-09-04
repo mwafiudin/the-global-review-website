@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.4.0
+ * Version:      3.4.1
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -1992,7 +1992,13 @@ add_action(
 				'show_ui'       => true,
 				'menu_icon'     => 'dashicons-groups',
 				'menu_position' => 25,
-				'supports'      => array( 'title', 'thumbnail', 'page-attributes' ),
+				// 'custom-fields' wajib ada meski kotak isiannya sendiri tidak
+				// dipakai: tanpa dukungan itu WordPress tidak pernah memunculkan
+				// field `meta` di REST, sehingga jabatan dan bio yang didaftarkan
+				// di bawah tak terbaca frontend — dan penulisannya lewat REST
+				// hilang tanpa pesan galat. Tiga CPT lain di berkas ini sudah
+				// mencantumkannya; tgr_orang sempat terlewat.
+				'supports'      => array( 'title', 'thumbnail', 'page-attributes', 'custom-fields' ),
 				'show_in_rest'  => true,
 				'rest_base'     => 'orang',
 			)
@@ -2055,6 +2061,13 @@ add_action(
 	'add_meta_boxes_tgr_orang',
 	function () {
 		add_meta_box( 'tgr_isi_orang', 'Detail Profil', 'tgr_kotak_orang', 'tgr_orang', 'normal', 'high' );
+
+		// Kotak "Custom Fields" bawaan disembunyikan. Dukungan custom-fields
+		// dinyalakan hanya supaya meta terbaca REST; layar ini tidak memakai
+		// editor blok, jadi tanpa baris ini redaksi melihat tabel meta mentah
+		// (tgr_bio, tgr_jabatan_en, …) berdampingan dengan kotak Detail Profil
+		// — dua cara menyunting hal yang sama, salah satunya membingungkan.
+		remove_meta_box( 'postcustom', 'tgr_orang', 'normal' );
 	}
 );
 
