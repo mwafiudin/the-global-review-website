@@ -81,7 +81,7 @@ export const pengurus: Pengurus[] = [
   },
   {
     nama: "Harry Samputra Agus",
-    foto: "/images/placeholder-pengurus-gfi-pria-1.jpg",
+    foto: "/images/harry-samputra-agus-direktur-pengembangan-bisnis-gfi.jpg",
     teks: {
       id: {
         jabatan:
@@ -97,7 +97,7 @@ export const pengurus: Pengurus[] = [
   },
   {
     nama: "Andrianto",
-    foto: "/images/placeholder-pengurus-gfi-pria-2.jpg",
+    foto: "/images/andrianto-direktur-diplomasi-kebudayaan-gfi.jpg",
     teks: {
       id: {
         jabatan: "Direktur Diplomasi Kebudayaan Antar-Bangsa dan Ekspatriat",
@@ -111,7 +111,7 @@ export const pengurus: Pengurus[] = [
   },
   {
     nama: "M Arief Pranoto",
-    foto: "/images/placeholder-pengurus-gfi-pria-3.jpg",
+    foto: "/images/m-arief-pranoto-direktur-pengkajian-geopolitik-gfi.jpg",
     teks: {
       id: {
         jabatan: "Direktur Pengkajian Geopolitik dan Studi Kewilayahan",
@@ -125,7 +125,7 @@ export const pengurus: Pengurus[] = [
   },
   {
     nama: "Murniatun Margono",
-    foto: "/images/placeholder-pengurus-gfi-perempuan.jpg",
+    foto: "/images/murniatun-margono-direktur-pengkajian-hukum-ham-gfi.jpg",
     teks: {
       id: {
         jabatan:
@@ -140,7 +140,7 @@ export const pengurus: Pengurus[] = [
   },
   {
     nama: "Halim Hutagalung",
-    foto: "/images/placeholder-pengurus-gfi-pria-1.jpg",
+    foto: "/images/halim-hutagalung-direktur-kearifan-lokal-gfi.jpg",
     teks: {
       id: {
         jabatan:
@@ -155,7 +155,7 @@ export const pengurus: Pengurus[] = [
   },
   {
     nama: "Neisya Aulia",
-    foto: "/images/placeholder-pengurus-gfi-perempuan.jpg",
+    foto: "/images/neisya-aulia-direktur-diplomasi-publik-gfi.jpg",
     teks: {
       id: {
         jabatan: "Direktur Diplomasi Publik dan Pemberdayaan Ekonomi Kreatif",
