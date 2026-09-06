@@ -7,7 +7,7 @@ import "server-only";
  */
 
 /** WAF host menolak User-Agent curl/*; pakai UA deskriptif sendiri. */
-const USER_AGENT = "TGR-Frontend/1.0 (Next.js; +https://the-global-review-website.vercel.app)";
+const USER_AGENT = "TGR-Frontend/1.0 (Next.js; +https://theglobal-review.com)";
 
 const TIMEOUT_MS = 15000;
 
@@ -128,7 +128,7 @@ function apiBase(): string {
   if (!base) {
     throw new Error(
       "WP_API_URL belum diatur. Salin .env.example ke .env.local (lokal) " +
-        "atau tambahkan di Vercel → Settings → Environment Variables."
+        "atau tambahkan di variabel service Railway (docs/hosting-railway.md)."
     );
   }
   return base;

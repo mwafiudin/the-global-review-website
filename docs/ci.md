@@ -4,8 +4,9 @@ Pemeriksaan otomatis yang berjalan di GitHub Actions setiap push ke `main`
 dan setiap pull request. Definisinya di `.github/workflows/ci.yml`.
 
 Aturan mainnya satu kalimat: **CI hanya menjalankan yang tidak dijalankan
-siapa pun.** Vercel sudah membangun tiap push dan membuat preview per PR,
-jadi verifikasi build ada di sana — CI mengisi celahnya.
+siapa pun.** Railway membangun tiap deploy (`railway up`, atau tiap push
+bila repo dihubungkan), jadi verifikasi build ada di sana — CI mengisi
+celahnya.
 
 ---
 
@@ -27,9 +28,10 @@ menit.
 - **`typecheck`** — `next typegen && tsc --noEmit`. `next build` hanya
   mengecek tipe modul yang ikut ter-bundle; ini mengecek seluruh cakupan
   `tsconfig.json`.
-- **`test`** — `vitest run` atas fungsi murni di `src/lib/wp/`
-  (`sanitize`, `rubrik`, `map`). Semuanya offline: `users` dan `category`
-  disuplai langsung ke `wpPostToArticle`, jadi tidak ada request ke WP.
+- **`test`** — `vitest run` atas `src/**/*.test.ts`: fungsi murni lib
+  (`src/lib/wp/`, rate limit, IP klien, i18n, paginasi) dan validator route
+  handler API. Semuanya offline: `users` dan `category` disuplai langsung
+  ke `wpPostToArticle`, jadi tidak ada request ke WP.
 - **`wordpress`** — `wordpress/mu-plugins/*.php` dipasang manual ke host
   produksi lewat cPanel tanpa SSH. Syntax error di sana berarti situs WP
   putih dan mahal dipulihkan; `php -l` menangkapnya di sini, gratis.
@@ -59,8 +61,9 @@ menembak WordPress produksi. Host itu rate-limited (lihat semafor
 
 Menjalankannya di CI berarti menambah beban ke host rapuh tiap push, butuh
 secret, dan membuat CI bisa merah karena 503 padahal kodenya benar —
-sementara Vercel sudah melakukan build yang sama dan statusnya sudah
-tampil di PR. Jadi build diserahkan sepenuhnya ke Vercel.
+sementara build yang sama sudah dijalankan Railway saat deploy, dan build
+yang gagal di sana tidak pernah menggantikan deployment yang sedang hidup.
+Jadi build diserahkan sepenuhnya ke Railway (`railway logs --build`).
 
 ## Menjalankan gate yang sama di lokal
 
@@ -71,8 +74,10 @@ npm ci && npm run lint && npm run typecheck && npm test
 ```
 
 Kalau ini hijau di laptop, ia hijau di CI. `.nvmrc` (Node 22) dan
-`engines` di `package.json` menjaga versi Node laptop, CI, dan Vercel tetap
-sama; CI membacanya lewat `node-version-file`.
+`engines.node` (`22.x`) di `package.json` menjaga versi Node laptop, CI,
+dan Railway tetap sama: CI membaca `.nvmrc` lewat `node-version-file`,
+sedangkan Railpack (builder Railway) membaca `engines.node` lebih dulu —
+karena itu keduanya harus menunjuk mayor yang sama.
 
 Job `wordpress` tidak punya langkah instalasi: `ubuntu-latest` (kini
 Ubuntu 24.04) sudah membawa **PHP 8.3.6** dan **ShellCheck 0.9.0**. Di
@@ -109,15 +114,16 @@ Nama yang muncul di daftar adalah `name:` job, bukan kunci `jobs:`-nya.
 
 `.github/dependabot.yml` membuka PR mingguan untuk dua ekosistem: `npm`
 dan `github-actions`. Yang kedua adalah pasangan wajib dari keputusan
-mem-pin action ke tag mayor (`@v5`) — action yang basi adalah jalur masuk
+mem-pin action ke tag mayor (`@v7`) — action yang basi adalah jalur masuk
 supply-chain.
 
 Update `minor` dan `patch` dikelompokkan jadi satu PR; `major` tetap
 terpisah supaya catatan rilisnya sempat dibaca. `next` dan `react` di-pin
 eksak, jadi kenaikannya memang selalu lewat PR yang harus di-review.
 
-CI **tidak** menjalankan `npm audit`. Alasannya: hari ini `npm audit`
-sudah melaporkan advisory pada `next@16.2.10` yang baru tuntas di 16.3.x,
-jadi menambahkannya sekarang hanya membuat CI merah permanen tanpa
-menambah informasi. Dependabot yang menanganinya — lewat PR yang bisa
-di-review, bukan lewat gate yang diabaikan.
+CI **tidak** menjalankan `npm audit`. Alasannya: saat CI dibuat, `npm
+audit` melaporkan advisory pada `next@16.2.10` yang baru tuntas di 16.3.x
+(kini terpasang), jadi gate semacam itu tinggal menunggu advisory
+berikutnya untuk membuat CI merah permanen tanpa menambah informasi.
+Dependabot yang menanganinya — lewat PR yang bisa di-review, bukan lewat
+gate yang diabaikan.

@@ -11,7 +11,7 @@ import { revalidateTag } from "next/cache";
  * pengaman bila webhook gagal terkirim.
  *
  * REVALIDATE_SECRET boleh berisi beberapa nilai dipisah koma supaya
- * rotasi bisa bertahap (tambah dulu di Vercel, lalu tukar di wp-config).
+ * rotasi bisa bertahap (tambah dulu di variabel host, lalu tukar di wp-config).
  */
 
 function secretValid(header: string | null): boolean {

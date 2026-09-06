@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { alamatKlien } from "@/lib/client-ip";
 import { wpApiBase } from "@/lib/wp/client";
 
 /**
@@ -42,6 +43,11 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Pilihan tidak sah" }, { status: 400 });
   }
 
+  // Satu suara per pembaca dijaga WordPress lewat alamat IP; tanpa header
+  // ini ia hanya melihat alamat egress server — seluruh situs dihitung
+  // satu pemilih.
+  const ip = alamatKlien(request.headers);
+
   try {
     const res = await fetch(`${wpUrl}/tgr/v1/vote`, {
       method: "POST",
@@ -49,6 +55,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         "X-TGR-Secret": secret,
         "User-Agent": "TGR-Frontend/1.0",
+        ...(ip ? { "X-TGR-Client-IP": ip } : {}),
       },
       body: JSON.stringify({ poll: payload.poll, opsi: payload.opsi }),
       signal: AbortSignal.timeout(8000),

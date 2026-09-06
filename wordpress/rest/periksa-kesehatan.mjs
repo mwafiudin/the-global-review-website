@@ -21,9 +21,8 @@ import { wp, AKAR_API, AGEN_HTTP } from "./wp.mjs";
 
 const DI_SINI = dirname(fileURLToPath(import.meta.url));
 
-/** Penerima webhook di Vercel; tanpa secret harus menjawab 401. */
-const URL_PENERIMA_WEBHOOK =
-  "https://the-global-review-website.vercel.app/api/revalidate";
+/** Penerima webhook di situs (domain utama); tanpa secret harus menjawab 401. */
+const URL_PENERIMA_WEBHOOK = "https://theglobal-review.com/api/revalidate";
 
 /* ── Mode banding ──────────────────────────────────────────────────── */
 
@@ -200,7 +199,7 @@ const snapshot = {
   auth: await ujiAuth(),
   tgr: await ujiEndpointTgr(),
   namespaces: await ujiNamespace(),
-  webhookVercel: await ujiPenerimaWebhook(),
+  webhookSitus: await ujiPenerimaWebhook(),
 };
 
 const stempel = snapshot.waktu.replace(/[-:]/g, "").slice(0, 13);
@@ -218,8 +217,8 @@ for (const [nama, kode] of Object.entries(snapshot.tgr)) {
   else if (kode !== 401 && kode !== 403) peringatan.push(`tgr/v1/${nama} → ${kode} (harapan 401/403)`);
 }
 if (!snapshot.namespaces.includes("tgr/v1")) peringatan.push("namespace tgr/v1 hilang");
-if (snapshot.webhookVercel !== 401) {
-  peringatan.push(`penerima webhook Vercel menjawab ${snapshot.webhookVercel} (harapan 401)`);
+if (snapshot.webhookSitus !== 401) {
+  peringatan.push(`penerima webhook situs menjawab ${snapshot.webhookSitus} (harapan 401)`);
 }
 if (peringatan.length) {
   console.log("\n⚠ Perhatian:");

@@ -30,7 +30,7 @@ describe("isPollClosed", () => {
 
   it("batas tutup mengikuti tengah malam WIB, bukan zona server", () => {
     // Gerbang suara mu-plugin menutup pukul 23:59:59 WIB = 16:59:59 UTC.
-    // Server Vercel berzona UTC — tanpa offset eksplisit, poll tampak
+    // Server produksi berzona UTC — tanpa offset eksplisit, poll tampak
     // masih buka 7 jam sementara WordPress sudah menolak suaranya (409).
     const p = poll({ closesAt: "2026-08-25" });
     vi.setSystemTime(new Date("2026-08-25T16:59:00Z")); // 23:59 WIB

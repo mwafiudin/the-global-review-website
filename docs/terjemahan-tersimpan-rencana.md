@@ -81,8 +81,8 @@ Alur otomatis:
   tombol "Terjemahkan sekarang/ulang" = tautan ber-nonce `admin-post.php`,
   pola tombol CSV di `tgr-headless.php`) + kolom ringkas **EN** (✓/—/!) di
   daftar tulisan untuk memantau sebaran backfill.
-- WP-Cron di CMS headless tetap terpicu oleh trafik REST rutin dari Vercel
-  (ISR tiap 300 dtk). Bila macet: tombol manual memanggil `spawn_cron()`
+- WP-Cron di CMS headless tetap terpicu oleh trafik REST rutin dari
+  frontend (ISR tiap 300 dtk). Bila macet: tombol manual memanggil `spawn_cron()`
   langsung, dan tersedia opsi cron cPanel (`wget -q -O /dev/null
   ".../wp-cron.php?doing_wp_cron"` per 5 menit — pakai wget; WAF host menolak
   UA curl). Jangan `DISABLE_WP_CRON`.

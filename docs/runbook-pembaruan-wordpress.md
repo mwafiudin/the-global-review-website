@@ -8,7 +8,8 @@ searah.
 ## Kenapa relatif aman di arsitektur ini — dan di mana rawannya
 
 Pembaca **tidak akan terganggu** apa pun yang terjadi: mereka melihat
-Next.js di Vercel yang menyajikan halaman dari cache. Kalau WordPress
+Next.js di Railway (di belakang Cloudflare) yang menyajikan halaman dari
+cache. Kalau WordPress
 tumbang satu jam, situs tetap tayang; yang berhenti hanya artikel baru dan
 pembaruan konten.
 

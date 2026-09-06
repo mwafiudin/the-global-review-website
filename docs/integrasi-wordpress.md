@@ -70,10 +70,12 @@ lewat cPanel File Manager, lalu jalankan kedua skrip seed dengan
 ## Status implementasi — 14 Agustus 2026
 
 **Fase 1 LIVE di produksi dan teruji ujung-ke-ujung** (sunting di wp-admin
-→ notice hijau → halaman Vercel berubah dalam hitungan detik). Rantai
-deploy: repo GitHub publik + webhook push → deploy hook Vercel (paket
-Hobby menolak auto-deploy commit kolaborator pada repo privat — itulah
-alasan repo dipublikkan). Pencarian dibatasi `search_columns=post_title`
+→ notice hijau → halaman situs berubah dalam hitungan detik). Rantai
+deploy saat itu: repo GitHub publik + webhook push → deploy hook Vercel
+(paket Hobby menolak auto-deploy commit kolaborator pada repo privat —
+itulah alasan repo dipublikkan). Sejak September 2026 produksi di Railway
+(`docs/hosting-railway.md`), deploy lewat `railway up`; alasan repo harus
+publik tidak berlaku lagi. Pencarian dibatasi `search_columns=post_title`
 (pencarian isi penuh 5–9 dtk di host ini dan kerap melewati batas waktu
 fungsi; judul saja <1 dtk) plus indikator "Mencari…" di panel.
 

@@ -17,7 +17,7 @@ import { dirname, join } from "node:path";
 const AKAR = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 /** User-Agent apa pun asal bukan curl/*: WAF host menolaknya dengan 406. */
-const USER_AGENT = "TGR-Admin/1.0 (+https://the-global-review-website.vercel.app)";
+const USER_AGENT = "TGR-Admin/1.0 (+https://theglobal-review.com)";
 
 /** Host ini membatasi burst — empat koneksi sudah terbukti aman di frontend. */
 const MAKS_PARALEL = 3;

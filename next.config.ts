@@ -33,7 +33,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       // Gambar yang disisipkan di badan artikel memakai URL absolut domain
-      // lama (±1 dari 5 artikel). Setelah domain utama dilayani Vercel, path
+      // lama (±1 dari 5 artikel). Setelah domain utama dilayani situs ini, path
       // uploads diteruskan ke WordPress di cms.* apa adanya — tanpa bedah
       // basis data, dan tautan gambar yang telanjur beredar tetap hidup.
       {
@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
         destination: "/feed",
         permanent: true,
       },
-      // Bookmark lama redaksi: apex kini dilayani Vercel, wp-admin pindah ke
+      // Bookmark lama redaksi: apex kini dilayani situs ini, wp-admin pindah ke
       // cms.*. Temporary (307), bukan permanent — alamat admin tidak layak
       // dipatri di cache browser selamanya.
       {

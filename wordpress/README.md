@@ -1,14 +1,14 @@
 # Sisi WordPress
 
 Berkas untuk dijalankan/dipasang di WordPress produksi TGR
-(<https://theglobal-review.com>). Frontend Next.js membacanya lewat REST API.
+(<https://cms.theglobal-review.com>). Frontend Next.js membacanya lewat REST API.
 
 ```
 wordpress/
 ├── mu-plugins/
 │   ├── tgr-headless.php     # CPT (Podcast, Album, Poll, Pesan Masuk, Pengurus &
 │   │                        #   Redaksi) + field Bedah Buku + isi halaman statis
-│   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend Vercel segar
+│   ├── tgr-revalidate.php   # webhook: simpan di wp-admin → frontend (situs) segar
 │   └── tgr-alih-sementara.php  # SEMENTARA: beranda lama → situs baru (302)
 ├── rest/                    # perkakas yang benar-benar dipakai (lihat catatan SSH)
 │   ├── wp.mjs               # klien REST + Application Password, semafor & jeda
@@ -382,20 +382,22 @@ tersalin dari situs tetap diterima), dan judul tulisan tayang yang diubah
 lewat Sunting Cepat sampai frasanya hilang membuat metanya **dikosongkan +
 notice** — bukan dibiarkan basi memamerkan sorotan yang tidak lagi dirender.
 
-Catatan terpisah soal cache gambar: optimizer `next/image` di Vercel tidak
-punya API invalidasi (TTL ≥4 jam, kuncinya URL sumber). Mengganti isi
-berkas **tanpa mengganti nama file** (plugin "replace media" dsb.) bisa
-menyisakan gambar lama selama itu; penyunting gambar bawaan WordPress aman
-karena selalu menghasilkan nama berkas baru (`-e1234567890`).
+Catatan terpisah soal cache gambar: optimizer `next/image` (kini berjalan
+di server sendiri lewat `sharp`) tidak punya API invalidasi (TTL ≥4 jam,
+kuncinya URL sumber). Mengganti isi berkas **tanpa mengganti nama file**
+(plugin "replace media" dsb.) bisa menyisakan gambar lama selama itu;
+penyunting gambar bawaan WordPress aman karena selalu menghasilkan nama
+berkas baru (`-e1234567890`).
 
-Optimizer yang sama juga punya **kuota bulanan** (paket Hobby). 26 Agu 2026
-kuotanya habis — semua transform baru dijawab `402` dan gambar segar tampil
-rusak, sementara yang ter-cache tetap jalan (gejalanya: beda antar browser).
-Sejak itu semua pemakaian gambar frontend lewat
+Sejarah: di Vercel (paket Hobby) optimizer itu punya **kuota bulanan**, dan
+26 Agu 2026 kuotanya habis — semua transform baru dijawab `402` dan gambar
+segar tampil rusak, sementara yang ter-cache tetap jalan (gejalanya: beda
+antar browser). Sejak itu semua pemakaian gambar frontend lewat
 `src/components/ImageWithFallback.tsx`: optimizer bawaan dulu, gagal →
 proxy gratis wsrv.nl (resize + CDN tetap dapat), gagal lagi → berkas asli
-tanpa optimasi. Call site baru wajib impor dari komponen itu, bukan
-langsung `next/image`, supaya otomatis kebagian jalur cadangan.
+tanpa optimasi. Di Railway kuota itu tidak ada lagi; jalur cadangannya
+tetap dipertahankan sebagai jaring pengaman. Call site baru wajib impor
+dari komponen itu, bukan langsung `next/image`.
 
 ---
 
@@ -445,7 +447,9 @@ cukup menambah satu entri di sana.
 SSH belum terbuka, tapi kedua mu-plugin bisa dipasang lewat peramban.
 Sekali sesi ±30 menit:
 
-1. Masuk cPanel: `https://theglobal-review.com:2083`.
+1. Masuk cPanel: `https://cpanel.theglobal-review.com` (atau
+   `https://cms.theglobal-review.com:2083`; apex sudah tidak melayani port
+   2083 sejak dilayani situs Next).
 2. Temukan akar WordPress. Bila ada **WP Toolkit**, buka — daftar instalasi
    menampilkan path lengkapnya (sekalian menjawab pertanyaan #5 ke Webiihost).
    Tanpa itu: **File Manager → public_html**, pastikan ada `wp-config.php`
@@ -481,20 +485,22 @@ Sekali sesi ±30 menit:
 ### Webhook revalidasi (tgr-revalidate.php)
 
 Setiap terbit/sunting/hapus tulisan, WordPress mem-POST
-`{ type, slug, status_new, … }` ke `/api/revalidate` di Vercel dengan header
-`X-TGR-Secret`. Frontend langsung mengadaluwarsakan cache halaman terkait —
+`{ type, slug, status_new, … }` ke `https://theglobal-review.com/api/revalidate`
+(`TGR_REVALIDATE_URL` di wp-config.php) dengan header `X-TGR-Secret`.
+Frontend langsung mengadaluwarsakan cache halaman terkait —
 perubahan tampil dalam hitungan detik. Redaksi melihat hasilnya sebagai
 notice di layar edit ("Situs baru diperbarui …" / peringatan bila gagal).
 
 Nilai secret **harus sama** di dua tempat: konstanta `TGR_REVALIDATE_SECRET`
-di wp-config.php dan variabel `REVALIDATE_SECRET` di Vercel (Project →
-Settings → Environment Variables, tandai *Sensitive*, lalu redeploy).
-Buat nilainya dengan `openssl rand -hex 32`; jangan kirim lewat chat/surel.
+di wp-config.php dan variabel `REVALIDATE_SECRET` di service Railway
+(`railway variables --set "REVALIDATE_SECRET=…"` memicu redeploy sendiri;
+lihat `docs/hosting-railway.md`). Buat nilainya dengan
+`openssl rand -hex 32`; jangan kirim lewat chat/surel.
 
 Kegagalan kirim tidak diulang — frontend memasang ISR berkala sebagai
 jaring pengaman, jadi webhook yang hilang tersusul paling lama satu jendela
-revalidasi. Uji ujung-ke-ujung: sunting judul satu tulisan → halaman Vercel
-berubah ≤30 detik → log fungsi `/api/revalidate` di dasbor Vercel mencatat 200.
+revalidasi. Uji ujung-ke-ujung: sunting judul satu tulisan → halaman situs
+berubah ≤30 detik → `railway logs --http` mencatat `POST /api/revalidate 200`.
 
 Sejak v1.2.0 webhook juga menyala untuk perubahan yang dulu lolos:
 **gambar unggulan diganti tanpa menyimpan pos** (meta `_thumbnail_id`

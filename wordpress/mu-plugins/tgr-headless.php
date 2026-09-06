@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.3.0
+ * Version:      3.4.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -1657,7 +1657,7 @@ function tgr_terima_suara( $request ) {
 	// Satu suara per alamat IP per jajak pendapat. Bukan pengaman mutlak
 	// (IP bisa berbagi atau berganti), melainkan penahan wajar — sama
 	// seperti yang dilakukan hampir semua jajak pendapat tanpa login.
-	$ip    = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$ip    = tgr_ip_klien( $request );
 	$sidik = 'tgr_vote_' . md5( $post_id . '|' . $ip . wp_salt() );
 	if ( get_transient( $sidik ) ) {
 		return array( 'tercatat' => false, 'hasil' => tgr_hasil_suara( $post_id ) );
@@ -1857,6 +1857,24 @@ function tgr_secret_cocok( $dikirim ) {
 }
 
 /**
+ * Alamat pembaca untuk gerbang per-IP (suara, pendaftaran, pesan).
+ *
+ * Frontend berjalan di satu server (Railway), jadi REMOTE_ADDR di sini
+ * adalah alamat egress Next — sama untuk semua pembaca; mengandalkannya
+ * berarti seluruh situs dihitung satu pemilih. Next meneruskan alamat
+ * aslinya lewat X-TGR-Client-IP. Header itu hanya dibaca di endpoint yang
+ * sudah lolos permission_callback tgr_secret_cocok, sehingga tidak bisa
+ * disuntik dari luar; tanpa header (atau bukan IP) jatuh ke REMOTE_ADDR.
+ */
+function tgr_ip_klien( $request ) {
+	$diteruskan = $request->get_header( 'x_tgr_client_ip' );
+	if ( $diteruskan && filter_var( $diteruskan, FILTER_VALIDATE_IP ) ) {
+		return $diteruskan;
+	}
+	return isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+}
+
+/**
  * Penerima pendaftaran dari frontend. Bukan endpoint publik: frontend
  * meneruskannya dari server dengan secret yang sama seperti webhook
  * revalidasi, sehingga alamat ini tidak bisa dibanjiri langsung dari
@@ -1891,7 +1909,7 @@ function tgr_terima_pelanggan( $request ) {
 
 	// Rem sederhana per alamat IP; frontend juga membatasi, ini lapis kedua
 	// bila secret bocor.
-	$ip    = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$ip    = tgr_ip_klien( $request );
 	$sidik = 'tgr_sub_' . md5( $ip . wp_salt() );
 	$hitung = (int) get_transient( $sidik );
 	if ( $hitung >= 10 ) {
@@ -2414,7 +2432,7 @@ function tgr_terima_pesan( $request ) {
 
 	// Rem per IP, lapis kedua setelah pembatas frontend — 5 pesan per jam
 	// sudah lebih dari cukup untuk pengirim yang sungguhan.
-	$ip     = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : '';
+	$ip     = tgr_ip_klien( $request );
 	$sidik  = 'tgr_msg_' . md5( $ip . wp_salt() );
 	$hitung = (int) get_transient( $sidik );
 	if ( $hitung >= 5 ) {

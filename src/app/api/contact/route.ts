@@ -1,4 +1,6 @@
 import type { NextRequest } from "next/server";
+import { alamatKlien } from "@/lib/client-ip";
+import { buatRem } from "@/lib/rate-limit";
 import { wpApiBase } from "@/lib/wp/client";
 
 /**
@@ -7,7 +9,7 @@ import { wpApiBase } from "@/lib/wp/client";
  * revalidasi — pola yang sama dengan /api/subscribe. Pesan tersimpan di
  * wp-admin sebagai "Pesan Masuk" dan redaksi menerima email pemberitahuan.
  *
- * Sengaja klon mandiri, bukan berbagi helper dengan subscribe: jatah rate
+ * Sengaja klon mandiri dari subscribe, dengan rem masing-masing: jatah rate
  * limit kedua formulir memang harus terpisah (preseden /api/vote).
  */
 
@@ -79,16 +81,7 @@ export function kontakValid(payload: {
  * Rem per alamat IP di memori proses — penahan agar satu peramban tidak
  * bisa mengulang kirim beruntun; WordPress membatasi lagi di lapis kedua.
  */
-const JENDELA_MS = 60_000;
-const MAKS_PER_JENDELA = 5;
-const jejak = new Map<string, number[]>();
-
-export function terlaluSering(kunci: string, sekarang = Date.now()): boolean {
-  const baru = (jejak.get(kunci) ?? []).filter((t) => sekarang - t < JENDELA_MS);
-  baru.push(sekarang);
-  jejak.set(kunci, baru);
-  return baru.length > MAKS_PER_JENDELA;
-}
+export const { terlaluSering } = buatRem({ jendelaMs: 60_000, maksPerJendela: 5 });
 
 export async function POST(request: NextRequest) {
   const secret = process.env.REVALIDATE_SECRET?.split(",")[0]?.trim();
@@ -126,17 +119,14 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: hasil.galat }, { status: 400 });
   }
 
-  // x-forwarded-for selalu ada di Vercel; di deployment lain yang tidak
-  // menyetelnya, tanpa cadangan ini SEMUA pengunjung berbagi satu ember
-  // rate-limit (kunci "") — pengirim sah ke-6 dalam semenit tertolak.
-  const ip =
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip")?.trim() ||
-    "anon";
-  if (ip === "anon") {
+  // IP pembaca dari header proxy yang bisa dipercaya (lib/client-ip). Tanpa
+  // itu SEMUA pengunjung berbagi satu ember rate-limit — pengirim sah ke-6
+  // dalam semenit tertolak — dan WordPress memakai alamat egress Next.
+  const ip = alamatKlien(request.headers);
+  if (!ip) {
     console.warn("[api/contact] alamat IP tak terbaca — rate limit memakai ember bersama");
   }
-  if (terlaluSering(ip)) {
+  if (terlaluSering(ip ?? "anon")) {
     return Response.json(
       { error: "Terlalu banyak percobaan, coba lagi sebentar lagi" },
       { status: 429 }
@@ -150,6 +140,9 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
         "X-TGR-Secret": secret,
         "User-Agent": "TGR-Frontend/1.0",
+        // Gerbang per-IP di mu-plugin memakai ini; tanpa header ia hanya
+        // melihat alamat egress server, sama untuk semua pembaca.
+        ...(ip ? { "X-TGR-Client-IP": ip } : {}),
       },
       body: JSON.stringify({
         ...hasil.data,

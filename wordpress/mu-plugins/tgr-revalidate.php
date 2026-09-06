@@ -1,7 +1,7 @@
 <?php
 /**
  * Plugin Name:  TGR Headless — Revalidasi Frontend
- * Description:  Memberi tahu frontend Next.js (Vercel) setiap kali tulisan
+ * Description:  Memberi tahu frontend Next.js setiap kali tulisan
  *               diterbitkan, disunting, atau dihapus — juga saat gambar
  *               unggulan diganti, media disunting, kategori ditata, atau
  *               profil penulis berubah — lewat webhook /api/revalidate,
@@ -102,7 +102,7 @@ function tgr_revalidate_kirim( $type, $slug, $status_new, $status_old, $modified
 	);
 
 	// Catat hasil terakhir untuk notice di layar edit (redaksi tidak punya
-	// akses log Vercel).
+	// akses log server frontend).
 	$code = is_wp_error( $response )
 		? $response->get_error_message()
 		: wp_remote_retrieve_response_code( $response );

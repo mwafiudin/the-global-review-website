@@ -20,7 +20,7 @@ export function isPollClosed(poll: Poll): boolean {
   if (!poll.closesAt) return false;
   // Offset WIB eksplisit: tanggal tutup redaksi adalah tanggal Jakarta, dan
   // gerbang suara di mu-plugin menutup pada tengah malam WIB. Tanpa offset,
-  // server Vercel (UTC) menganggap poll masih buka 7 jam lebih lama — kartu
+  // server (UTC) menganggap poll masih buka 7 jam lebih lama — kartu
   // "AKTIF" yang suaranya ditolak 409 oleh WordPress.
   return Date.now() > new Date(poll.closesAt + "T23:59:59+07:00").getTime();
 }

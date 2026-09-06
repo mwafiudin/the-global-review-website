@@ -3,8 +3,9 @@ export const site = {
   tagline: "Pemandu Informasi Perkembangan Dunia",
   /**
    * Alamat kanonik situs. Dipakai metadataBase, sitemap, dan robots —
-   * pasca-cutover situs juga tersaji di *.vercel.app, dan canonical inilah
-   * yang menjaga Google menghitung semuanya sebagai domain utama.
+   * situs juga tersaji di alamat bawaan host (*.up.railway.app), dan
+   * canonical inilah yang menjaga Google menghitung semuanya sebagai
+   * domain utama.
    */
   url: "https://theglobal-review.com",
   description:
@@ -35,7 +36,7 @@ export const site = {
   /**
    * Getter, bukan nilai beku: dievaluasi saat modul dimuat berarti instansi
    * server berumur panjang memajang tahun lama, dan getFullYear() memakai
-   * zona server (UTC di Vercel) — pembaca WIB melihat tahun lalu selama
+   * zona server (UTC di container) — pembaca WIB melihat tahun lalu selama
    * 31 Des 17:00 UTC sampai pergantian tahun UTC.
    */
   get copyright(): string {
