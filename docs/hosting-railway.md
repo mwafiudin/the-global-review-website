@@ -233,7 +233,45 @@ sekitar **$6–12/bulan**, sebagian tertutup kredit $5 paket Hobby.
   sana. Akun `mwafiudin` di Vercel terkunci (2FA); bila suatu saat pulih,
   hapus project-nya supaya tidak menagih.
 
-## 10. Jalan ke server sendiri
+## 10. Jembatan www (berlaku sampai nameserver pindah ke Cloudflare)
+
+Dipasang September 2026 karena panel klien webiihost (tempat nameserver
+diganti) tidak bisa diakses, sedangkan situs harus hidup segera. Zona DNS
+tetap di cPanel webiihost, yang hanya bisa CNAME di subdomain:
+
+| Record (cPanel → Zone Editor) | Nilai | Untuk apa |
+|---|---|---|
+| `www` CNAME | target Railway (`….up.railway.app`) | situs |
+| TXT verifikasi Railway untuk `www` | nama + nilai dari `railway domain www.theglobal-review.com` | Railway menerbitkan sertifikat |
+| `@` A | `172.236.131.177` (server WordPress) | apex hidup lagi sebagai papan penunjuk |
+
+Di server WordPress, mu-plugin **`tgr-alih-www.php`** melempar semua
+permintaan ber-host `theglobal-review.com` ke `https://www.theglobal-review.com`
+(308, path + query utuh; berkas `wp-content/uploads` tetap dilayani
+langsung). Di kode, `site.url` sementara `https://www.theglobal-review.com`
+supaya canonical, sitemap, dan feed konsisten dengan alamat yang tayang.
+Railway hanya memegang domain `www`.
+
+Efek: pembaca dan Google mendarat di `www…`; tautan lama tanpa www tetap
+sampai lewat satu lompatan. Webhook `TGR_REVALIDATE_URL` tidak perlu
+diubah (308 mempertahankan POST).
+
+**Mengembalikan apex sebagai alamat utama** (setelah nameserver menunjuk
+`arvind`/`sneh.ns.cloudflare.com` dan zona Cloudflare aktif), urutannya:
+
+1. Railway: tambah custom domain `theglobal-review.com`; Cloudflare: record
+   `@` CNAME → target Railway (proxied), TXT verifikasinya, `www` CNAME →
+   `theglobal-review.com` (proxied). Redirect Rule www → akar sudah ada.
+2. Kode: `site.url` kembali `https://theglobal-review.com`, deploy.
+3. WordPress: hapus `tgr-alih-www.php`. Zona cPanel boleh dibiarkan (tidak
+   lagi dibaca siapa pun).
+4. Search Console: kirim ulang `https://theglobal-review.com/sitemap.xml`.
+
+Sampai langkah 2 selesai, jangan aktifkan Redirect Rule www → akar untuk
+lalu lintas nyata — ia memang sudah "Active" di zona yang masih pending,
+jadi begitu NS pindah, kerjakan langkah 1–3 dalam satu duduk.
+
+## 11. Jalan ke server sendiri
 
 Rencana pemilik: hardware sendiri. Yang berubah hanya lapisan aplikasi:
 

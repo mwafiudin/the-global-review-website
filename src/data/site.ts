@@ -6,8 +6,14 @@ export const site = {
    * situs juga tersaji di alamat bawaan host (*.up.railway.app), dan
    * canonical inilah yang menjaga Google menghitung semuanya sebagai
    * domain utama.
+   *
+   * SEMENTARA di www: nameserver domain belum bisa dipindah ke Cloudflare,
+   * jadi apex (tanpa www) dilayani server WordPress lama yang melempar 308
+   * ke www (mu-plugin tgr-alih-www.php). Kembalikan ke
+   * "https://theglobal-review.com" saat apex sudah menunjuk Railway —
+   * lihat docs/hosting-railway.md §10.
    */
-  url: "https://theglobal-review.com",
+  url: "https://www.theglobal-review.com",
   description:
     "Media online yang dimiliki Global Future Institute. The Global Review menyajikan analisis dan opini politik luar negeri serta geopolitik dari Indonesia.",
   owner: "Global Future Institute (GFI)",
