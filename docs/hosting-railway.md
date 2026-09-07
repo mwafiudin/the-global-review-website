@@ -203,6 +203,18 @@ sekitar **$6–12/bulan**, sebagian tertutup kredit $5 paket Hobby.
 
 ## 9. Batasan dan jebakan
 
+- **Build gagal bila WordPress mati.** `next build` mem-prerender `/`,
+  `/redaksi`, halaman statis, sitemap, dan feed dari REST `cms.*`; bila host
+  itu tidak menjawab, build berhenti ("Export encountered an error … exiting
+  the build") dan deployment lama tetap hidup. Saat host down, jangan
+  memaksa deploy — tunggu `https://cms.theglobal-review.com/wp-json/`
+  menjawab 200 dulu (terverifikasi 7 Sep 2026 saat server webiihost padam
+  ±7 jam).
+- **`railway.json` (Config as Code) dinyatakan usang** oleh Railway; masih
+  dibaca sampai 1 Des 2026. Sebelum itu jalankan `railway config migrate
+  --apply` (menghasilkan `.railway/railway.ts`, diterapkan lewat
+  `railway config apply`), tinjau hasilnya, lalu hapus `railway.json`.
+
 - **Cache ISR ikut hilang tiap deploy/restart.** Menit-menit pertama
   setelah deploy, tiap halaman pertama kali diminta akan menembak
   WordPress (semafor `MAX_CONCURRENT = 4` di `src/lib/wp/client.ts`).
@@ -241,9 +253,14 @@ tetap di cPanel webiihost, yang hanya bisa CNAME di subdomain:
 
 | Record (cPanel → Zone Editor) | Nilai | Untuk apa |
 |---|---|---|
-| `www` CNAME | target Railway (`….up.railway.app`) | situs |
-| TXT verifikasi Railway untuk `www` | nama + nilai dari `railway domain www.theglobal-review.com` | Railway menerbitkan sertifikat |
+| `www` CNAME | `2sa3iw89.up.railway.app` | situs |
+| `_railway-verify.www` TXT | `railway-verify=8e84848af0db12e5e10d4dec8994b3d3e88c8db7ab8ba61806d4cc7de622279e` | Railway memverifikasi kepemilikan lalu menerbitkan sertifikat |
 | `@` A | `172.236.131.177` (server WordPress) | apex hidup lagi sebagai papan penunjuk |
+
+(Nilai di atas keluaran `railway domain www.theglobal-review.com --json`;
+bila domain dihapus dan dibuat ulang di Railway, nilainya berganti.)
+Project Railway: `theglobal-review` (workspace Coderoach), service `web`,
+domain bawaan `https://web-production-95661.up.railway.app`.
 
 Di server WordPress, mu-plugin **`tgr-alih-www.php`** melempar semua
 permintaan ber-host `theglobal-review.com` ke `https://www.theglobal-review.com`
