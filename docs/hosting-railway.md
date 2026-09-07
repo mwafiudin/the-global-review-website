@@ -208,8 +208,20 @@ sekitar **$6–12/bulan**, sebagian tertutup kredit $5 paket Hobby.
   itu tidak menjawab, build berhenti ("Export encountered an error … exiting
   the build") dan deployment lama tetap hidup. Saat host down, jangan
   memaksa deploy — tunggu `https://cms.theglobal-review.com/wp-json/`
-  menjawab 200 dulu (terverifikasi 7 Sep 2026 saat server webiihost padam
-  ±7 jam).
+  menjawab 200 dulu (terverifikasi 7 Sep 2026 lewat build lokal saat `cms`
+  tak terjangkau dari laptop).
+- **Semua port host timeout dari satu lokasi ≠ server mati.** 7 Sep 2026
+  laptop pengelola diblok firewall host webiihost (pola CSF/lfd: DROP semua
+  port termasuk ICMP; traceroute mati tepat di hop terakhir; host lain di
+  /24 yang sama tetap terjangkau) setelah beberapa request ber-User-Agent
+  non-browser dijawab 406 oleh WAF dan uji port berulang. Selama ±10 jam
+  ini keliru dibaca sebagai server padam. Sebelum menyimpulkan "down", cek
+  dari vantage luar (`https://api.hackertarget.com/httpheaders/?q=https://cms.theglobal-review.com/`
+  atau HP lewat data seluler). Ke `cms.`/`cpanel.` hanya kirim request
+  ber-UA `TGR-Admin/1.0 (+https://theglobal-review.com)` atau UA frontend,
+  dan jangan pernah uji port. Bila terblok: ganti IP publik (restart modem /
+  hotspot) atau minta webiihost membuka blokir. Build Railway tidak
+  terpengaruh — egress-nya IP lain.
 - **`railway.json` (Config as Code) dinyatakan usang** oleh Railway; masih
   dibaca sampai 1 Des 2026. Sebelum itu jalankan `railway config migrate
   --apply` (menghasilkan `.railway/railway.ts`, diterapkan lewat
