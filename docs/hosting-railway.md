@@ -97,21 +97,20 @@ Rollback: dasbor → Deployments → deployment sebelumnya → **Redeploy**, ata
 `railway redeploy` untuk membangun ulang deployment terakhir. Restart tanpa
 build: `railway restart`.
 
-Auto-deploy dari GitHub — **repo sudah dihubungkan 7 Sep 2026** (Service →
-Settings → Source: `mwafiudin/the-global-review-website`, cabang `main`,
-Root Directory kosong), tetapi Railway masih menampilkan **"Auto deploy
-unavailable"**, jadi push ke `main` BELUM memicu deploy dan `railway up`
-tetap diperlukan.
+Auto-deploy dari GitHub — **aktif sejak 7 Sep 2026.** Service → Settings →
+Source: `mwafiudin/the-global-review-website`, cabang `main`, Root Directory
+kosong. Push ke `main` langsung memicu build dan deploy; `railway up` hanya
+untuk keadaan darurat, dan justru jalur itu yang pernah menayangkan pohon
+kerja basi.
 
-Sebabnya bukan salah konfigurasi di Railway. Repo dimiliki akun pribadi
-`mwafiudin`; pemasangan Railway GitHub App yang ada justru di akun
-`farrez30`, dan pemasangan aplikasi GitHub hanya menjangkau repo milik akun
-tempat ia dipasang. Railway bisa *melihat* repo lewat hak baca kolaborator,
-tapi tidak menerima webhook push-nya. Perbaikannya harus dari pemilik repo:
-buka `github.com/settings/installations` sebagai `mwafiudin` → Railway App →
-Configure → Repository access → tambahkan `the-global-review-website`.
-Alternatif permanen: pindahkan repo ke organisasi GitHub yang admin-nya
-lebih dari satu orang.
+> **Label "Auto deploy unavailable" di halaman Settings tidak bisa
+> dipercaya.** Ia tetap tampil padahal auto-deploy sudah bekerja. Jangan
+> menyimpulkan dari tulisan itu — periksa perilakunya:
+> ```bash
+> railway deployment list --json
+> ```
+> Entri yang punya `meta.commitHash`, `meta.branch`, dan `meta.commitAuthor`
+> dipicu GitHub; entri tanpa itu berasal dari `railway up`.
 
 **Wait for CI** (Settings → Source) sengaja dimatikan sampai auto-deploy
 terbukti jalan: fitur itu menuntut izin GitHub tambahan, dan bila izinnya
