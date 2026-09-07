@@ -271,6 +271,18 @@ tetap di cPanel webiihost, yang hanya bisa CNAME di subdomain:
 
 (Nilai di atas keluaran `railway domain www.theglobal-review.com --json`;
 bila domain dihapus dan dibuat ulang di Railway, nilainya berganti.)
+
+**Terpasang 7 September 2026 pukul 11.47 WIB**, lewat UAPI cPanel
+`DNS::mass_edit_zone` (serial zona 2026090705 → 2026090706). Record `@` A
+sudah menunjuk server WordPress sejak sebelumnya, jadi yang berubah hanya
+`www` dan TXT verifikasinya; keduanya diberi TTL 300 supaya perpindahan
+berikutnya cepat. Terverifikasi dari `ns1.webiihost.net` dan `8.8.8.8`,
+dan apex menjawab 308 ke `www` dengan path serta query utuh.
+
+> **Menguji apex lewat curl:** WAF host menolak User-Agent non-peramban
+> dengan **406**, bukan 308. Selalu sertakan `-A "Mozilla/5.0 …Chrome…"`
+> saat menguji `theglobal-review.com`, `cms.`, atau `cpanel.`; 406 di sini
+> berarti UA-nya yang salah, bukan pengalihannya yang rusak.
 Project Railway: `theglobal-review` (workspace Coderoach), service `web`,
 domain bawaan `https://web-production-95661.up.railway.app`.
 
