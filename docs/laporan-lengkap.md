@@ -137,7 +137,7 @@ lalu domain dialihkan ke situs baru.
 | Tulisan tayang ber-Sorotan Judul | 871 dari 887 (per 24 Agustus) |
 | Podcast dipindah ke wp-admin | 9 |
 | Kamus antarmuka Inggris | 55 → 190+ entri |
-| Mu-plugin WordPress | 3 — `tgr-headless` v3.2.0, `tgr-revalidate` v1.1.0, `tgr-alih-sementara` v1.0.0 |
+| Mu-plugin WordPress | 2 — `tgr-headless` v3.4.0, `tgr-revalidate` v1.2.0 (`tgr-alih-sementara` pensiun setelah peralihan domain tuntas) |
 | Perkakas administratif | 10 skrip REST + 4 skrip cPanel |
 | Tangkapan layar panduan | 19 |
 | Dokumen serah terima | 9 berkas Markdown + 1 kartu langkah cetak |

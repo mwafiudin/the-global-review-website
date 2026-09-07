@@ -29,6 +29,7 @@ export const EN: Record<string, string> = {
   Media: "Media",
   // Kanal
   "Bedah Buku": "Book Reviews",
+  "Pustaka GFI": "GFI Library",
   Podcast: "Podcast",
   Galeri: "Gallery",
   // Kawasan
@@ -133,6 +134,10 @@ export const EN: Record<string, string> = {
   "Tentang The Global Review": "About The Global Review",
   // Halaman artikel
   "menit baca": "min read",
+  // Kotak byline artikel memakai "Editor": naskah kerap datang dari
+  // penulis lain dan yang tercantum adalah editor yang menerbitkannya.
+  // "Penulis" tetap dipakai halaman bedah buku untuk penulis bukunya.
+  Editor: "Editor",
   Penulis: "Author",
   Sebelumnya: "Previous",
   Selanjutnya: "Next",
@@ -142,8 +147,12 @@ export const EN: Record<string, string> = {
   "Artikel terkait": "Related articles",
   Bagikan: "Share",
   "Salin tautan": "Copy link",
-  "Bagikan ke WhatsApp": "Share to WhatsApp",
+  "Bagikan ke Facebook": "Share to Facebook",
+  "Bagikan ke Telegram": "Share to Telegram",
   "Bagikan ke X": "Share to X",
+  "Bagikan ke Instagram": "Share to Instagram",
+  "Instagram tidak menerima tautan langsung — tautan disalin agar bisa ditempel":
+    "Instagram accepts no direct links — the link is copied so you can paste it",
   // Arsip rubrik & paginasi
   artikel: "articles",
   "Semua penulis": "All authors",
@@ -239,6 +248,15 @@ export const EN: Record<string, string> = {
   "Baca ulasan lengkap": "Read the full review",
   "Koleksi Lainnya": "More from the Collection",
   "Baca ulasan": "Read review",
+  // Pustaka GFI — katalog karya sendiri, bukan daftar ulasan
+  "Buku yang ditulis dan disusun para pengkaji Global Future Institute.":
+    "Books written and compiled by Global Future Institute researchers.",
+  "Karya para pengkaji kami.": "Work by our researchers.",
+  "Halaman ini memuat karya sendiri. Ulasan buku dari penerbit lain ada di":
+    "This page holds our own work. Reviews of books from other publishers are in",
+  "Belum ada buku yang ditandai": "No books marked yet",
+  "Buku tampil di sini setelah ditandai Karya GFI pada Identitas Buku di wp-admin.":
+    "Books appear here once marked Karya GFI under Identitas Buku in wp-admin.",
   Ulasan: "Review",
   "Tonton diskusinya": "Watch the discussion",
   bersama: "with",

@@ -1,5 +1,9 @@
+"use client";
+
 import Image from "@/components/ImageWithFallback";
 import Link from "next/link";
+import { site } from "@/data/site";
+import { useLang } from "@/lib/i18n";
 
 /**
  * Wordmark serif dari logotype asli (tgr-wordmark.svg, digenerate dari
@@ -17,6 +21,8 @@ export function Logo({
   /** Beranda per bahasa ("/" atau "/en") — dipasok header/footer lewat l(). */
   homeHref?: string;
 }) {
+  const { t } = useLang();
+
   return (
     <Link
       href={homeHref}
@@ -52,10 +58,13 @@ export function Logo({
         </>
       )}
       {withTagline && (
-        <span className="hidden whitespace-nowrap border-l border-line pl-3.5 text-[10px] font-medium uppercase tracking-[0.14em] text-meta lg:block xl:hidden 2xl:block">
-          Pemandu Informasi
-          <br />
-          Perkembangan Dunia
+        // Sembunyi di mobile: bar hanya menyisakan 40px di samping wordmark,
+        // dan menumpuknya ke bawah membuat header terasa penuh — perannya
+        // diambil kop di panel menu burger. xl:hidden karena di 1280–1535px
+        // nav utama muncul dan bar jadi sesak; 2xl melegakan lagi. Membungkus
+        // sendiri (bukan <br> keras) supaya versi EN ikut memecah baris wajar.
+        <span className="hidden max-w-[12rem] border-l border-line pl-3.5 text-[10px] font-medium uppercase leading-[1.4] tracking-[0.14em] text-meta md:block xl:hidden 2xl:block">
+          {t(site.tagline)}
         </span>
       )}
     </Link>

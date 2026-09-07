@@ -252,6 +252,12 @@ export function SiteHeader() {
           className="fixed inset-x-0 bottom-0 top-[72px] z-40 overflow-y-auto overscroll-contain border-t border-line bg-canvas xl:hidden"
         >
           <div className="mx-auto max-w-xl px-5 pb-16 pt-6">
+            {/* Kop identitas: tanpa ini panel langsung membuka ke daftar
+                rubrik tanpa framing brand sama sekali. */}
+            <p className="mb-7 border-b border-line pb-5 text-[11px] font-medium uppercase leading-[1.6] tracking-[0.16em] text-meta">
+              {t(site.tagline)}
+            </p>
+
             {/* Rubrik utama */}
             <p className="mb-2 text-[11px] font-bold uppercase tracking-[0.16em] text-meta">
               {t("Utama")}

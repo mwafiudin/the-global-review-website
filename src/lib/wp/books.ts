@@ -45,6 +45,7 @@ interface WpBookPost {
     tgr_buku_sampul?: number;
     tgr_buku_podcast?: string;
     tgr_buku_unggulan?: string;
+    tgr_buku_karya_gfi?: string;
   };
 }
 
@@ -93,6 +94,7 @@ export function wpPostToBook(
     ulasan,
     podcastTerkait: teksMeta(item.meta?.tgr_buku_podcast),
     unggulan: item.meta?.tgr_buku_unggulan === "1",
+    karyaGfi: item.meta?.tgr_buku_karya_gfi === "1",
   };
 }
 
@@ -169,4 +171,25 @@ export async function wpBook(slug: string): Promise<Book | undefined> {
 export async function bukuPilihan(): Promise<Book | undefined> {
   const daftar = await wpBooks();
   return daftar.find((b) => b.unggulan) ?? daftar[0];
+}
+
+/**
+ * Buku karya pengkaji GFI, untuk halaman /pustaka-gfi dan seksinya di
+ * beranda. Terbitan terbaru dulu — koleksi ini soal karya, bukan kabar,
+ * jadi tahun terbit lebih bermakna ketimbang tanggal tayang ulasannya.
+ * Buku tanpa tahun ditaruh di belakang, bukan dibuang.
+ *
+ * Kosong selama redaksi belum mencentang "Karya GFI" di wp-admin (butuh
+ * mu-plugin ≥3.4.0); halaman dan seksinya menampilkan keadaan kosong,
+ * bukan menebak lewat nama penerbit — Neo Kolonialisme terbit lewat
+ * Indonesia Consulting Group dan tetap karya GFI, jadi saringan penerbit
+ * akan salah.
+ */
+export async function pustakaGfi(): Promise<Book[]> {
+  const daftar = (await wpBooks()).filter((b) => b.karyaGfi);
+  return daftar.sort((a, b) => {
+    const ta = Number(a.tahun) || 0;
+    const tb = Number(b.tahun) || 0;
+    return tb - ta;
+  });
 }

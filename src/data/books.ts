@@ -19,6 +19,13 @@ export interface Book {
   podcastTerkait?: string;
   /** Satu buku ber-nilai true tampil di kartu "Buku pilihan" sidebar. */
   unggulan?: boolean;
+  /**
+   * Buku karya pengkaji GFI — mengisi halaman Pustaka GFI. Berbeda dari
+   * `unggulan`: boleh true pada banyak buku. Penerbitnya tidak harus GFI
+   * (mis. Neo Kolonialisme terbit lewat Indonesia Consulting Group), jadi
+   * penandanya keputusan redaksi di wp-admin, bukan hasil saring penerbit.
+   */
+  karyaGfi?: boolean;
 }
 
 // Seluruh ulasan dikelola di wp-admin (kategori bedah-buku + meta Identitas

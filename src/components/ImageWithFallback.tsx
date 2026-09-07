@@ -5,14 +5,29 @@ import { useState } from "react";
 
 import { wsrvLoader } from "@/lib/image-loader";
 
-// Insiden 26 Agu 2026: kuota Image Optimization paket Hobby habis dan semua
-// transform baru dijawab 402 -> ikon gambar rusak di browser tanpa cache.
-// Komponen ini pengganti drop-in next/image dengan jalur muat berlapis:
-//   1. optimizer bawaan (gratis selama kuota bulanan masih ada)
-//   2. proxy wsrv.nl (resize + CDN tetap jalan)
-//   3. file asli tanpa optimasi
-// Impor gambar selalu lewat sini, jangan langsung dari next/image, supaya
-// call site baru otomatis kebagian jalur cadangannya.
+/**
+ * Pengganti drop-in next/image dengan jalur muat berlapis. Impor gambar
+ * selalu lewat sini, jangan langsung dari next/image, supaya call site baru
+ * otomatis kebagian jalur cadangannya.
+ *
+ * Jalurnya kini dua, bukan tiga:
+ *   0. proxy wsrv.nl — resize + WebP + CDN, gratis tanpa akun
+ *   1. berkas asli tanpa optimasi
+ *
+ * Optimizer bawaan Vercel SENGAJA DILEWATI sejak 3 September 2026. Kuota
+ * Image Optimization paket Hobby habis pada 26 Agustus dan belum pulih:
+ * setiap lebar dijawab 402 dalam 0,5-1,2 detik. Selama ia berada di jalur
+ * pertama, tiap gambar membayar satu permintaan gagal sebelum cadangan
+ * dijalankan — dan `priority` justru memperparah, karena preload di <head>
+ * mengikat bandwidth paling awal ke URL yang dijamin gagal. Itu yang
+ * membuat LCP lapangan tertahan di 2.736 ms.
+ *
+ * Melewatinya bukan sekadar tambal: paket Hobby akan menghabiskan kuota itu
+ * lagi tiap bulan, sedangkan wsrv.nl tanpa kuota. Bila suatu saat optimizer
+ * bawaan ingin dipakai lagi, kembalikan jalurnya di sini — cukup satu
+ * lapisan tambahan di depan, dengan konsekuensi yang sama bila kuotanya
+ * habis lagi.
+ */
 export default function ImageWithFallback(props: ImageProps) {
   const [tahap, setTahap] = useState(0);
 
@@ -20,17 +35,19 @@ export default function ImageWithFallback(props: ImageProps) {
     <NextImage
       key={tahap}
       {...props}
-      loader={tahap === 1 ? wsrvLoader : undefined}
-      unoptimized={tahap >= 2 ? true : props.unoptimized}
+      // Loader menentukan srcset DAN URL preload yang ditulis `priority`,
+      // jadi mengganti loader di sini sekaligus membetulkan preload-nya.
+      loader={tahap === 0 ? wsrvLoader : undefined}
+      unoptimized={tahap >= 1 ? true : props.unoptimized}
       onError={
-        tahap < 2
+        tahap < 1
           ? () => {
               console.warn(
-                `[gambar] jalur ${tahap === 0 ? "optimizer" : "wsrv"} gagal untuk "${String(
+                `[gambar] wsrv gagal untuk "${String(
                   props.src
-                )}", pindah ke jalur berikutnya`
+                )}", memakai berkas asli`
               );
-              setTahap(tahap + 1);
+              setTahap(1);
             }
           : undefined
       }

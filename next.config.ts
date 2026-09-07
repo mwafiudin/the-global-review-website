@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Logo dibaca saat render kartu OG lewat fs, bukan diimpor, jadi
+  // penelusuran modul Next tidak melihatnya dan tidak ikut membundelnya —
+  // fungsinya akan gagal di produksi meski lolos di mesin lokal.
+  outputFileTracingIncludes: {
+    "/[lang]/[slug]": ["./public/tgr-wordmark-dark.svg"],
+  },
   images: {
     // picsum.photos sudah dicabut: gambar pengganti kini aset lokal
     // (lib/articles.ts placeholderImage) — foto stok acak tampil seolah

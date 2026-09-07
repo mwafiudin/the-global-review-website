@@ -16,8 +16,11 @@ describe("sanitizeWpHtml", () => {
 
   it("membuang event handler inline", () => {
     const out = sanitizeWpHtml('<img src="https://x.test/a.png" onerror="alert(1)">');
-    expect(out).toContain("https://x.test/a.png");
+    // Sumbernya tetap terbawa, hanya kini terbungkus proxy wsrv sehingga
+    // ter-encode. Yang diuji tetap sama: handler-nya tidak boleh lolos.
+    expect(out).toContain(encodeURIComponent("https://x.test/a.png"));
     expect(out).not.toContain("onerror");
+    expect(out).not.toContain("alert(1)");
   });
 
   it("menolak href berskema javascript:", () => {
@@ -105,5 +108,33 @@ describe("sanitizeWpHtml", () => {
     expect(out).toContain('class="twitter-tweet"');
     const liar = sanitizeWpHtml('<blockquote class="menyaru-gaya-situs"><p>x</p></blockquote>');
     expect(liar).not.toContain("menyaru-gaya-situs");
+  });
+});
+
+describe("gambar sisipan badan artikel", () => {
+  const tag =
+    '<p><img loading="lazy" src="https://cms.theglobal-review.com/wp-content/uploads/2026/09/foto.jpeg" alt="" width="415" height="456" srcset="https://cms.theglobal-review.com/wp-content/uploads/2026/09/foto.jpeg 612w, https://cms.theglobal-review.com/wp-content/uploads/2026/09/foto-273x300.jpeg 273w" sizes="(max-width: 415px) 100vw, 415px" /></p>';
+
+  it("dialihkan lewat wsrv agar ikut ter-cache CDN", () => {
+    const hasil = sanitizeWpHtml(tag);
+    expect(hasil).toContain("wsrv.nl");
+    expect(hasil).toContain("output=webp");
+    // we=1: jangan membesarkan melebihi berkas aslinya.
+    expect(hasil).toContain("we=1");
+  });
+
+  // Keduanya menunjuk cms.* dan peramban mendahulukannya di atas src —
+  // membiarkannya berarti perbaikan ini tidak berpengaruh sama sekali.
+  it("membuang srcset dan sizes bawaan WordPress", () => {
+    const hasil = sanitizeWpHtml(tag);
+    expect(hasil).not.toContain("srcset");
+    expect(hasil).not.toContain("sizes=");
+    expect(hasil).not.toContain("612w");
+  });
+
+  it("membiarkan gambar berjalur relatif apa adanya", () => {
+    const hasil = sanitizeWpHtml('<p><img src="/tgr-gold-compass.svg" alt="" /></p>');
+    expect(hasil).toContain('src="/tgr-gold-compass.svg"');
+    expect(hasil).not.toContain("wsrv");
   });
 });

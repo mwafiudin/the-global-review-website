@@ -15,6 +15,16 @@ updates:
       minor-dan-patch:
         patterns: ["*"]
         update-types: [minor, patch]
+    ignore:
+      # ESLint 10 menghapus metode context lawas (context.getFilename dkk).
+      # eslint-plugin-react — dibundel eslint-config-next dan masih memakainya
+      # — mentok di 7.37.5 dengan peer "eslint: ^9.7", jadi lint langsung
+      # runtuh: "Error while loading rule 'react/display-name'".
+      # Tanpa ignore, Dependabot terus membuka PR yang mustahil digabung.
+      # CABUT begitu eslint-plugin-react merilis dukungan ESLint 10 dan
+      # eslint-config-next memakainya.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
 
   # Pasangan wajib dari keputusan mem-pin action ke tag mayor (@v5): tag bisa
   # bergeser, dan action pihak ketiga yang basi adalah jalur masuk supply-chain.

@@ -5,7 +5,7 @@
  *               Pendapat, Pengurus & Redaksi, Pesan Masuk), field tambahan
  *               Bedah Buku, dan isi halaman statis, seluruhnya untuk
  *               dikonsumsi frontend Next.js.
- * Version:      3.4.0
+ * Version:      3.6.0
  * Author:       Coderoach Studio
  *
  * Diletakkan di wp-content/mu-plugins/ sehingga aktif otomatis, tidak bisa
@@ -280,6 +280,9 @@ function tgr_register_book_meta() {
 		'tgr_buku_podcast'         => 'string',
 		// "1" pada satu-satunya buku yang tampil di kartu promo sidebar.
 		'tgr_buku_unggulan'        => 'string',
+		// "1" untuk buku karya pengkaji GFI — mengisi halaman Pustaka GFI.
+		// Berbeda dari 'unggulan': boleh dicentang pada banyak buku sekaligus.
+		'tgr_buku_karya_gfi'       => 'string',
 	);
 
 	foreach ( $fields as $key => $type ) {
@@ -1028,6 +1031,22 @@ function tgr_kotak_buku( $post ) {
 				</td>
 			</tr>
 			<tr>
+				<th scope="row">Karya GFI</th>
+				<td>
+					<label>
+						<input type="checkbox" name="tgr_buku_karya_gfi" value="1"
+							<?php checked( '1', tgr_meta( $post->ID, 'tgr_buku_karya_gfi' ) ); ?>>
+						Tampilkan di halaman &ldquo;Pustaka GFI&rdquo;
+					</label>
+					<p class="description">
+						Buku yang ditulis atau disusun pengkaji GFI. Boleh dicentang pada
+						beberapa buku sekaligus &mdash; tidak seperti Buku pilihan sidebar.
+						Penerbitnya tidak harus GFI; yang tercantum di kartu tetap penerbit
+						sebenarnya dari field di atas.
+					</p>
+				</td>
+			</tr>
+			<tr>
 				<th scope="row">Sampul buku</th>
 				<td>
 					<input type="hidden" id="tgr_buku_sampul" name="tgr_buku_sampul" value="<?php echo esc_attr( $sampul ); ?>">
@@ -1114,6 +1133,13 @@ add_action(
 				update_post_meta( $id_lain, 'tgr_buku_unggulan', '' );
 			}
 		}
+
+		// Karya GFI: centang bebas, tanpa efek ke buku lain.
+		update_post_meta(
+			$post_id,
+			'tgr_buku_karya_gfi',
+			isset( $_POST['tgr_buku_karya_gfi'] ) ? '1' : ''
+		);
 
 		$frasa = tgr_kiriman_teks( 'tgr_sorotan' );
 		$judul = get_post_field( 'post_title', $post_id );
@@ -1984,7 +2010,13 @@ add_action(
 				'show_ui'       => true,
 				'menu_icon'     => 'dashicons-groups',
 				'menu_position' => 25,
-				'supports'      => array( 'title', 'thumbnail', 'page-attributes' ),
+				// 'custom-fields' wajib ada meski kotak isiannya sendiri tidak
+				// dipakai: tanpa dukungan itu WordPress tidak pernah memunculkan
+				// field `meta` di REST, sehingga jabatan dan bio yang didaftarkan
+				// di bawah tak terbaca frontend — dan penulisannya lewat REST
+				// hilang tanpa pesan galat. Tiga CPT lain di berkas ini sudah
+				// mencantumkannya; tgr_orang sempat terlewat.
+				'supports'      => array( 'title', 'thumbnail', 'page-attributes', 'custom-fields' ),
 				'show_in_rest'  => true,
 				'rest_base'     => 'orang',
 			)
@@ -2047,6 +2079,13 @@ add_action(
 	'add_meta_boxes_tgr_orang',
 	function () {
 		add_meta_box( 'tgr_isi_orang', 'Detail Profil', 'tgr_kotak_orang', 'tgr_orang', 'normal', 'high' );
+
+		// Kotak "Custom Fields" bawaan disembunyikan. Dukungan custom-fields
+		// dinyalakan hanya supaya meta terbaca REST; layar ini tidak memakai
+		// editor blok, jadi tanpa baris ini redaksi melihat tabel meta mentah
+		// (tgr_bio, tgr_jabatan_en, …) berdampingan dengan kotak Detail Profil
+		// — dua cara menyunting hal yang sama, salah satunya membingungkan.
+		remove_meta_box( 'postcustom', 'tgr_orang', 'normal' );
 	}
 );
 
@@ -2166,6 +2205,172 @@ add_action(
 	10,
 	2
 );
+
+/**
+ * tgr/v1/orang: penyelaras profil Pengurus & Redaksi dari repo ke CMS.
+ *
+ * Jalur Application Password tidak bisa dipakai di hosting ini: server
+ * membuang header Authorization sebelum PHP melihatnya, sehingga REST bawaan
+ * WordPress selalu menganggap permintaannya anonim — kredensial yang sengaja
+ * dibuat salah menghasilkan jawaban yang sama persis dengan tanpa kredensial.
+ *
+ * Endpoint ini memakai rahasia bersama lewat header x-tgr-secret, pola yang
+ * sama dengan webhook revalidasi dan penerima pendaftaran di berkas ini, dan
+ * sudah terbukti lolos di host yang sama. Bukan endpoint publik.
+ */
+add_action(
+	'rest_api_init',
+	function () {
+		register_rest_route(
+			'tgr/v1',
+			'/orang',
+			array(
+				'methods'             => 'POST',
+				'permission_callback' => function ( $request ) {
+					return tgr_secret_cocok( $request->get_header( 'x-tgr-secret' ) );
+				},
+				'callback'            => 'tgr_selaraskan_orang',
+				'args'                => array(
+					'profil' => array( 'required' => true ),
+				),
+			)
+		);
+	}
+);
+
+/**
+ * Unduh potret dari URL dan jadikan lampiran, sekali saja per berkas.
+ *
+ * Lampiran dengan judul yang sama dianggap berkas yang sama: menjalankan
+ * ulang penyelarasan tidak menumpuk salinan di pustaka media — penting di
+ * hosting ini karena tiap unggahan melahirkan puluhan varian ukuran.
+ */
+function tgr_potret_lampiran( $url, $post_id ) {
+	$jalur = wp_parse_url( $url, PHP_URL_PATH );
+	if ( ! $jalur ) {
+		return 0;
+	}
+	$judul = preg_replace( '/\.[^.]+$/', '', basename( $jalur ) );
+	if ( '' === $judul ) {
+		return 0;
+	}
+
+	$ada = get_posts(
+		array(
+			'post_type'     => 'attachment',
+			'post_status'   => 'inherit',
+			'title'         => $judul,
+			'numberposts'   => 1,
+			'fields'        => 'ids',
+			'no_found_rows' => true,
+		)
+	);
+	if ( $ada ) {
+		return (int) $ada[0];
+	}
+
+	require_once ABSPATH . 'wp-admin/includes/file.php';
+	require_once ABSPATH . 'wp-admin/includes/media.php';
+	require_once ABSPATH . 'wp-admin/includes/image.php';
+
+	$id = media_sideload_image( $url, $post_id, null, 'id' );
+	return is_wp_error( $id ) ? 0 : (int) $id;
+}
+
+/** Kunci meta yang boleh ditulis, dipetakan dari nama ringkas di muatan. */
+function tgr_kunci_orang() {
+	return array(
+		'kelompok'   => 'tgr_kelompok',
+		'jabatan'    => 'tgr_jabatan',
+		'jabatan_en' => 'tgr_jabatan_en',
+		'bio'        => 'tgr_bio',
+		'bio_en'     => 'tgr_bio_en',
+	);
+}
+
+function tgr_selaraskan_orang( $request ) {
+	$daftar = $request->get_param( 'profil' );
+	if ( ! is_array( $daftar ) ) {
+		return new WP_Error( 'tgr_profil_tidak_sah', 'Parameter profil harus berupa larik.', array( 'status' => 400 ) );
+	}
+
+	$hasil = array();
+	foreach ( $daftar as $p ) {
+		if ( ! is_array( $p ) || empty( $p['slug'] ) ) {
+			continue;
+		}
+		$slug = sanitize_title( (string) $p['slug'] );
+		$pos  = get_posts(
+			array(
+				'post_type'     => 'tgr_orang',
+				'post_status'   => 'any',
+				'name'          => $slug,
+				'numberposts'   => 1,
+				'fields'        => 'ids',
+				'no_found_rows' => true,
+			)
+		);
+
+		$id     = $pos ? (int) $pos[0] : 0;
+		$dibuat = false;
+		if ( ! $id ) {
+			$baru = wp_insert_post(
+				array(
+					'post_type'   => 'tgr_orang',
+					'post_status' => 'publish',
+					'post_title'  => isset( $p['nama'] ) ? sanitize_text_field( (string) $p['nama'] ) : $slug,
+					'post_name'   => $slug,
+				)
+			);
+			if ( is_wp_error( $baru ) || ! $baru ) {
+				$hasil[] = array(
+					'slug'   => $slug,
+					'status' => 'gagal-dibuat',
+				);
+				continue;
+			}
+			$id     = (int) $baru;
+			$dibuat = true;
+		}
+
+		if ( isset( $p['urutan'] ) ) {
+			wp_update_post(
+				array(
+					'ID'         => $id,
+					'menu_order' => (int) $p['urutan'],
+				)
+			);
+		}
+
+		// sanitize_callback dari register_post_meta tetap berlaku di sini —
+		// update_post_meta melewati filter yang sama seperti tulisan REST.
+		foreach ( tgr_kunci_orang() as $pendek => $kunci ) {
+			if ( array_key_exists( $pendek, $p ) ) {
+				update_post_meta( $id, $kunci, (string) $p[ $pendek ] );
+			}
+		}
+
+		$foto = 0;
+		if ( ! empty( $p['foto_url'] ) ) {
+			$foto = tgr_potret_lampiran( esc_url_raw( (string) $p['foto_url'] ), $id );
+			if ( $foto ) {
+				set_post_thumbnail( $id, $foto );
+			}
+		}
+
+		$hasil[] = array(
+			'slug'   => $slug,
+			'id'     => $id,
+			'status' => $dibuat ? 'dibuat' : 'diselaraskan',
+			'foto'   => $foto,
+		);
+	}
+
+	return array(
+		'jumlah' => count( $hasil ),
+		'hasil'  => $hasil,
+	);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════
  * Pesan masuk (formulir kontak situs).

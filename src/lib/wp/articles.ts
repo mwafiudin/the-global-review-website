@@ -1,6 +1,7 @@
 import "server-only";
 
 import { unstable_cache } from "next/cache";
+import { authors } from "@/data/authors";
 import type { Article } from "@/lib/types";
 import {
   dedup,
@@ -192,12 +193,12 @@ const cachedSearch = unstable_cache(
   async (q: string, limit: number): Promise<Article[]> => {
     // search= bawaan menggeledah isi lengkap ±5.700 pos: 5–9 dtk di host
     // ini, kerap melewati batas waktu sehingga panel tampak "tanpa hasil".
-    // Kolom judul saja ±0,9 dtk (butuh WP ≥6.2) dan lebih relevan untuk
-    // pencarian situs.
+    // Judul + ringkasan (butuh WP ≥6.2) jauh lebih murah dan tetap relevan;
+    // isi penuh sengaja TIDAK ikut agar tidak kembali ke rentang timeout.
     const posts = await wpFetchFresh<WpPost[]>("/posts", {
       query: listQuery({
         search: q,
-        search_columns: "post_title",
+        search_columns: "post_title,post_excerpt",
         per_page: limit,
       }),
     });
@@ -350,9 +351,42 @@ export async function articlesBySlugs(slugs: string[]): Promise<Article[]> {
   return hasil;
 }
 
-/** Pencarian judul WordPress (urutan relevansi) untuk /api/search. */
+/**
+ * Penulis yang namanya cocok kueri. Ambang 3 huruf: pada 2 huruf "ru"
+ * sudah menyapu seluruh tulisan Rusman dan menggusur hasil judul.
+ */
+function penulisCocok(q: string): string[] {
+  if (q.length < 3) return [];
+  return authors
+    .filter((a) => a.name.toLowerCase().includes(q))
+    .map((a) => a.slug);
+}
+
+/**
+ * Pencarian untuk /api/search: judul + ringkasan, DITAMBAH tulisan penulis
+ * yang namanya cocok kueri. Tanpa yang terakhir, mencari "Hendrajit" selalu
+ * nihil — nama penulis tidak pernah ada di judul, dan WP tak punya kolom
+ * pencarian untuk itu (hanya filter author id).
+ *
+ * Tulisan penulis ditaruh lebih dulu: kueri yang persis sebuah nama penulis
+ * adalah sinyal niat yang jauh lebih kuat ketimbang kecocokan kata di judul.
+ */
 export async function searchArticles(q: string, limit = 8): Promise<Article[]> {
-  return dedup(`search:${q}:${limit}`, () => cachedSearch(q, perPage(limit)));
+  const slugPenulis = penulisCocok(q);
+  const [hasilTeks, ...hasilPenulis] = await Promise.all([
+    dedup(`search:${q}:${limit}`, () => cachedSearch(q, perPage(limit))),
+    ...slugPenulis.map((slug) => byAuthor(slug, limit)),
+  ]);
+
+  const terlihat = new Set<string>();
+  const gabungan: Article[] = [];
+  for (const artikel of [...hasilPenulis.flat(), ...hasilTeks]) {
+    if (terlihat.has(artikel.slug)) continue;
+    terlihat.add(artikel.slug);
+    gabungan.push(artikel);
+    if (gabungan.length >= limit) break;
+  }
+  return gabungan;
 }
 
 /** Entri ringan untuk sitemap: slug + waktu ubah terakhir (UTC). */

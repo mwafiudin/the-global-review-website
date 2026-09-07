@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { CaretLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { getAuthor } from "@/data/authors";
+import { site } from "@/data/site";
 import { getT } from "@/lib/i18n-server";
 import { DEFAULT_LANG, isLocale } from "@/lib/locale-routing";
-import { kanonik, robotsEn } from "@/lib/seo";
+import { kanonik, ogArtikel, robotsEn } from "@/lib/seo";
 import {
   articleHref,
   articleImage,
@@ -51,6 +52,9 @@ export async function generateMetadata({
   // di-stream (didokumentasikan di loading.md) — slug mati tidak terindeks.
   // Hard 404 tetap berlaku untuk path multi-segmen (catch-all tanpa loading).
   if (!article) notFound();
+  const deskripsi =
+    article.excerpt || article.body[0]?.slice(0, 160) || site.description;
+
   return {
     // Konten /en masih bahasa Indonesia (duplikat) — jangan diindeks.
     robots: robotsEn(bahasa),
@@ -58,7 +62,19 @@ export async function generateMetadata({
     title: article.title,
     // Excerpt kosong = excerpt otomatis WP (duplikat awal body) yang
     // sengaja tidak ditampilkan sebagai lead; meta tetap butuh deskripsi.
-    description: article.excerpt || article.body[0]?.slice(0, 160),
+    description: deskripsi,
+    // Wajib disetel eksplisit: layout mendefinisikan openGraph sendiri, dan
+    // Next tidak menurunkan `title` di atas ke og:title bila induknya sudah
+    // punya. Tanpa blok ini, tiap artikel yang dibagikan menampilkan judul
+    // dan gambar situs — bukan judul dan gambarnya sendiri.
+    ...ogArtikel({
+      judul: article.title,
+      deskripsi,
+      path: `/${slug}`,
+      lang: bahasa,
+      tanggal: article.date,
+      penulis: getAuthor(article.author).name,
+    }),
   };
 }
 
@@ -173,7 +189,7 @@ export default async function ArticlePage({
             )}
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-meta">
-                {t("Penulis")}
+                {t("Editor")}
               </p>
               <p className="mt-1.5 font-display text-lg font-bold text-ink">
                 {author.name}

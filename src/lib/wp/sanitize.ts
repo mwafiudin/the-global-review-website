@@ -80,6 +80,40 @@ const CONFIG: sanitizeHtml.IOptions = {
       }
       return { tagName, attribs };
     },
+    /**
+     * Gambar sisipan dialihkan lewat wsrv.
+     *
+     * Gambar unggulan dan sidebar melewati ImageWithFallback dan karenanya
+     * ikut ter-cache CDN; gambar DI DALAM badan artikel datang sebagai HTML
+     * mentah dari WordPress dan selama ini menembak cms.* langsung — tanpa
+     * cadangan, tanpa cache. Saat CMS mati (dua kali pada 3 September 2026),
+     * hanya gambar sisipan yang patah, dan patahnya tampil sebagai ikon
+     * rusak di tengah tulisan.
+     *
+     * srcset dan sizes DIBUANG, bukan ikut ditulis ulang: keduanya menunjuk
+     * cms.* dan peramban mendahulukannya di atas src — memperbaiki src saja
+     * tidak mengubah apa pun. we=1 mencegah pembesaran melebihi berkas
+     * aslinya, jadi satu URL sudah memadai.
+     */
+    img: (tagName, attribs) => {
+      const src = attribs.src ?? "";
+      if (!/^https?:\/\//.test(src)) {
+        return { tagName, attribs };
+      }
+      const { srcset, sizes, ...sisa } = attribs;
+      void srcset;
+      void sizes;
+      return {
+        tagName,
+        attribs: {
+          ...sisa,
+          src: `https://wsrv.nl/?url=${encodeURIComponent(
+            src
+          )}&w=1200&q=80&we=1&output=webp`,
+          loading: attribs.loading ?? "lazy",
+        },
+      };
+    },
   },
 };
 
