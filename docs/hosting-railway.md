@@ -97,10 +97,35 @@ Rollback: dasbor → Deployments → deployment sebelumnya → **Redeploy**, ata
 `railway redeploy` untuk membangun ulang deployment terakhir. Restart tanpa
 build: `railway restart`.
 
-Auto-deploy dari GitHub (belum dipasang): Service → Settings → Source →
-hubungkan `mwafiudin/the-global-review-website` cabang `main`. Butuh
-Railway GitHub App terpasang di akun pemilik repo. Setelah itu `railway up`
-tidak diperlukan lagi.
+Auto-deploy dari GitHub — **repo sudah dihubungkan 7 Sep 2026** (Service →
+Settings → Source: `mwafiudin/the-global-review-website`, cabang `main`,
+Root Directory kosong), tetapi Railway masih menampilkan **"Auto deploy
+unavailable"**, jadi push ke `main` BELUM memicu deploy dan `railway up`
+tetap diperlukan.
+
+Sebabnya bukan salah konfigurasi di Railway. Repo dimiliki akun pribadi
+`mwafiudin`; pemasangan Railway GitHub App yang ada justru di akun
+`farrez30`, dan pemasangan aplikasi GitHub hanya menjangkau repo milik akun
+tempat ia dipasang. Railway bisa *melihat* repo lewat hak baca kolaborator,
+tapi tidak menerima webhook push-nya. Perbaikannya harus dari pemilik repo:
+buka `github.com/settings/installations` sebagai `mwafiudin` → Railway App →
+Configure → Repository access → tambahkan `the-global-review-website`.
+Alternatif permanen: pindahkan repo ke organisasi GitHub yang admin-nya
+lebih dari satu orang.
+
+**Wait for CI** (Settings → Source) sengaja dimatikan sampai auto-deploy
+terbukti jalan: fitur itu menuntut izin GitHub tambahan, dan bila izinnya
+belum diterima Railway bisa menunggu status CI tanpa batas — deploy berhenti
+diam-diam tanpa pesan galat. Nyalakan setelah auto-deploy hidup;
+`.github/workflows/ci.yml` sudah menjalankan lint, typecheck, dan tes pada
+tiap push ke `main` dalam ±40 detik.
+
+> **Setiap deploy atau perubahan Settings me-restart service dan
+> mengosongkan cache ISR.** Sesudahnya beranda bisa memakan 7 detik. Panaskan
+> ulang dengan menyusuri `sitemap.xml`, **beri jeda ±0,6 detik antar
+> permintaan**: menembak ratusan URL beruntun membuat WordPress di hosting
+> bersama tersedak dan sebagian halaman menjawab 500. Terbukti 7 Sep 2026 —
+> tempo cepat 147/150, tempo lambat 150/150.
 
 ## 5. Domain
 
