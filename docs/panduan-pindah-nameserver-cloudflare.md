@@ -29,6 +29,39 @@ Panduan ini dibagi dua fase:
 
 Perkiraan waktu: 45–60 menit kerja, lalu menunggu propagasi.
 
+## Status 13 Okt 2026: langkah 1–3 selesai
+
+- Zona September sudah dihapus otomatis oleh Cloudflare (zona paket Free
+  yang Pending lebih dari 28 hari dihapus). Zona dibuat ulang 13 Okt 2026,
+  paket Free, dan pasangan nameserver-nya tetap `arvind.ns.cloudflare.com`
+  + `sneh.ns.cloudflare.com`. Redirect Rule www → apex dari rencana lama
+  ikut hilang, jadi langkah 3 butir 1 tidak perlu dikerjakan lagi.
+- Isi zona: 39 record, dibandingkan satu per satu dengan jawaban
+  `ns1.webiihost.net` (A, CNAME, MX, TXT, SRV) dan hasilnya identik. Hanya
+  `www` yang Proxied, sisanya DNS only. Di luar tabel langkah 2, zona juga
+  memuat record email `cms` (MX, SPF, DKIM, DMARC, dan lima SRV
+  `_autodiscover`, `_caldav(s)`, `_carddav(s)` di `._tcp.cms`), CNAME
+  `www.cms`, TXT `_cpanel-dcv-test-record`, serta TXT `path=/` untuk SRV
+  kalender dan kontak di apex.
+- Setelan: SSL/TLS **Full** (dipilih manual, bukan Automatic), Always Use
+  HTTPS on, Email Address Obfuscation off, Rocket Loader off, Bot Fight
+  Mode off, tanpa Cache Rule maupun Redirect Rule. Bot Preference Sync
+  (robots.txt kelolaan Cloudflare) dimatikan saat onboarding supaya
+  robots.txt dari aplikasi tidak ikut diubah.
+- **Tenggat:** zona ini juga akan dihapus kalau nameserver belum pindah
+  dalam 28 hari, yaitu sekitar **10 Nov 2026**. Kalau terlewat, ulangi
+  langkah 1–3.
+- Sisa: langkah 4 (DNSSEC) dan 5 (ganti nameserver) di panel klien
+  webiihost, lalu verifikasi di langkah 6.
+
+Isi zona bisa dicek ulang sebelum nameserver diganti, tanpa menunggu
+propagasi, dengan membandingkan jawaban kedua nameserver untuk nama yang
+sama:
+
+```bash
+nslookup -type=TXT default._domainkey.cms.theglobal-review.com arvind.ns.cloudflare.com
+```
+
 ---
 
 ## Yang dibutuhkan
