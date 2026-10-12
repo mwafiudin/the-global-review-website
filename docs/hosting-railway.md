@@ -29,9 +29,18 @@ Next.js → REST WordPress bila cache ISR belum hangat.
   disk container, revalidasi webhook gratis.
 - **`next start`, bukan Docker/standalone.** Railpack membaca `.nvmrc` dan
   `package-lock.json`, menjalankan `npm ci` + `npm run build`, lalu
-  `npm start`. Itu jalur "Node.js server" di dokumentasi Next (semua fitur
+  `next start`. Itu jalur "Node.js server" di dokumentasi Next (semua fitur
   didukung) dengan konfigurasi paling sedikit. `output: "standalone"` +
   Dockerfile hanya menghemat ukuran image, yang tidak kita butuhkan.
+- **Heap Node dibatasi 512 MB** (sejak 12 Okt 2026). `startCommand` di
+  `railway.json` memanggil `node --max-old-space-size=512 …/next start`
+  langsung, tanpa `npm start`, supaya tidak ada proses npm ekstra yang ikut
+  memakan memori. Tanpa batas ini V8 melihat limit container 8 GB dan
+  membiarkan heap membengkak: RSS bertahan 1,2–1,7 GB sepanjang September,
+  padahal CPU rata-rata hanya 0,02 vCPU. RAM adalah 86% tagihan
+  ($11,54 dari $13,40 untuk 13 Sep–8 Okt). Flagnya sengaja **tidak**
+  ditaruh di variabel `NODE_OPTIONS`, karena variabel itu ikut terbaca saat
+  build dan bisa membuat `next build` kehabisan heap.
 - **Satu replica.** `/api/revalidate` memanggil `revalidateTag` yang hanya
   menyentuh cache proses penerimanya, dan cache ISR hidup di `.next/cache`
   container. Menaikkan replica tanpa cache handler bersama (Redis) berarti
@@ -49,6 +58,7 @@ Next.js → REST WordPress bila cache ISR belum hangat.
 | `WP_API_URL` | `https://cms.theglobal-review.com/wp-json` | build **dan** runtime (halaman statis, sitemap, dan feed di-prerender saat build) |
 | `REVALIDATE_SECRET` | sama dengan `TGR_REVALIDATE_SECRET` di `wp-config.php`; boleh beberapa nilai dipisah koma untuk rotasi | runtime (`/api/revalidate`, `/api/contact`, `/api/subscribe`, `/api/vote`) |
 | `WP_ARCHIVE_AFTER` | `2022-12-31T23:59:59` (= bawaan kode; ditulis eksplisit agar terlihat di dasbor) | build **dan** runtime |
+| `MALLOC_ARENA_MAX` | `2` | runtime. glibc membuat banyak arena malloc per thread dan jarang mengembalikan memorinya ke OS, sehingga RSS menggelembung di luar heap V8 |
 
 `NODE_ENV=production` tidak perlu ditulis — Railpack menyetelnya sendiri.
 Mengubah variabel memicu redeploy otomatis.
@@ -221,9 +231,15 @@ egress). Biaya berjalan tampil di workspace → Usage.
 ## 8. Biaya (perkiraan)
 
 Railway menagih RAM $10/GB-bulan, CPU $20/vCPU-bulan, egress $0,05/GB.
-Situs ini: RAM ±0,5–1 GB, CPU aktual ±12 jam/bulan, egress ±20 GB (lebih
-kecil lagi karena Cloudflare menyerap aset statis dan gambar `uploads`) →
-sekitar **$6–12/bulan**, sebagian tertutup kredit $5 paket Hobby.
+Perkiraan awal $6–12/bulan meleset. **Angka nyata periode 13 Sep–8 Okt
+2026: $13,40** (RAM $11,54, egress $1,58, CPU $0,28), atau sekitar
+$16/bulan. Penyebabnya heap Node tanpa batas (lihat §2) dan crawler yang
+menyusuri pohon `/en` (lihat §9). Cloudflare juga belum aktif, jadi egress
+tidak terserap CDN. Target setelah batas heap: RAM ±0,4–0,6 GB, sekitar
+$6–8/bulan.
+
+Pantau: `railway usage projects --project theglobal-review --json`
+(rincian per komponen) dan `railway metrics --since 7d --memory`.
 
 ## 9. Batasan dan jebakan
 
@@ -257,6 +273,17 @@ sekitar **$6–12/bulan**, sebagian tertutup kredit $5 paket Hobby.
   Deploy di jam sepi.
 - **Jangan menaikkan `numReplicas`** tanpa cache handler bersama (lihat
   §2). `railway.json` mengunci 1.
+- **Crawler dan pohon `/en`.** Setiap halaman punya salinan `/en` yang
+  noindex. Crawler (meta-externalagent, Bytespider, PetalBot, Amazonbot)
+  menyusurinya, sehingga server merender dan menyimpan dua kali jumlah
+  halaman. Di log 12 Okt, sebagian request `/en` dari Amazonbot putus
+  setelah 10 detik (499). `src/app/robots.ts` menutup `/en/` kecuali lima
+  halaman statis yang memang diindeks. Bot yang tidak patuh robots
+  diblokir di Cloudflare setelah zona aktif
+  (`docs/panduan-pindah-nameserver-cloudflare.md`).
+- **Batas heap 512 MB** (§2). Bila log menunjukkan `JavaScript heap out of
+  memory` dan service restart berulang, naikkan angkanya di `startCommand`
+  `railway.json` (misalnya 768). Jangan hapus batasnya.
 - **Alamat IP pembaca** ditentukan `src/lib/client-ip.ts`: `cf-connecting-ip`
   hanya dipercaya bila peer-nya (entri terakhir `x-forwarded-for`) memang
   IP Cloudflare; selain itu peer itulah yang dipakai. Entri pertama
@@ -282,6 +309,13 @@ sekitar **$6–12/bulan**, sebagian tertutup kredit $5 paket Hobby.
   hapus project-nya supaya tidak menagih.
 
 ## 10. Jembatan www (berlaku sampai nameserver pindah ke Cloudflare)
+
+> **Status 12 Okt 2026: nameserver masih `ns1/ns2.webiihost.net`.**
+> Cloudflare belum melayani apa pun, dan Railway menerima semua request
+> langsung. Langkah memindahkannya tanpa downtime ada di
+> `docs/panduan-pindah-nameserver-cloudflare.md`. Jangan ganti nameserver
+> dengan isi zona Cloudflare versi September: `@` di sana menunjuk Railway,
+> yang tidak memegang domain apex.
 
 Dipasang September 2026 karena panel klien webiihost (tempat nameserver
 diganti) tidak bisa diakses, sedangkan situs harus hidup segera. Zona DNS
