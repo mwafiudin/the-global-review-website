@@ -1,6 +1,6 @@
 # 23 Okt 2026: tulisan baru tidak tampil (egress Railway diblok firewall WP)
 
-Status: **Terbuka**, menunggu webiihost membuka blokir.
+Status: **Pulih** 23 Okt 12.07 WIB (static outbound IP + redeploy); whitelist di webiihost masih ditunggu.
 Tingkat: P2 / SEV-2 (fungsi inti gagal untuk sebagian halaman; situs tetap menyajikan cache lama).
 Pelapor: klien, lewat Wafi (WhatsApp, 23 Okt 09.30 WIB).
 
@@ -28,6 +28,7 @@ di cache, termasuk tulisan baru 09.04 WIB, timeout. Webhook WP ke Railway tetap
 | 23 Okt 09.04 | Redaksi menerbitkan tulisan; webhook `/api/revalidate` 200. |
 | 23 Okt 09.30 | Klien melapor lewat Wafi. |
 | 23 Okt ±11.30 | Diagnosis: log network Railway hanya berisi SYN ke 172.236.131.177 tanpa balasan; dari dalam container IP egress `208.77.246.75`, fetch ke WP timeout; dari laptop WP 200 dalam 1,3 s. |
+| 23 Okt 12.07 | Static Outbound IP Railway aktif (208.77.246.240–242), redeploy sukses. IP keluar baru belum pernah diblok: WP 200 dari container, pemantau sintetis lulus, nol galat WP sejak redeploy. |
 
 ## Sebab
 
