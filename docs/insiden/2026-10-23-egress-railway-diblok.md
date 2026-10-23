@@ -57,7 +57,7 @@ di cache, termasuk tulisan baru 09.04 WIB, timeout. Webhook WP ke Railway tetap
 |---|---|---|
 | Kode sebab undici (`[UND_ERR_CONNECT_TIMEOUT]`, dll.) ikut di pesan galat WP | deteksi | selesai (`src/lib/wp/client.ts`) |
 | Pemeriksa sintetis 15 menit: tulisan terbaru harus tampil, gagal membuka issue | deteksi | selesai (`.github/workflows/pantau-situs.yml`), aktif setelah push |
-| IP egress tetap (Railway Static Outbound IP) + whitelist permanen di host | cegah | menunggu keputusan |
+| IP egress tetap (Railway Static Outbound IP) + whitelist permanen di host | cegah | static IP aktif 23 Okt (208.77.246.240–242, ADR 0001); whitelist menunggu webiihost |
 | Konfirmasi pemicu blokir dari log lfd | selidiki | menunggu webiihost |
 | Pindah ke VPS sendiri (COD-42) menghapus ketergantungan firewall shared host | cegah | rencana berjalan |
 

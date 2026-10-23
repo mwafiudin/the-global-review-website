@@ -269,8 +269,12 @@ Pantau: `railway usage projects --project theglobal-review --json`
   `railway logs --network --since 1h --json | grep 172.236.131.177` — flow
   egress berukuran 74/148/222… byte tanpa balasan berarti SYN di-DROP.
   IP egress saat ini: jalankan `node -e "fetch('https://api.ipify.org').then(r=>r.text()).then(console.log)"`
-  lewat `railway ssh` (image tanpa curl). Selama IP itu bukan Static
-  Outbound IP, whitelist di host hilang begitu IP berganti.
+  lewat `railway ssh` (image tanpa curl). Sejak 23 Okt 2026 service `web`
+  memakai Static Outbound IP (mode HA): 208.77.246.240, .241, .242
+  (`railway outbound-network static-ip status`; ADR
+  `docs/decisions/0001-static-outbound-ip-railway.md`). Ketiganya yang
+  di-whitelist di webiihost; jangan matikan fitur ini tanpa memperbarui
+  whitelist.
   Pemeriksa sintetis `.github/workflows/pantau-situs.yml` membuka issue
   `pemantau-situs` bila tulisan terbaru tidak tampil.
 - **`railway.json` (Config as Code) dinyatakan usang** oleh Railway; masih
