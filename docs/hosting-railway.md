@@ -262,6 +262,17 @@ Pantau: `railway usage projects --project theglobal-review --json`
   dan jangan pernah uji port. Bila terblok: ganti IP publik (restart modem /
   hotspot) atau minta webiihost membuka blokir. Build Railway tidak
   terpengaruh — egress-nya IP lain.
+- **IP egress Railway juga bisa diblok firewall host.** 23 Okt 2026 semua
+  fetch ke `cms.*` gagal (`fetch failed [UND_ERR_CONNECT_TIMEOUT]`) sementara
+  webhook masuk tetap 200 dan beranda lama tersaji dari cache
+  (`docs/insiden/2026-10-23-egress-railway-diblok.md`). Diagnosis cepat:
+  `railway logs --network --since 1h --json | grep 172.236.131.177` — flow
+  egress berukuran 74/148/222… byte tanpa balasan berarti SYN di-DROP.
+  IP egress saat ini: jalankan `node -e "fetch('https://api.ipify.org').then(r=>r.text()).then(console.log)"`
+  lewat `railway ssh` (image tanpa curl). Selama IP itu bukan Static
+  Outbound IP, whitelist di host hilang begitu IP berganti.
+  Pemeriksa sintetis `.github/workflows/pantau-situs.yml` membuka issue
+  `pemantau-situs` bila tulisan terbaru tidak tampil.
 - **`railway.json` (Config as Code) dinyatakan usang** oleh Railway; masih
   dibaca sampai 1 Des 2026. Sebelum itu jalankan `railway config migrate
   --apply` (menghasilkan `.railway/railway.ts`, diterapkan lewat

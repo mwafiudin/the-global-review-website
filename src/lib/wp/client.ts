@@ -157,7 +157,22 @@ function toError(err: unknown, url: string): Error {
     return new Error(`WP tidak menjawab dalam batas waktu: ${url}`);
   }
   const detail = err instanceof Error ? err.message : String(err);
-  return new Error(`Gagal menghubungi WordPress (${url}): ${detail}`);
+  return new Error(`Gagal menghubungi WordPress (${url}): ${detail}${kodeSebab(err)}`);
+}
+
+/**
+ * undici hanya bilang "fetch failed"; sebab sebenarnya ada di err.cause.
+ * Kodenya yang membedakan IP egress diblok firewall host (connect timeout,
+ * SYN tak dibalas) dari WP yang menolak atau DNS yang gagal — insiden
+ * 23 Okt 2026 sempat terbaca sebagai "WP lambat" karena kode ini tak tercatat.
+ */
+export function kodeSebab(err: unknown): string {
+  const cause = err instanceof Error ? (err.cause as { code?: unknown; message?: unknown } | undefined) : undefined;
+  if (!cause) return "";
+  const kode = typeof cause.code === "string" ? cause.code : undefined;
+  const pesan = typeof cause.message === "string" ? cause.message : undefined;
+  const isi = kode ?? pesan;
+  return isi ? ` [${isi}]` : "";
 }
 
 async function request(path: string, opts: WpFetchOptions): Promise<Response> {
