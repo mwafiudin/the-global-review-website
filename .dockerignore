@@ -18,5 +18,5 @@ docs
 wordpress
 scripts
 *.md
-Dockerfile
+Dockerfile.selfhost
 .dockerignore

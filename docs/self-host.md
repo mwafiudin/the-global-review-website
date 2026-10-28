@@ -1,5 +1,10 @@
 # Self-host: image Docker
 
+Nama berkasnya `Dockerfile.selfhost`, bukan `Dockerfile`: begitu ada `Dockerfile` di root, Railway
+memakainya walau `railway.json` menulis `builder: RAILPACK`. Itu terjadi saat berkas ini pertama
+di-merge (deploy b712041, 28 Okt 2026), jadi namanya diganti supaya produksi Railway kembali ke
+Railpack sampai pindah ke VPS.
+
 Jalur cadangan dan rencana pindah dari Railway ke server sendiri (container
 di belakang Cloudflare Tunnel + Caddy). Railway **tidak** memakai berkas di
 sini: Railpack tetap membangun dari `package.json` dan menjalankan
@@ -11,10 +16,10 @@ sini: Railpack tetap membangun dari `package.json` dan menjalankan
 ## 1. Build
 
 ```bash
-docker build -t tgr-web .
+docker build -f Dockerfile.selfhost -t tgr-web .
 ```
 
-`Dockerfile` memasang `NEXT_OUTPUT=standalone`, dan `next.config.ts` hanya
+`Dockerfile.selfhost` memasang `NEXT_OUTPUT=standalone`, dan `next.config.ts` hanya
 menyalakan `output: "standalone"` bila variabel itu ada. Build Railway tidak
 berubah selama variabel ini tidak dipasang di Railway.
 
@@ -24,7 +29,7 @@ dan feed di-prerender dari REST `cms.*` (alasan yang sama dengan
 masuk lewat build arg, bawaannya produksi:
 
 ```bash
-docker build --build-arg WP_API_URL=https://cms.theglobal-review.com/wp-json \
+docker build -f Dockerfile.selfhost --build-arg WP_API_URL=https://cms.theglobal-review.com/wp-json \
              --build-arg WP_ARCHIVE_AFTER=2022-12-31T23:59:59 -t tgr-web .
 ```
 
@@ -102,7 +107,7 @@ membuat sebagian pembaca melihat artikel basi.
 sama dengan `startCommand` Railway ([`hosting-railway.md`](hosting-railway.md)
 §2). Batasnya di `CMD`, bukan `NODE_OPTIONS`, supaya tidak ikut terbaca
 proses lain. Bila log menunjukkan `JavaScript heap out of memory`, naikkan
-angkanya di `Dockerfile`, jangan hapus batasnya. Batasi juga container-nya
+angkanya di `Dockerfile.selfhost`, jangan hapus batasnya. Batasi juga container-nya
 (`--memory=1g`) supaya bocor memori tidak menjatuhkan service lain di host.
 
 ## 6. IP klien di belakang Tunnel
