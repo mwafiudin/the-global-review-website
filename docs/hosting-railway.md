@@ -389,7 +389,7 @@ jadi begitu NS pindah, kerjakan langkah 1–3 dalam satu duduk.
 
 Rencana pemilik: hardware sendiri. Yang berubah hanya lapisan aplikasi:
 
-1. Server menjalankan image dari `Dockerfile` (build, env, health check
+1. Server menjalankan image dari `Dockerfile.selfhost` (build, env, health check
    `/api/health`, cache disk, dan batas heap di
    [`self-host.md`](self-host.md)), atau `npm ci && npm run build && npm start`
    dengan tiga variabel §3. Node 22 (`engines.node` = `22.x`, sama dengan
