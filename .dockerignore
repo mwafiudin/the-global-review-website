@@ -1,0 +1,22 @@
+# Konteks build sekecil mungkin, dan tanpa rahasia: .env* tidak boleh ikut
+# ke layer image mana pun.
+.git
+.github
+.claude
+.next
+.vercel
+node_modules
+graphify-out
+.env*
+!.env.example
+*.tsbuildinfo
+npm-debug.log*
+wordpress/potret/.sesi.json
+
+# Tidak dibutuhkan next build maupun saat jalan.
+docs
+wordpress
+scripts
+*.md
+Dockerfile
+.dockerignore

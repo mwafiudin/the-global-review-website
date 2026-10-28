@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Hanya untuk image Docker (lihat Dockerfile, docs/self-host.md). Railway
+  // tetap membangun mode biasa dan menjalankan `next start`, jadi build-nya
+  // tidak berubah selama variabel ini tidak dipasang di sana.
+  ...(process.env.NEXT_OUTPUT === "standalone"
+    ? { output: "standalone" as const }
+    : {}),
   // Logo dibaca saat render kartu OG lewat fs, bukan diimpor, jadi
   // penelusuran modul Next tidak melihatnya dan tidak ikut membundelnya —
   // fungsinya akan gagal di produksi meski lolos di mesin lokal.
