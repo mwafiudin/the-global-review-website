@@ -14,6 +14,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Salinan standar Coderoach (kit dan fixture, termasuk yang sengaja cacat).
     "standar/**",
+    ".claude/**",
   ]),
 ]);
 

@@ -1,10 +1,13 @@
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 
 const fromRoot = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   test: {
+    // standar/ dan .claude/ berisi kit dan fixture dari sinkron standar Coderoach,
+    // termasuk yang sengaja cacat; bukan tes situs ini.
+    exclude: [...configDefaults.exclude, "standar/**", ".claude/**"],
     alias: [
       // Samakan dengan paths di tsconfig.json. Pola "@/" (bukan "@") wajib:
       // tanpa garis miring, @phosphor-icons/react ikut tertelan alias ini.
