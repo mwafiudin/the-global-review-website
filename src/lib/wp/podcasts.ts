@@ -84,21 +84,25 @@ const cachedPodcasts = unstable_cache(
   { revalidate: 300, tags: ["wp:podcasts"] }
 );
 
+const podcastsDariWp = () => dedup("podcasts", () => cachedPodcasts());
+
 /** Semua penampilan, terbaru dulu; koleksi kosong/gagal → []. */
 export async function wpPodcasts(): Promise<Podcast[]> {
-  return dedup("podcasts", async () => {
-    try {
-      return await cachedPodcasts();
-    } catch (err) {
-      // Kegagalan harus terlihat DAN jujur: menyajikan snapshot hardcode
-      // membuat wp-admin dan situs menampilkan isi yang berbeda tanpa jejak.
-      console.error("[wp] podcast gagal dibaca:", err);
-      return [];
-    }
-  });
+  try {
+    return await podcastsDariWp();
+  } catch (err) {
+    // Kegagalan harus terlihat DAN jujur: menyajikan snapshot hardcode
+    // membuat wp-admin dan situs menampilkan isi yang berbeda tanpa jejak.
+    console.error("[wp] podcast gagal dibaca:", err);
+    return [];
+  }
 }
 
-/** Satu penampilan berdasarkan slug (koleksi kecil — cari dari daftar). */
+/**
+ * Satu penampilan berdasarkan slug (koleksi kecil — cari dari daftar).
+ * Galat dibiarkan naik: "tidak ada" saat WP gagal dibaca menjawab 404 untuk
+ * halaman yang ada, dan crawler mencatatnya sebagai hilang.
+ */
 export async function wpPodcast(slug: string): Promise<Podcast | undefined> {
-  return (await wpPodcasts()).find((p) => p.slug === slug);
+  return (await podcastsDariWp()).find((p) => p.slug === slug);
 }

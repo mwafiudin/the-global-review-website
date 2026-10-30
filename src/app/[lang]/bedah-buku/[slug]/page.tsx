@@ -6,7 +6,7 @@ import { ArrowLeft, CaretRight } from "@phosphor-icons/react/dist/ssr";
 import { bookImprint } from "@/data/books";
 import { wpBook, wpBooks } from "@/lib/wp/books";
 import { getT } from "@/lib/i18n-server";
-import { wpPodcast } from "@/lib/wp/podcasts";
+import { wpPodcasts } from "@/lib/wp/podcasts";
 import { VideoEmbed } from "@/components/VideoEmbed";
 import { EndMark } from "@/components/Ornaments";
 
@@ -39,15 +39,16 @@ export default async function BookReviewPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const book = await wpBook(slug);
+  if (!book) notFound();
   const semua = await wpBooks();
   const { t, l } = await getT();
-  const book = semua.find((b) => b.slug === slug);
-  if (!book) notFound();
 
   // Lewat lapisan WordPress, bukan data contoh: /podcast/{slug} me-resolve
   // dari sana, jadi tautan ke slug yang tak ada di sana akan berujung 404.
+  // Daftar yang gagal dibaca cukup menghilangkan kartunya, bukan ulasannya.
   const podcast = book.podcastTerkait
-    ? await wpPodcast(book.podcastTerkait)
+    ? (await wpPodcasts()).find((p) => p.slug === book.podcastTerkait)
     : undefined;
   // Kini koleksinya puluhan, bukan empat: seksi penutup dibatasi agar tidak
   // berubah jadi daftar panjang di bawah setiap ulasan.

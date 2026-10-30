@@ -144,23 +144,23 @@ const cachedBooks = unstable_cache(
   { revalidate: 300, tags: ["wp:posts"] }
 );
 
+const booksDariWp = () => dedup("books", () => cachedBooks());
+
 /** Semua ulasan, terbaru dulu; kategori kosong/gagal → []. */
 export async function wpBooks(): Promise<Book[]> {
-  return dedup("books", async () => {
-    try {
-      return await cachedBooks();
-    } catch (err) {
-      // Kegagalan harus terlihat DAN jujur: menyajikan snapshot hardcode
-      // membuat wp-admin dan situs menampilkan isi yang berbeda tanpa jejak.
-      console.error("[wp] bedah buku gagal dibaca:", err);
-      return [];
-    }
-  });
+  try {
+    return await booksDariWp();
+  } catch (err) {
+    // Kegagalan harus terlihat DAN jujur: menyajikan snapshot hardcode
+    // membuat wp-admin dan situs menampilkan isi yang berbeda tanpa jejak.
+    console.error("[wp] bedah buku gagal dibaca:", err);
+    return [];
+  }
 }
 
-/** Satu ulasan berdasarkan slug. */
+/** Satu ulasan berdasarkan slug; galat dibiarkan naik (lihat wpPodcast). */
 export async function wpBook(slug: string): Promise<Book | undefined> {
-  return (await wpBooks()).find((b) => b.slug === slug);
+  return (await booksDariWp()).find((b) => b.slug === slug);
 }
 
 /**

@@ -276,7 +276,18 @@ Pantau: `railway usage projects --project theglobal-review --json`
   di-whitelist di webiihost; jangan matikan fitur ini tanpa memperbarui
   whitelist.
   Pemeriksa sintetis `.github/workflows/pantau-situs.yml` membuka issue
-  `pemantau-situs` bila tulisan terbaru tidak tampil.
+  `pemantau-situs` bila tulisan terbaru tidak tampil. Terulang 29 Okt 2026
+  dengan IP statis yang sama (`docs/insiden/2026-10-29-egress-railway-diblok-lagi.md`):
+  whitelist di webiihost belum pernah terkonfirmasi.
+- **Saat WP tak terjangkau, situs gagal cepat, bukan menggantung.**
+  `src/lib/wp/client.ts` tidak mengulang fetch yang timeout, membatasi
+  antre slot semafor 10 dtk, dan membuka pemutus setelah empat galat
+  transport beruntun: selama 30 dtk semua panggilan WP langsung gagal,
+  lalu satu permintaan uji dilepas. Halaman yang datanya sudah di cache
+  tetap tampil versi lama (revalidasi latar gagal cepat); halaman dingin
+  mendapat halaman galat dalam milidetik. Cari `[wp] pemutus terbuka` di
+  log untuk awal gangguan dan `[wp] WordPress terjangkau lagi` untuk
+  akhirnya.
 - **`railway.json` (Config as Code) dinyatakan usang** oleh Railway; masih
   dibaca sampai 1 Des 2026. Sebelum itu jalankan `railway config migrate
   --apply` (menghasilkan `.railway/railway.ts`, diterapkan lewat
@@ -285,7 +296,10 @@ Pantau: `railway usage projects --project theglobal-review --json`
 - **Cache ISR ikut hilang tiap deploy/restart.** Menit-menit pertama
   setelah deploy, tiap halaman pertama kali diminta akan menembak
   WordPress (semafor `MAX_CONCURRENT = 4` di `src/lib/wp/client.ts`).
-  Deploy di jam sepi.
+  Deploy di jam sepi. **Jangan deploy (termasuk merge ke main, yang
+  memicu auto-deploy) selama WP tak terjangkau dari Railway**: container
+  lama masih menyajikan halaman dari cache, container baru tidak punya
+  apa-apa untuk disajikan.
 - **Jangan menaikkan `numReplicas`** tanpa cache handler bersama (lihat
   §2). `railway.json` mengunci 1.
 - **Crawler dan pohon `/en`.** Setiap halaman punya salinan `/en` yang
