@@ -102,19 +102,19 @@ const cachedAlbums = unstable_cache(
   { revalidate: 300, tags: ["wp:albums"] }
 );
 
+const albumsDariWp = () => dedup("albums", () => cachedAlbums());
+
 /** Semua album, terbaru dulu; koleksi kosong/gagal → []. */
 export async function wpAlbums(): Promise<Album[]> {
-  return dedup("albums", async () => {
-    try {
-      return await cachedAlbums();
-    } catch (err) {
-      console.error("[wp] album gagal dibaca:", err);
-      return [];
-    }
-  });
+  try {
+    return await albumsDariWp();
+  } catch (err) {
+    console.error("[wp] album gagal dibaca:", err);
+    return [];
+  }
 }
 
-/** Satu album berdasarkan slug. */
+/** Satu album berdasarkan slug; galat dibiarkan naik (lihat wpPodcast). */
 export async function wpAlbum(slug: string): Promise<Album | undefined> {
-  return (await wpAlbums()).find((a) => a.slug === slug);
+  return (await albumsDariWp()).find((a) => a.slug === slug);
 }

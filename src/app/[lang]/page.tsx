@@ -1,5 +1,6 @@
 import Image from "@/components/ImageWithFallback";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   CardCompact,
   CardHeadline,
@@ -39,7 +40,16 @@ export async function generateMetadata({
   return { robots: robotsEn(bahasa), alternates: kanonik(bahasa, "/") };
 }
 
-export default async function HomePage() {
+export default async function HomePage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  // Path berekstensi lolos dari proxy dan tiba di sini sebagai "bahasa"
+  // (/content_detail.php peninggalan situs lama). Layout memang menolaknya,
+  // tapi halaman ini dirender bersamaan dan sempat mengantre lima panggilan
+  // WP, jadi 404-nya ikut menunggu WordPress.
+  if (!isLocale((await params).lang)) notFound();
   const [heroes, analisisPool, internasionalPool, ragamPool, terbaru] =
     await Promise.all([
       featuredArticles(5),
