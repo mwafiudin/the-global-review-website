@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { kodeSebab } from "./client";
+import { kodeSebab, ringkas5xx } from "./client";
 
 describe("kodeSebab", () => {
   it("mengambil kode dari err.cause undici", () => {
@@ -19,6 +19,31 @@ describe("kodeSebab", () => {
   it("kosong untuk galat tanpa cause atau bukan Error", () => {
     expect(kodeSebab(new Error("x"))).toBe("");
     expect(kodeSebab("x")).toBe("");
+  });
+});
+
+describe("ringkas5xx", () => {
+  it("halaman HTML diringkas jadi teks, tanpa tag dan gaya", () => {
+    const res = new Response(null, {
+      status: 503,
+      headers: { server: "nginx", "content-type": "text/html", "retry-after": "30" },
+    });
+    const html =
+      "<html><head><style>body{color:red}</style></head><body>\n<h1>503 Service Temporarily Unavailable</h1>\n<hr><center>nginx</center></body></html>";
+    expect(ringkas5xx(res, html)).toBe(
+      ' [server=nginx type=text/html retry-after=30 isi="503 Service Temporarily Unavailable nginx"]'
+    );
+  });
+
+  it("isi panjang dipotong 200 karakter", () => {
+    const res = new Response(null, { status: 500 });
+    const jejak = ringkas5xx(res, "x".repeat(5000));
+    expect(jejak).toBe(` [isi="${"x".repeat(200)}"]`);
+  });
+
+  it("kosong bila tak ada header dan isi", () => {
+    const res = new Response(null, { status: 500 });
+    expect(ringkas5xx(res, "  ")).toBe("");
   });
 });
 
@@ -112,6 +137,24 @@ describe("request ke WordPress saat host tak terjangkau", () => {
     await vi.advanceTimersByTimeAsync(700);
     await expect(kedua).resolves.toEqual([]);
     expect(fetchPalsu).toHaveBeenCalledTimes(4);
+  });
+
+  it("galat 5xx membawa server, tipe, dan potongan isi jawabannya", async () => {
+    const jawab500 = () =>
+      new Response(
+        '{"code":"internal_server_error","message":"<p>Ada galat kritis di situs ini.</p>","data":{"status":500}}',
+        { status: 500, headers: { server: "nginx", "content-type": "application/json; charset=UTF-8" } }
+      );
+    const fetchPalsu = vi.fn(async () => jawab500());
+    vi.stubGlobal("fetch", fetchPalsu);
+    const { wpFetchFresh } = await klienBaru();
+
+    const hasil = expect(wpFetchFresh("/posts")).rejects.toThrow(
+      /WP menjawab 500 untuk https:\/\/wp\.contoh\/wp-json\/wp\/v2\/posts \[server=nginx type=application\/json; charset=UTF-8 isi="\{"code":"internal_server_error".*Ada galat kritis/
+    );
+    await vi.advanceTimersByTimeAsync(700);
+    await hasil;
+    expect(fetchPalsu).toHaveBeenCalledTimes(2);
   });
 
   it("menolak tanpa menyentuh jaringan setelah empat galat transport beruntun", async () => {

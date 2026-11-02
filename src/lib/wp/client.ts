@@ -253,6 +253,31 @@ function galatTimeout(err: unknown): boolean {
   return kode === "UND_ERR_CONNECT_TIMEOUT" || kode === "UND_ERR_HEADERS_TIMEOUT";
 }
 
+/**
+ * Jejak sebuah 5xx: siapa yang menjawab dan apa katanya. Status saja tidak
+ * membedakan PHP fatal (JSON internal_server_error dari WP), basis data
+ * putus ("Error establishing a database connection"), batas sumber daya
+ * akun shared host, atau nginx yang kehabisan upstream — padahal tiap
+ * kelas punya pemilik perbaikan yang berbeda. Sejak 30 Okt 2026 host
+ * menjawab 500 belasan kali per jam dan log PHP-nya hanya terbaca dari
+ * cPanel; potongan ini yang jadi bukti pertamanya.
+ */
+export function ringkas5xx(res: Response, isi: string): string {
+  const bagian = [
+    res.headers.get("server") && `server=${res.headers.get("server")}`,
+    res.headers.get("content-type") && `type=${res.headers.get("content-type")}`,
+    res.headers.get("retry-after") && `retry-after=${res.headers.get("retry-after")}`,
+  ].filter(Boolean);
+  const teks = isi
+    .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 200);
+  if (teks) bagian.push(`isi="${teks}"`);
+  return bagian.length ? ` [${bagian.join(" ")}]` : "";
+}
+
 async function kirim(url: string, timeoutMs: number, init: RequestInit): Promise<Response> {
   const izin = izinPemutus();
   if (izin === "tolak") throw galatPemutus(url);
@@ -275,7 +300,8 @@ async function kirim(url: string, timeoutMs: number, init: RequestInit): Promise
         });
         catatTerjangkau();
         if (res.ok || res.status < 500) return res;
-        lastError = new Error(`WP menjawab ${res.status} untuk ${url}`);
+        const isi = await res.text().catch(() => "");
+        lastError = new Error(`WP menjawab ${res.status} untuk ${url}${ringkas5xx(res, isi)}`);
       } catch (err) {
         catatTakTerjangkau();
         lastError = toError(err, url);
