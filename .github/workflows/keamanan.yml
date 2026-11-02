@@ -57,7 +57,7 @@ jobs:
     container:
       image: semgrep/semgrep:1.176.0@sha256:12672acdb0949e19f9f6a4c2b288edd0b404f268f0ca7738a2c06f372f50362e
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Ruleset disebut eksplisit, bukan `--config auto`: auto memilih rules
       # dengan mengirim metadata project ke registry, dan tidak bisa
@@ -86,7 +86,7 @@ jobs:
     name: Trivy — dependensi, IaC, secret
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # .trivyignore di akar repo dibaca Trivy sendiri kalau ada. Input
       # `trivyignores` sengaja tidak dipakai: action-nya gagal kalau berkas
@@ -124,7 +124,7 @@ jobs:
       contents: read
       pull-requests: read
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           # Seluruh riwayat. Secret yang sudah dihapus dari HEAD tetap ada di
           # commit lama, dan itu justru yang paling sering lolos.
@@ -143,7 +143,7 @@ jobs:
     name: OSV-Scanner — dependensi
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Action langsung, bukan workflow reusable-nya: yang reusable mengunggah
       # ke code scanning lewat security-events: write, yang tidak tersedia di
