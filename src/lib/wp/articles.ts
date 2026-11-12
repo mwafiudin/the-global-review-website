@@ -233,8 +233,37 @@ export async function featuredArticles(limit = 5): Promise<Article[]> {
   return [...sticky, ...latest].slice(0, limit);
 }
 
-/** Satu artikel lengkap (body tersanitasi) berdasarkan slug. */
+/**
+ * Bentuk slug yang bisa dihasilkan WordPress (sanitize_title): huruf, angka,
+ * tanda hubung, garis bawah. Titik, garis miring, bintang, spasi tidak
+ * pernah ada. 928 slug tayang per 12 Nov 2026 semuanya [a-z0-9_-], terpanjang
+ * 157; huruf non-Latin diizinkan untuk judul yang kelak ter-persen-encode.
+ */
+const SLUG_WP = /^[\p{L}\p{N}\p{M}_-]{1,200}$/u;
+
+export function slugSah(slug: string): boolean {
+  let s = slug;
+  if (s.includes("%")) {
+    try {
+      s = decodeURIComponent(s);
+    } catch {
+      return false;
+    }
+  }
+  return SLUG_WP.test(s);
+}
+
+/**
+ * Satu artikel lengkap (body tersanitasi) berdasarkan slug.
+ *
+ * Slug yang bentuknya mustahil dijawab "tidak ada" tanpa bertanya ke
+ * WordPress. Pemindai celah menembak /config/app.php, /x/web.config,
+ * /backend/.env; dulu semuanya diteruskan sebagai posts?slug=… dari IP
+ * kita, dan 8 Nov 2026 firewall host memblokir IP itu dua menit kemudian
+ * (docs/insiden/2026-11-08-…).
+ */
 export async function getArticle(slug: string): Promise<Article | undefined> {
+  if (!slugSah(slug)) return undefined;
   const posts = await wpFetch<WpPost[]>("/posts", {
     query: { slug, _embed: EMBED, _fields: DETAIL_FIELDS },
     revalidate: DETAIL_REVALIDATE,

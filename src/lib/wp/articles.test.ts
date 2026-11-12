@@ -81,3 +81,74 @@ describe("mediaIdsTanpaGambar", () => {
     expect(mediaIdsTanpaGambar([pos({})] as never)).toEqual([0]);
   });
 });
+
+describe("slugSah", () => {
+  it("menerima bentuk slug WordPress", async () => {
+    const { slugSah } = await muat();
+    for (const slug of [
+      "polarisasi-blok-indo-pasifik",
+      "uni-eropa-diminta-tidak-ikuti-permainan-trump-2",
+      "a",
+      "judul_lama",
+      "سلام",
+      "%d8%b3%d9%84%d8%a7%d9%85",
+      "a".repeat(200),
+    ]) {
+      expect(slugSah(slug), slug).toBe(true);
+    }
+  });
+
+  it("menolak tebakan pemindai dan bentuk yang mustahil", async () => {
+    const { slugSah } = await muat();
+    // Diambil dari log 8 Nov 2026 (TLM-Audit-Scanner) dan batas pola.
+    for (const slug of [
+      "web.config",
+      "config.xml",
+      ".env",
+      "php.ini",
+      "phpinfo.php",
+      "docker-compose.yml",
+      "laravel.log",
+      "[slug]",
+      "*",
+      "..\\..\\var",
+      "a/b",
+      "a b",
+      "a<script>",
+      "a?b=1",
+      "50%-benar",
+      "%2e%2e%2f",
+      "",
+      "a".repeat(201),
+    ]) {
+      expect(slugSah(slug), slug).toBe(false);
+    }
+  });
+});
+
+describe("getArticle", () => {
+  it("regresi 8 Nov 2026: slug mustahil tidak pernah sampai ke WordPress", async () => {
+    vi.stubEnv("WP_API_URL", "https://wp.contoh/wp-json");
+    const fetchPalsu = vi.fn();
+    vi.stubGlobal("fetch", fetchPalsu);
+    vi.resetModules();
+    const { getArticle } = await import("./articles");
+    for (const slug of ["web.config", ".env", "phpinfo.php", "[slug]"]) {
+      expect(await getArticle(slug)).toBeUndefined();
+    }
+    expect(fetchPalsu).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it("slug wajar tetap ditanyakan ke WordPress", async () => {
+    vi.stubEnv("WP_API_URL", "https://wp.contoh/wp-json");
+    const fetchPalsu = vi.fn<(url: unknown) => Promise<Response>>(async () => Response.json([]));
+    vi.stubGlobal("fetch", fetchPalsu);
+    vi.resetModules();
+    const { getArticle } = await import("./articles");
+    expect(await getArticle("judul-yang-belum-ada")).toBeUndefined();
+    expect(fetchPalsu).toHaveBeenCalledTimes(1);
+    expect(String(fetchPalsu.mock.calls[0][0])).toContain("slug=judul-yang-belum-ada");
+    vi.unstubAllGlobals();
+  });
+});
