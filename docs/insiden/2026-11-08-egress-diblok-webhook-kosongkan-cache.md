@@ -121,6 +121,8 @@ halamannya belum punya cache.
 | 12.57 | PR #47 di-merge (`273877f`), deploy `74f095a4` sukses. |
 | ±13.00 | `/`, `/category/geopolitik`, `/category/analisis`, artikel terbaru: 200. `/x/web.config`: 404 dalam 0,09 dtk. `railway logs --network`: 28 flow ingress dari 172.236.131.177 dalam 5 menit. `node scripts/pantau-artikel-terbaru.mjs`: sehat. |
 
+12 Nov ±18.00 WIB, uji service sementara ber-IP statis (5 deploy, lalu dihapus): tiap deploy memakai SATU IP untuk semua koneksinya (30/30), bergantian antar deploy. Hasil per IP: .240 30/30 ke WordPress 200 (2 deploy), .241 30/30 (2 deploy), .242 30/30 (1 deploy). Ketiganya saat ini tidak diblokir. Pelajaran: HA Railway membagi IP per container, bukan per koneksi, jadi satu container yang kena blokir mati total walau dua IP lain sehat.
+
 12 Nov sore webiihost (lewat Wafi) membuka blokir 208.77.246.240 dan
 menambahkannya ke whitelist. Belum ada konfirmasi untuk .241 dan .242.
 
