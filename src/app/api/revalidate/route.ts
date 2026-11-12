@@ -5,9 +5,8 @@ import { revalidateTag } from "next/cache";
 /**
  * Penerima webhook dari mu-plugin tgr-revalidate.php: setiap kali redaksi
  * menyimpan/menghapus tulisan di wp-admin, WordPress mem-POST
- * { type, slug, status_new, ... } ke sini dan cache tag terkait langsung
- * kedaluwarsa ({ expire: 0 } — pola webhook yang direkomendasikan docs
- * revalidateTag Next 16). ISR berkala tetap berjalan sebagai jaring
+ * { type, slug, status_new, ... } ke sini dan cache tag terkait ditandai
+ * basi (lihat profilUntuk). ISR berkala tetap berjalan sebagai jaring
  * pengaman bila webhook gagal terkirim.
  *
  * REVALIDATE_SECRET boleh berisi beberapa nilai dipisah koma supaya
@@ -59,6 +58,26 @@ export function tagsUntuk(type: string, slug: string): string[] {
 }
 
 /**
+ * Cara gugur per tag. Bawaannya "max": entri ditandai basi, pembaca
+ * berikutnya masih dapat salinan lama selagi yang baru diambil di latar.
+ * Kalau WordPress sedang tak terjangkau, salinan lama itu tetap tersaji.
+ * Dulu semua tag memakai { expire: 0 }; 11 Nov 2026 satu webhook di tengah
+ * blokir egress membuang cache wp:posts dan seluruh situs jadi 500.
+ *
+ * Satu-satunya yang harus hilang seketika: halaman detail tulisan yang
+ * ditarik (draft/trash/private), supaya tidak tersaji lagi dari cache.
+ */
+export function profilUntuk(
+  tag: string,
+  statusNew: string
+): "max" | { expire: number } {
+  if (tag.startsWith("wp:post:") && statusNew !== "publish") {
+    return { expire: 0 };
+  }
+  return "max";
+}
+
+/**
  * WordPress mengirim post_name apa adanya — ter-persen-encode untuk judul
  * non-Latin — sedangkan tag wp:post:{slug} di lapisan fetch dibangun dari
  * param rute yang sudah di-decode Next. Keduanya digugurkan sekaligus:
@@ -87,7 +106,7 @@ export async function POST(request: NextRequest) {
     return new Response(null, { status: 401 });
   }
 
-  let payload: { slug?: unknown; type?: unknown };
+  let payload: { slug?: unknown; type?: unknown; status_new?: unknown };
   try {
     payload = await request.json();
   } catch {
@@ -108,7 +127,9 @@ export async function POST(request: NextRequest) {
   const tags = [
     ...new Set(slugVarian(slug).flatMap((varian) => tagsUntuk(type, varian))),
   ];
-  for (const tag of tags) revalidateTag(tag, { expire: 0 });
+  const statusNew =
+    typeof payload.status_new === "string" ? payload.status_new : "publish";
+  for (const tag of tags) revalidateTag(tag, profilUntuk(tag, statusNew));
 
   return Response.json({ revalidated: tags });
 }

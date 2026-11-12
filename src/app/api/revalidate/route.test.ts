@@ -1,5 +1,10 @@
-import { describe, expect, it } from "vitest";
-import { slugVarian, tagsUntuk } from "./route";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { NextRequest } from "next/server";
+
+const revalidateTag = vi.fn();
+vi.mock("next/cache", () => ({ revalidateTag }));
+
+const { POST, profilUntuk, slugVarian, tagsUntuk } = await import("./route");
 
 describe("tagsUntuk", () => {
   it("tulisan biasa: tag halaman detail + seluruh daftar", () => {
@@ -54,5 +59,76 @@ describe("slugVarian", () => {
 
   it("%-sequence cacat tidak melempar — jatuh ke bentuk mentah", () => {
     expect(slugVarian("50%-benar")).toEqual(["50%-benar"]);
+  });
+});
+
+describe("profilUntuk", () => {
+  it("tulisan terbit: daftar dan detail memakai max (salinan lama tetap tersaji)", () => {
+    expect(profilUntuk("wp:posts", "publish")).toBe("max");
+    expect(profilUntuk("wp:post:a", "publish")).toBe("max");
+  });
+
+  it("tulisan ditarik: hanya detailnya yang hilang seketika", () => {
+    for (const status of ["draft", "trash", "private", "pending"]) {
+      expect(profilUntuk("wp:post:a", status)).toEqual({ expire: 0 });
+      expect(profilUntuk("wp:posts", status)).toBe("max");
+    }
+  });
+
+  it("koleksi, peta, dan laman tidak pernah dibuang seketika", () => {
+    for (const tag of ["wp:podcasts", "wp:categories", "wp:users", "wp:halaman"]) {
+      expect(profilUntuk(tag, "trash")).toBe("max");
+    }
+  });
+});
+
+describe("POST", () => {
+  const SECRET = "rahasia-uji";
+  const asli = process.env.REVALIDATE_SECRET;
+
+  beforeEach(() => {
+    process.env.REVALIDATE_SECRET = SECRET;
+    revalidateTag.mockClear();
+  });
+  afterEach(() => {
+    process.env.REVALIDATE_SECRET = asli;
+  });
+
+  function kirim(body: unknown, secret = SECRET) {
+    return POST(
+      new Request("http://x/api/revalidate", {
+        method: "POST",
+        headers: { "x-tgr-secret": secret, "content-type": "application/json" },
+        body: JSON.stringify(body),
+      }) as unknown as NextRequest
+    );
+  }
+
+  it("regresi 11 Nov 2026: webhook terbit tidak membuang cache daftar", async () => {
+    const res = await kirim({ type: "post", slug: "a", status_new: "publish" });
+    expect(res.status).toBe(200);
+    expect(revalidateTag.mock.calls).toEqual([
+      ["wp:post:a", "max"],
+      ["wp:posts", "max"],
+    ]);
+  });
+
+  it("tulisan dibuang ke trash: detail gugur seketika, daftar tetap max", async () => {
+    await kirim({ type: "post", slug: "a", status_new: "trash" });
+    expect(revalidateTag.mock.calls).toEqual([
+      ["wp:post:a", { expire: 0 }],
+      ["wp:posts", "max"],
+    ]);
+  });
+
+  it("payload tanpa status_new (kiriman lama) dianggap terbit", async () => {
+    await kirim({ type: "post", slug: "a" });
+    expect(revalidateTag.mock.calls.every(([, p]) => p === "max")).toBe(true);
+  });
+
+  it("rahasia salah: 401 dan tidak ada yang digugurkan", async () => {
+    const res = await kirim({ type: "post", slug: "a" }, "salah");
+    expect(res.status).toBe(401);
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 });
