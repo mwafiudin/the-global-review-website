@@ -40,6 +40,7 @@ harus mengambil ulang dari WordPress, gagal, dan menjawab 500.
 | Semua slug tayang di WordPress (`posts?_fields=slug`, 10 halaman, 12 Nov) | 928 slug, semuanya `[a-z0-9_-]`, tanpa titik, terpanjang 157 |
 | `railway logs --network --since 30m` | 17 flow egress ke 172.236.131.177 (74/148/222/296 B, SYN diulang), 0 flow ingress darinya |
 | Laptop ke `cms.*` (satu permintaan) | 200, 0,75 dtk |
+| Service uji sementara di Railway tanpa IP statis, 12 Nov ±12.40 WIB (sudah dihapus) | IP keluar 35.198.232.215, region sin: TCP ke 172.236.131.177:443 tersambung 3 ms, `posts?per_page=1` menjawab 200. Yang diblokir tiga IP statis, bukan seluruh Railway |
 | `railway logs --http --filter @path:/api/revalidate --since 4d` | satu webhook, 11 Nov 14:17:52 UTC, 200 |
 | `railway logs --http` path `/`, 11 Nov 13.30–15.00 UTC | 200 sampai 14:1x, 500 sejak 14:1x (setelah webhook), 500 terus sampai kini dalam ±20 ms |
 
