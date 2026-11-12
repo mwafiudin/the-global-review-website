@@ -1,6 +1,6 @@
 # 8–12 Nov 2026: egress Railway diblok lagi, lalu webhook mengosongkan cache dan situs 500
 
-Status: **Pulih** 12 Nov ±13.00 WIB lewat jalur sementara (IP statis Railway dimatikan + deploy PR #47). 12 Nov sore webiihost membuka blokir 208.77.246.240 dan memasukkannya ke whitelist; .241 dan .242 belum dikonfirmasi, jadi IP statis tetap mati.
+Status: **Pulih**. 12 Nov ±13.00 WIB lewat jalur sementara (IP statis mati + deploy PR #47); 12 Nov sore IP statis dinyalakan lagi setelah ketiganya teruji tidak diblokir (keputusan Farrez). Whitelist webiihost: .240 sudah, .241 dan .242 belum.
 Tingkat: P1 / SEV-1 (beranda dan rubrik 500 untuk semua pembaca).
 Pelapor: Farrez, tangkapan layar "Terjadi kesalahan" di /category/geopolitik, 12 Nov.
 
