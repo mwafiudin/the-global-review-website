@@ -1,6 +1,6 @@
 # 8–12 Nov 2026: egress Railway diblok lagi, lalu webhook mengosongkan cache dan situs 500
 
-Status: **Berjalan**. WordPress tak terjangkau dari Railway sejak 8 Nov 13.39 WIB; seluruh halaman 500 sejak 11 Nov 21.17 WIB. Perbaikan kode di PR `claude/t-0076-webhook-swr` (draft, belum boleh di-deploy).
+Status: **Pulih**. 12 Nov ±13.00 WIB lewat jalur sementara (IP statis mati + deploy PR #47); 12 Nov sore IP statis dinyalakan lagi setelah ketiganya teruji tidak diblokir (keputusan Farrez). Whitelist webiihost: .240 sudah, .241 dan .242 belum.
 Tingkat: P1 / SEV-1 (beranda dan rubrik 500 untuk semua pembaca).
 Pelapor: Farrez, tangkapan layar "Terjadi kesalahan" di /category/geopolitik, 12 Nov.
 
@@ -47,12 +47,27 @@ harus mengambil ulang dari WordPress, gagal, dan menjawab 500.
 ## Sebab
 
 - **Langsung (blokir):** firewall host men-DROP IP egress Railway.
-- **Pemicu blokir (terbukti urutannya, mekanismenya dugaan kuat):** kode
-  kita meneruskan tebakan pemindai ke WordPress. `getArticle(slug)` tidak
-  memeriksa bentuk slug, dan `generateMetadata` memanggilnya juga saat
-  segmen `[lang]` bukan bahasa yang sah. Di host ini 406 dari ModSecurity
-  dihitung lfd dan ±5 kali berarti blokir permanen (pengalaman IP laptop,
-  7 Sep). Aturan mana yang kena hanya bisa dipastikan dari log lfd host.
+- **Pemicu blokir (terbukti, dikonfirmasi log host):** kode kita meneruskan
+  tebakan pemindai ke WordPress. `getArticle(slug)` tidak memeriksa bentuk
+  slug, dan `generateMetadata` memanggilnya juga saat segmen `[lang]` bukan
+  bahasa yang sah. Webiihost mengirim baris `csf.deny`-nya (12 Nov, lewat
+  Wafi):
+
+  ```
+  208.77.246.240 # lfd: (SUSPECTFILES) Suspected Files Access via
+  /var/log/nginx/access.log 208.77.246.240 (SG/Singapore/-): 10 in the last
+  3600 secs - Sun Nov  8 13:38:55 2026
+  ```
+
+  Jadi aturannya **SUSPECTFILES** milik lfd, bukan ModSecurity seperti dugaan
+  awal saya: lfd membaca access log nginx host, menghitung permintaan yang
+  menyebut nama berkas mencurigakan (`web.config`, `.env`, `php.ini`, ...),
+  dan memblokir IP yang mencapai 10 dalam satu jam. URL kita memuat nama
+  berkas itu di query (`posts?slug=web.config`). Waktunya cocok sampai menit:
+  pemindai mulai 13.37.14 WIB, blokir 13.38.55, balasan host terakhir di log
+  jaringan kita pada menit 13.38, galat pertama 13.39.12 (`slug=config.xml`).
+  Hanya .240 yang tercatat di `csf.deny`; Railway HA memakai ketiganya
+  bergantian, dan kebetulan lalu lintas saat itu keluar lewat .240.
   Insiden 23 dan 29 Okt tidak bisa dicek ulang: log HTTP Railway untuk
   tanggal itu sudah tidak tersedia.
 - **Langsung (500):** `{ expire: 0 }` di webhook. Menurut docs
@@ -97,6 +112,28 @@ halamannya belum punya cache.
 3. Setelah terbuka: `railway logs --network --since 10m --json` memuat flow
    ingress dari 172.236.131.177, `/` menjawab 200; lalu PR di-merge.
 
+## Pemulihan 12 Nov
+
+| Waktu (WIB) | Kejadian |
+|---|---|
+| ±12.40 | Service uji tanpa IP statis: WordPress menjawab 200 dari 35.198.232.215. Service dihapus. |
+| 12.5x | `railway outbound-network static-ip disable -s web` (keputusan Farrez). Berlaku di deploy berikutnya. |
+| 12.57 | PR #47 di-merge (`273877f`), deploy `74f095a4` sukses. |
+| ±13.00 | `/`, `/category/geopolitik`, `/category/analisis`, artikel terbaru: 200. `/x/web.config`: 404 dalam 0,09 dtk. `railway logs --network`: 28 flow ingress dari 172.236.131.177 dalam 5 menit. `node scripts/pantau-artikel-terbaru.mjs`: sehat. |
+
+12 Nov ±18.00 WIB, uji service sementara ber-IP statis (5 deploy, lalu dihapus): tiap deploy memakai SATU IP untuk semua koneksinya (30/30), bergantian antar deploy. Hasil per IP: .240 30/30 ke WordPress 200 (2 deploy), .241 30/30 (2 deploy), .242 30/30 (1 deploy). Ketiganya saat ini tidak diblokir. Pelajaran: HA Railway membagi IP per container, bukan per koneksi, jadi satu container yang kena blokir mati total walau dua IP lain sehat.
+
+12 Nov sore webiihost (lewat Wafi) membuka blokir 208.77.246.240 dan
+menambahkannya ke whitelist. Belum ada konfirmasi untuk .241 dan .242.
+
+Keadaan sekarang menyimpang dari ADR 0001 dengan sengaja: IP keluar
+diambil dari kumpulan bersama Railway dan bisa berganti tiap deploy. Jadi
+**setiap deploy adalah lemparan dadu kecil**; sesudah deploy, cek
+`railway logs --network` untuk flow ingress dari host. Jalan kembali:
+webiihost mengonfirmasi **ketiga** IP (208.77.246.240–242) sudah di
+`csf.allow` dan `csf.ignore` (.240 sudah, .241 dan .242 belum), lalu
+`railway outbound-network static-ip enable -s web` dan satu deploy.
+
 ## Pelajaran
 
 - Webhook revalidasi tidak boleh menjadi jalan untuk membuang satu-satunya
@@ -105,6 +142,9 @@ halamannya belum punya cache.
 - Apa pun yang diketik orang luar dan kita teruskan ke host bersama akan
   dinilai firewall host sebagai perbuatan IP kita. Saring bentuknya di sisi
   kita dulu; yang mustahil sah jangan pernah dikirim.
+- Firewall host bersama tidak hanya membaca kode status: lfd SUSPECTFILES
+  membaca URL di access log. Nama berkas di query string sudah cukup untuk
+  diblokir, walau WordPress menjawab 200 dan tidak ada 406 sama sekali.
 - "Host memblokir kita" bukan akhir diagnosis. Lihat dulu apa yang kita
   kirim di menit-menit sebelum blokir (`railway logs --http` dan URL di
   pesan galat aplikasi).

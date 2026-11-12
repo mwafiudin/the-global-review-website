@@ -38,3 +38,12 @@ Opsi 1 (diputuskan oleh: Farrez).
   bukan allow semua port, supaya proteksi ModSecurity tetap berlaku.
 - Tinjau ulang bila: pindah ke VPS (COD-42) selesai, Railway mengubah
   syarat static IP, atau whitelist ternyata tidak mencegah blokir.
+
+## Note, 2026-11-12
+
+Static IPs are temporarily disabled (decided by Farrez). All three were
+dropped by the host firewall on 8 Nov and never whitelisted; a probe from a
+non-static Railway egress IP reached WordPress, so the service was moved
+back to the shared pool to restore the site. This ADR still stands:
+re-enable static IPs once webiihost confirms the whitelist. See
+docs/insiden/2026-11-08-egress-diblok-webhook-kosongkan-cache.md.
