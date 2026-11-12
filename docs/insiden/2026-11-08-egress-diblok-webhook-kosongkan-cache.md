@@ -1,6 +1,6 @@
 # 8–12 Nov 2026: egress Railway diblok lagi, lalu webhook mengosongkan cache dan situs 500
 
-Status: **Berjalan**. WordPress tak terjangkau dari Railway sejak 8 Nov 13.39 WIB; seluruh halaman 500 sejak 11 Nov 21.17 WIB. Perbaikan kode di PR `claude/t-0076-webhook-swr` (draft, belum boleh di-deploy).
+Status: **Pulih** 12 Nov ±13.00 WIB lewat jalur sementara (IP statis Railway dimatikan + deploy PR #47). Whitelist tiga IP statis di webiihost masih ditunggu; sampai itu ada, IP statis jangan dinyalakan.
 Tingkat: P1 / SEV-1 (beranda dan rubrik 500 untuk semua pembaca).
 Pelapor: Farrez, tangkapan layar "Terjadi kesalahan" di /category/geopolitik, 12 Nov.
 
@@ -96,6 +96,22 @@ halamannya belum punya cache.
    detail yang masih tersaji dari cache ikut hilang bila container diganti.
 3. Setelah terbuka: `railway logs --network --since 10m --json` memuat flow
    ingress dari 172.236.131.177, `/` menjawab 200; lalu PR di-merge.
+
+## Pemulihan 12 Nov
+
+| Waktu (WIB) | Kejadian |
+|---|---|
+| ±12.40 | Service uji tanpa IP statis: WordPress menjawab 200 dari 35.198.232.215. Service dihapus. |
+| 12.5x | `railway outbound-network static-ip disable -s web` (keputusan Farrez). Berlaku di deploy berikutnya. |
+| 12.57 | PR #47 di-merge (`273877f`), deploy `74f095a4` sukses. |
+| ±13.00 | `/`, `/category/geopolitik`, `/category/analisis`, artikel terbaru: 200. `/x/web.config`: 404 dalam 0,09 dtk. `railway logs --network`: 28 flow ingress dari 172.236.131.177 dalam 5 menit. `node scripts/pantau-artikel-terbaru.mjs`: sehat. |
+
+Keadaan sekarang menyimpang dari ADR 0001 dengan sengaja: IP keluar
+diambil dari kumpulan bersama Railway dan bisa berganti tiap deploy. Jadi
+**setiap deploy adalah lemparan dadu kecil**; sesudah deploy, cek
+`railway logs --network` untuk flow ingress dari host. Jalan kembali:
+webiihost mengonfirmasi 208.77.246.240–242 sudah di `csf.allow`, lalu
+`railway outbound-network static-ip enable -s web` dan satu deploy.
 
 ## Pelajaran
 
